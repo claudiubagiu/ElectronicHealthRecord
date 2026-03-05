@@ -1,0 +1,194 @@
+services:
+  traefik:
+    image: traefik:v3.6.2
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dynamic:/dynamic:ro
+    command:
+      # Entrypoints
+      - "--entrypoints.web.address=:80"
+
+      # Providers
+      - "--providers.file.directory=/dynamic"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=proxy"
+
+      #API & Dashboard
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+
+      # Observability
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--metrics.prometheus=true"
+
+      # Plugins
+      - "--experimental.plugins.jwt-validation-middleware.modulename=github.com/legege/jwt-validation-middleware"
+      - "--experimental.plugins.jwt-validation-middleware.version=v0.2.1"
+    labels:
+      # Enable self-routing
+      - "traefik.enable=true"
+   
+      # Dashboard router
+      - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+      - "traefik.http.routers.dashboard.service=api@internal"
+
+      # Basic Auth middleware
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=admin:$$apr1$$G1TQqWMl$$1KXnUaCBerpnCeKPGUPOD/"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@docker"
+
+      # CORS middleware for frontend
+      - "traefik.http.middlewares.cors-frontend.headers.accessControlAllowOriginList=http://localhost:4200,http://frontend.docker.localhost"
+      - "traefik.http.middlewares.cors-frontend.headers.accessControlAllowMethods=GET,POST,PUT,PATCH,DELETE,OPTIONS"
+      - "traefik.http.middlewares.cors-frontend.headers.accessControlAllowHeaders=Authorization,Content-Type,X-Requested-With,X-SignalR-User-Agent"
+      - "traefik.http.middlewares.cors-frontend.headers.accessControlAllowCredentials=true"
+      - "traefik.http.middlewares.cors-frontend.headers.addVaryHeader=true"
+      - "traefik.http.middlewares.cors-frontend.headers.accessControlExposeHeaders=*"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - proxy
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s 
+      timeout: 5s 
+      retries: 5 
+      start_period: 30s
+    labels:
+      - "traefik.enable=false"
+
+  # angular:
+  #   build:
+  #     context: App.UI
+  #     dockerfile: Dockerfile
+  #   container_name: angular
+  #   restart: unless-stopped
+  #   image: ${DOCKER_REGISTRY-}angular
+  #   ports:
+  #     - "4201:8080"
+
+
+  angular-dev:
+    image: ${DOCKER_REGISTRY-}angular-dev
+    restart: unless-stopped
+    container_name: angular-dev
+    build:
+      context: ./App.UI
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./App.UI:/app
+      - /app/node_modules
+    depends_on:
+      - auth.api
+      - users.api
+
+  auth.api:
+    image: ${DOCKER_REGISTRY-}authapi
+    container_name: auth-api
+    restart: unless-stopped
+    build:
+      context: Auth.Api
+      dockerfile: Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth-api.rule=Host(`auth.api.docker.localhost`)"
+      - "traefik.http.routers.auth-api.entrypoints=web"
+      - "traefik.http.routers.auth-api.middlewares=cors-frontend@docker"
+      - "traefik.http.routers.auth-api.service=auth-api"
+      - "traefik.http.services.auth-api.loadbalancer.server.port=8080"
+    depends_on:
+      auth.database:
+        condition: service_started 
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - proxy
+
+  auth.database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: auth-database
+    restart: unless-stopped
+    environment:
+      - SA_PASSWORD=Password1@
+      - ACCEPT_EULA=Y
+    ports:
+      - "1433:1433"
+    expose:
+      - "1433"
+    volumes:
+      - auth_database:/var/opt/mssql
+    networks:
+      - proxy
+
+  users.api:
+    image: ${DOCKER_REGISTRY-}usersapi
+    build:
+      context: Users.Api
+      dockerfile: Dockerfile
+    container_name: users-api
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.users-api.rule=Host(`users.api.docker.localhost`)"
+      - "traefik.http.routers.users-api.entrypoints=web"
+      - "traefik.http.routers.users-api.middlewares=cors-frontend@docker"
+      - "traefik.http.routers.users-api.service=users-api"
+      - "traefik.http.services.users-api.loadbalancer.server.port=8080"
+    depends_on:
+      users.database:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - proxy
+
+  users.database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: users-database
+    restart: unless-stopped
+    environment:
+      - SA_PASSWORD=Password1@
+      - ACCEPT_EULA=Y
+    ports:
+      - "1434:1433"
+    expose:
+      - "1433"
+    volumes:
+      - users_database:/var/opt/mssql
+    networks:
+      - proxy
+
+volumes:
+  auth_database:
+  users_database:
+  rabbitmq_data:
+
+networks:
+  proxy:
+    name: proxy
+  blockchain-network:
+    driver: bridge

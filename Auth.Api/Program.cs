@@ -3,6 +3,7 @@ using Auth.Api.Domain.Models;
 using Auth.Api.Extensions;
 using Auth.Api.Infrastructure.RabbitMQ.Implementation;
 using Auth.Api.Infrastructure.RabbitMQ.Interface;
+using Auth.Api.Mappings;
 using Auth.Api.Repositories.Implementation;
 using Auth.Api.Repositories.Interface;
 using Auth.Api.Services.Implementation;
@@ -11,7 +12,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Org.BouncyCastle.Asn1.X509.Qualified;
 using RabbitMQ.Client;
 using System.Text;
 
@@ -35,7 +35,7 @@ builder.Services.AddSingleton<IConnection>(sp =>
                  .GetResult();
 });
 builder.Services.AddSingleton(typeof(IGenericRabbitMQService<>), typeof(GenericRabbitMQService<>));
-builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddMemoryCache();
 

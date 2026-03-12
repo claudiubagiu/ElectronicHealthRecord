@@ -6,5 +6,7 @@
         public required string IdentityId { get; set; }
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
+        public required string CNP { get; set; }
+        public required DateTime DateOfBirth { get; set; }
     }
 }

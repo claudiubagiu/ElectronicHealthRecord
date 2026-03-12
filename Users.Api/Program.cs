@@ -34,9 +34,8 @@ builder.Services.AddSingleton<IConnection>(sp =>
                  .GetResult();
 });
 
-
-builder.Services.AddSingleton(typeof(IGenericRabbitMQConsumer<>),
-                               typeof(GenericRabbitMQConsumer<>));
+builder.Services.AddSingleton(typeof(IGenericRabbitMQService<>), typeof(GenericRabbitMQService<>));
+builder.Services.AddSingleton(typeof(IGenericRabbitMQConsumer<>), typeof(GenericRabbitMQConsumer<>));
 
 builder.Services.AddHostedService<IdentityCreatedConsumerWorker>();
 

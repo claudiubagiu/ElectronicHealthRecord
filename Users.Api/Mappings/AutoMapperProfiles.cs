@@ -10,6 +10,8 @@ namespace Users.Api.Mappings
         {
             CreateMap<IdentityCreatedEvent, Patient>().ReverseMap();
             CreateMap<IdentityCreatedEvent, Doctor>().ReverseMap();
+            CreateMap<UserCreatedEvent, Patient>().ReverseMap();
+            CreateMap<UserCreatedEvent, Doctor>().ReverseMap();
         }
     }
 }

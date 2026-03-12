@@ -182,9 +182,51 @@ services:
     networks:
       - proxy
 
+  diagnostics.api:
+    image: ${DOCKER_REGISTRY-}diagnosticsapi
+    build:
+      context: Diagnostics.Api
+      dockerfile: Dockerfile
+    container_name: diagnostics-api
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.diagnostics-api.rule=Host(`diagnostics.api.docker.localhost`)"
+      - "traefik.http.routers.diagnostics-api.entrypoints=web"
+      - "traefik.http.routers.diagnostics-api.middlewares=cors-frontend@docker"
+      - "traefik.http.routers.diagnostics-api.service=diagnostics-api"
+      - "traefik.http.services.diagnostics-api.loadbalancer.server.port=8080"
+    depends_on:
+      diagnostics.database:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - diagnostics_files:/app/uploads
+    networks:
+      - proxy
+
+  diagnostics.database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: diagnostics-database
+    restart: unless-stopped
+    environment:
+      - SA_PASSWORD=Password1@
+      - ACCEPT_EULA=Y
+    ports:
+      - "1435:1433"
+    expose:
+      - "1433"
+    volumes:
+      - diagnostics_database:/var/opt/mssql
+    networks:
+      - proxy
+
 volumes:
   auth_database:
   users_database:
+  diagnostics_database:
+  diagnostics_files:
   rabbitmq_data:
 
 networks:

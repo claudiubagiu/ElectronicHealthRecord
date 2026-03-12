@@ -11,14 +11,17 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
         private readonly IGenericRabbitMQConsumer<IdentityCreatedEvent> _consumer;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IMapper _mapper;
+        private readonly IGenericRabbitMQService<UserCreatedEvent> _genericRabbitMQService;
 
         public IdentityCreatedConsumerWorker(IGenericRabbitMQConsumer<IdentityCreatedEvent> consumer, 
                                              IServiceScopeFactory scopeFactory, 
-                                             IMapper mapper)
+                                             IMapper mapper,
+                                             IGenericRabbitMQService<UserCreatedEvent> genericRabbitMQService)
         {
             _consumer = consumer;
             _scopeFactory = scopeFactory;
             _mapper = mapper;
+            _genericRabbitMQService = genericRabbitMQService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,12 +40,19 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                     if (identityCreatedEvent.Role.Equals("Patient"))
                     {
                         Patient patient = _mapper.Map<Patient>(identityCreatedEvent);
-                        await patientsRepository.CreateAsync(patient);
+                        patient = await patientsRepository.CreateAsync(patient);
+                        UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(patient);
+                        userCreatedEvent.Role = identityCreatedEvent.Role;
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
                     }
                     else if (identityCreatedEvent.Role == "Doctor")
                     {
                         Doctor doctor = _mapper.Map<Doctor>(identityCreatedEvent);
                         await doctorsRepository.CreateAsync(doctor);
+                        doctor.Id = Guid.NewGuid();
+                        UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(doctor);
+                        userCreatedEvent.Role = identityCreatedEvent.Role;
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
                     }
                 });
         }

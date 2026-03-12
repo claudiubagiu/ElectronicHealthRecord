@@ -87,6 +87,8 @@ namespace Auth.Api.Services.Implementation
                         Role = roles.First(),
                         FirstName = registerRequestDto.FirstName,
                         LastName = registerRequestDto.LastName,
+                        CNP = registerRequestDto.CNP,
+                        DateOfBirth = registerRequestDto.DateOfBirth,
                         Specialization = registerRequestDto.Specialization,
                         LicenseNumber = registerRequestDto.LicenseNumber,
                         HospitalAffiliation = registerRequestDto.HospitalAffiliation,

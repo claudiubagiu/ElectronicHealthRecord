@@ -1,0 +1,145 @@
+.sidenav-container {
+  height: 100vh;
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: 600;
+
+  .app-name {
+    letter-spacing: 0.5px;
+  }
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.nav-links a {
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.active-link {
+  border-bottom: 2px solid white;
+  border-radius: 0;
+}
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .login-btn {
+    color: white;
+    border-color: rgba(255, 255, 255, 0.6);
+    background-color: orange;
+
+    mat-icon {
+      margin-right: 4px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .register-btn {
+    mat-icon {
+      margin-right: 4px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.profile-button {
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.profile-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+
+  .profile-menu-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .profile-menu-address {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.7);
+    font-family: monospace;
+  }
+}
+
+.sidenav {
+  width: 280px;
+}
+
+.sidenav-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+
+  .sidenav-avatar-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .sidenav-username {
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: monospace;
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+.content {
+  padding: 0px;
+}
+
+.menu-button {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .menu-button {
+    display: inline-flex;
+  }
+
+  .nav-links,
+  .auth-buttons {
+    display: none !important;
+  }
+
+  .profile-button {
+    display: none !important;
+  }
+}

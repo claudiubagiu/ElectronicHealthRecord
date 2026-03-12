@@ -1,0 +1,185 @@
+<div class="register-page">
+  <div class="register-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>person_add</mat-icon>
+      </div>
+      <h1>Create an account</h1>
+      <p class="subtitle">Fill in the details to register</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <!-- Step 1: Role -->
+      <div class="section">
+        <p class="section-label">Select your role</p>
+        <div class="role-selector">
+          <button
+            type="button"
+            class="role-btn"
+            [class.active]="selectedRole === 'Patient'"
+            (click)="selectRole('Patient')"
+          >
+            <mat-icon>personal_injury</mat-icon>
+            <span>Patient</span>
+          </button>
+          <button
+            type="button"
+            class="role-btn"
+            [class.active]="selectedRole === 'Doctor'"
+            (click)="selectRole('Doctor')"
+          >
+            <mat-icon>medical_services</mat-icon>
+            <span>Doctor</span>
+          </button>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Step 2: Personal details -->
+      <div class="section">
+        <p class="section-label">Personal details</p>
+
+        <div class="row-fields">
+          <mat-form-field appearance="outline" class="half">
+            <mat-label>First name</mat-label>
+            <input matInput formControlName="firstName" placeholder="John" />
+            <mat-icon matSuffix>badge</mat-icon>
+            <mat-error *ngIf="registerForm.get('firstName')?.hasError('required')">
+              This field is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half">
+            <mat-label>Last name</mat-label>
+            <input matInput formControlName="lastName" placeholder="Doe" />
+            <mat-icon matSuffix>badge</mat-icon>
+            <mat-error *ngIf="registerForm.get('lastName')?.hasError('required')">
+              This field is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="userName" placeholder="john.doe" />
+          <mat-icon matSuffix>alternate_email</mat-icon>
+          <mat-error *ngIf="registerForm.get('userName')?.hasError('required')">
+            This field is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" placeholder="john@example.com" />
+          <mat-icon matSuffix>mail</mat-icon>
+          <mat-error *ngIf="registerForm.get('email')?.hasError('required')">
+            This field is required
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('email')?.hasError('email')">
+            Invalid email address
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Phone number</mat-label>
+          <input matInput formControlName="phoneNumber" placeholder="+10000000000" />
+          <mat-icon matSuffix>phone</mat-icon>
+          <mat-error *ngIf="registerForm.get('phoneNumber')?.hasError('required')">
+            This field is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Step 3: Patient fields (conditional) -->
+      <ng-container *ngIf="selectedRole === 'Patient'">
+        <mat-divider></mat-divider>
+        <div class="section">
+          <p class="section-label">Patient information</p>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Date of birth</mat-label>
+            <input matInput formControlName="dateOfBirth" type="date" />
+            <mat-icon matSuffix>calendar_today</mat-icon>
+            <mat-error *ngIf="registerForm.get('dateOfBirth')?.hasError('required')">
+              This field is required for Patients
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>CNP</mat-label>
+            <input matInput formControlName="cnp" placeholder="e.g. 1234567890123" />
+            <mat-icon matSuffix>fingerprint</mat-icon>
+            <mat-error *ngIf="registerForm.get('cnp')?.hasError('required')">
+              This field is required for Patients
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </ng-container>
+
+      <!-- Step 3: Doctor fields (conditional) -->
+      <ng-container *ngIf="selectedRole === 'Doctor'">
+        <mat-divider></mat-divider>
+        <div class="section">
+          <p class="section-label">Doctor information</p>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Specialization</mat-label>
+            <input matInput formControlName="specialization" placeholder="e.g. Cardiology" />
+            <mat-icon matSuffix>local_hospital</mat-icon>
+            <mat-error *ngIf="registerForm.get('specialization')?.hasError('required')">
+              This field is required for Doctors
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>License number</mat-label>
+            <input matInput formControlName="licenseNumber" placeholder="e.g. US-12345" />
+            <mat-icon matSuffix>verified</mat-icon>
+            <mat-error *ngIf="registerForm.get('licenseNumber')?.hasError('required')">
+              This field is required for Doctors
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Hospital / Affiliation</mat-label>
+            <input
+              matInput
+              formControlName="hospitalAffiliation"
+              placeholder="e.g. General County Hospital"
+            />
+            <mat-icon matSuffix>domain</mat-icon>
+            <mat-error *ngIf="registerForm.get('hospitalAffiliation')?.hasError('required')">
+              This field is required for Doctors
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </ng-container>
+
+      <mat-divider></mat-divider>
+
+      <!-- Submit -->
+      <button
+        mat-flat-button
+        type="submit"
+        class="submit-btn"
+        [disabled]="registerForm.invalid || isLoading"
+      >
+        <ng-container *ngIf="!isLoading; else loadingTpl">
+          <mat-icon>how_to_reg</mat-icon>
+          Register with MetaMask
+        </ng-container>
+        <ng-template #loadingTpl>
+          <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
+          Processing...
+        </ng-template>
+      </button>
+
+      <p class="login-text">
+        Already have an account?
+        <a routerLink="/login">Sign in</a>
+      </p>
+    </form>
+  </div>
+</div>

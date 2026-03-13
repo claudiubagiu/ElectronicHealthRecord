@@ -7,8 +7,11 @@ using Diagnostics.Api.Repositories.Implementation;
 using Diagnostics.Api.Repositories.Interface;
 using Diagnostics.Api.Services.Implementation;
 using Diagnostics.Api.Services.Interface;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RabbitMQ.Client;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +56,22 @@ builder.Services.AddSingleton(typeof(IGenericRabbitMQConsumer<>), typeof(Generic
 
 builder.Services.AddHostedService<UserCreatedConsumerWorker>();
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
+
 
 var app = builder.Build();
 
@@ -63,6 +82,7 @@ if(app.Environment.IsDevelopment())
     app.ApplyMigrations();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

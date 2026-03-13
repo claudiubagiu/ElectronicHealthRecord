@@ -31,10 +31,6 @@ services:
       - "--log.level=INFO"
       - "--accesslog=true"
       - "--metrics.prometheus=true"
-
-      # Plugins
-      - "--experimental.plugins.jwt-validation-middleware.modulename=github.com/legege/jwt-validation-middleware"
-      - "--experimental.plugins.jwt-validation-middleware.version=v0.2.1"
     labels:
       # Enable self-routing
       - "traefik.enable=true"

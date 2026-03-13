@@ -2,6 +2,7 @@
 using Diagnostics.Api.Services.Implementation;
 using Diagnostics.Api.Services.Interface;
 using FluentResults;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,11 +20,15 @@ namespace Diagnostics.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> AddDiagnostic(
             [FromForm] CreateDiagnosticRequestDto request)
         {
             if (request.File == null || request.File.Length == 0)
                 return BadRequest("File is required.");
+
+            var doctorIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId").Value;
+            request.DoctorId = Guid.Parse(doctorIdClaim);
 
             var result = await _diagnosticsService.CreateAsync(request);
 

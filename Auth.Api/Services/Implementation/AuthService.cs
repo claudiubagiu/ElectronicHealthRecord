@@ -137,7 +137,7 @@ namespace Auth.Api.Services.Implementation
                 return Result.Fail<LoginResponseDto>(
                     new Error("Invalid signature").WithMetadata("StatusCode", 401));
 
-            var user = await userManager.Users.FirstOrDefaultAsync(u => u.WalletAddress == walletAddress);
+            var user = await userManager.Users.Include(u => u.User).FirstOrDefaultAsync(u => u.WalletAddress == walletAddress);
 
             if (user == null)
                 return Result.Fail<LoginResponseDto>(

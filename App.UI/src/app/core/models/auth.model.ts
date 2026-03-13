@@ -32,10 +32,13 @@ export interface NonceResponse {
 
 export interface DecodedToken {
   email: string;
-  nameid: string;
+  identityId: string;
+  userId: string;
   username: string;
   walletAddress: string;
   role: string | string[];
+  firstName: string;
+  lastName: string;
   exp: number;
   iss: string;
   aud: string;

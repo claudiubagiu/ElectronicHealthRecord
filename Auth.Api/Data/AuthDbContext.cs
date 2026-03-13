@@ -1,4 +1,5 @@
 ﻿using Auth.Api.Domain.Models;
+using Auth.Api.Models.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,9 @@ namespace Auth.Api.Data
         public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
         {
         }
+
+        public DbSet<User> Users { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -36,6 +40,12 @@ namespace Auth.Api.Data
             };
 
             builder.Entity<IdentityRole>().HasData(roles);
+
+            builder.Entity<User>()
+                .HasOne(u => u.ApplicationUser)
+                .WithOne(a => a.User)             
+                .HasForeignKey<User>(u => u.IdentityId)
+                .IsRequired(false);
 
         }
     }

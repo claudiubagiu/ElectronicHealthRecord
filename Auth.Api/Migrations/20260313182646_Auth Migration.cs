@@ -160,6 +160,25 @@ namespace Auth.Api.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    IdentityId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Users_AspNetUsers_IdentityId",
+                        column: x => x.IdentityId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
@@ -207,6 +226,13 @@ namespace Auth.Api.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_IdentityId",
+                table: "Users",
+                column: "IdentityId",
+                unique: true,
+                filter: "[IdentityId] IS NOT NULL");
         }
 
         /// <inheritdoc />
@@ -226,6 +252,9 @@ namespace Auth.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

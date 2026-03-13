@@ -37,6 +37,21 @@
           <mat-icon class="sidenav-avatar-icon">account_circle</mat-icon>
           <span class="sidenav-username">{{ getShortAddress() }}</span>
         </div>
+
+        <!-- Role-based links -->
+        <ng-container *ngIf="roles$ | async as roles">
+          <a mat-list-item routerLink="/propose-diagnostic" routerLinkActive="active-link"
+             (click)="sidenav.close()" *ngIf="roles.includes('Doctor')">
+            <mat-icon matListItemIcon>medical_services</mat-icon>
+            <span matListItemTitle>Propose Diagnostic</span>
+          </a>
+          <a mat-list-item routerLink="/diagnostics" routerLinkActive="active-link"
+             (click)="sidenav.close()" *ngIf="roles.includes('Patient')">
+            <mat-icon matListItemIcon>assignment</mat-icon>
+            <span matListItemTitle>See Proposed Diagnostics</span>
+          </a>
+        </ng-container>
+
         <a mat-list-item routerLink="/profile" routerLinkActive="active-link"
            (click)="sidenav.close()">
           <mat-icon matListItemIcon>person</mat-icon>
@@ -125,6 +140,21 @@
             <mat-icon>settings</mat-icon>
             <span>Settings</span>
           </button>
+
+            <!-- Role-based items -->
+          <ng-container *ngIf="roles$ | async as roles">
+            <button mat-menu-item routerLink="/propose-diagnostic"
+                    *ngIf="roles.includes('Doctor')">
+              <mat-icon>medical_services</mat-icon>
+              <span>Propose Diagnostic</span>
+            </button>
+            <button mat-menu-item routerLink="/diagnostics"
+                    *ngIf="roles.includes('Patient')">
+              <mat-icon>assignment</mat-icon>
+              <span>See Diagnostics</span>
+            </button>
+          </ng-container>
+
           <mat-divider></mat-divider>
           <button mat-menu-item (click)="logout()">
             <mat-icon color="warn">logout</mat-icon>

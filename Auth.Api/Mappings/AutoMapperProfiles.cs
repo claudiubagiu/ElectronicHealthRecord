@@ -1,5 +1,7 @@
 ﻿using Auth.Api.Domain.Models;
+using Auth.Api.Models.Domain;
 using Auth.Api.Models.DTOs;
+using Auth.Api.Models.Messages;
 using AutoMapper;
 
 namespace Auth.Api.Mappings
@@ -10,6 +12,7 @@ namespace Auth.Api.Mappings
         {
             CreateMap<RegisterRequestDto, ApplicationUser>().ReverseMap();
             CreateMap<ApplicationUser, LoginResponseDto>().ReverseMap();
+            CreateMap<User, UserCreatedResponseEvent>().ReverseMap();
         }
     }
 }

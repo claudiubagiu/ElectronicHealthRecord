@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Auth.Api.Models.Domain;
+using Microsoft.AspNetCore.Identity;
 
 namespace Auth.Api.Domain.Models
 {
@@ -6,5 +7,7 @@ namespace Auth.Api.Domain.Models
     {
         public required string WalletAddress { get; set; }
         public required string Nonce { get; set; }
+
+        public User? User { get; set; }
     }
 }

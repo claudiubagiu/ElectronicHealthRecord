@@ -22,7 +22,9 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AuthConnectionString")));
 
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
 builder.Services.AddSingleton<IConnection>(sp =>
 {
     var factory = new ConnectionFactory
@@ -35,6 +37,10 @@ builder.Services.AddSingleton<IConnection>(sp =>
                  .GetResult();
 });
 builder.Services.AddSingleton(typeof(IGenericRabbitMQService<>), typeof(GenericRabbitMQService<>));
+builder.Services.AddSingleton(typeof(IGenericRabbitMQConsumer<>), typeof(GenericRabbitMQConsumer<>));
+
+builder.Services.AddHostedService<UserCreatedConsumerWorker>();
+
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddMemoryCache();

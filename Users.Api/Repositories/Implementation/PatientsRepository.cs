@@ -53,5 +53,19 @@ namespace Users.Api.Repositories.Implementation
             await dbContext.SaveChangesAsync();
             return existingPatient;
         }
+
+        public async Task<IReadOnlyList<Patient>> SearchByNameAsync(string search)
+        {
+            return await dbContext.Patients
+                .AsNoTracking()
+                .Where(p =>
+                    EF.Functions.Like(p.FirstName, $"%{search}%") ||
+                    EF.Functions.Like(p.LastName, $"%{search}%") ||
+                    EF.Functions.Like(p.FirstName + " " + p.LastName, $"%{search}%") ||
+                    EF.Functions.Like(p.LastName + " " + p.FirstName, $"%{search}%")
+                )
+                .Take(20)
+                .ToListAsync();
+        }
     }
 }

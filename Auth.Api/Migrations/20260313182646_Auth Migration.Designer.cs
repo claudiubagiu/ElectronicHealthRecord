@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Auth.Api.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20260312180029_Auth Migration")]
+    [Migration("20260313182646_Auth Migration")]
     partial class AuthMigration
     {
         /// <inheritdoc />
@@ -96,6 +96,31 @@ namespace Auth.Api.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Auth.Api.Models.Domain.User", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IdentityId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdentityId")
+                        .IsUnique()
+                        .HasFilter("[IdentityId] IS NOT NULL");
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -247,6 +272,15 @@ namespace Auth.Api.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Auth.Api.Models.Domain.User", b =>
+                {
+                    b.HasOne("Auth.Api.Domain.Models.ApplicationUser", "ApplicationUser")
+                        .WithOne("User")
+                        .HasForeignKey("Auth.Api.Models.Domain.User", "IdentityId");
+
+                    b.Navigation("ApplicationUser");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -296,6 +330,11 @@ namespace Auth.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Auth.Api.Domain.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

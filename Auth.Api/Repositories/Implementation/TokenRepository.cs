@@ -21,9 +21,12 @@ namespace Auth.Api.Repositories.Implementation
             var claims = new List<Claim>
             {
                 new Claim("email", user.Email!),
-                new Claim("nameid", user.Id),
-                new Claim("username", user.UserName),
-                new Claim("walletAddress", user.WalletAddress)
+                new Claim("identityId", user.Id),
+                new Claim("userId", user.User?.Id.ToString() ?? string.Empty),
+                new Claim("username", user.UserName ?? string.Empty),
+                new Claim("walletAddress", user.WalletAddress),
+                new Claim("firstName", user.User?.FirstName ?? string.Empty),
+                new Claim("lastName", user.User?.LastName ?? string.Empty)
             };
 
             foreach (var role in roles)

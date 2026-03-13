@@ -37,6 +37,7 @@ export class Navbar {
 
   isAuthenticated$ = this.authService.isAuthenticated$;
   user$ = this.authService.user$;
+  roles$ = this.authService.roles$;
 
   toggleSidenav(): void {
     this.isSidenavOpen = !this.isSidenavOpen;

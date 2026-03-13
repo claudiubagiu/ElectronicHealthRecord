@@ -10,5 +10,6 @@ namespace Users.Api.Repositories.Interface
         Task<Patient?> GetByIdentityIdAsync(string identityId);
         Task<Patient?> UpdateAsync(Patient patient);
         Task<Patient?> DeleteAsync(Patient patient);
+        Task<IReadOnlyList<Patient>> SearchByNameAsync(string search);
     }
 }

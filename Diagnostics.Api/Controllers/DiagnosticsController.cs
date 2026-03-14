@@ -56,7 +56,11 @@ namespace Diagnostics.Api.Controllers
             var result = await _diagnosticsService.GetFileByIdAsync(id);
 
             if (result.IsSuccess)
-                return Ok(result.Value);
+            {
+                var fileDto = result.Value;
+                Response.Headers.Append("Content-Disposition", $"inline; filename=\"{fileDto.FileName}\"");
+                return File(fileDto.Stream, fileDto.ContentType);
+            }
 
             var error = result.Errors.First();
 

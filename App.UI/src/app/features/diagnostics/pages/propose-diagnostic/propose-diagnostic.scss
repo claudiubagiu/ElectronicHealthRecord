@@ -1,0 +1,330 @@
+.propose-diagnostic-page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  padding: 32px 16px;
+  box-sizing: border-box;
+}
+
+.propose-diagnostic-card {
+  width: 100%;
+  max-width: 720px;
+  padding: 32px 40px;
+  box-sizing: border-box;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255, 152, 0, 0.1);
+  margin-bottom: 16px;
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: #f57c00;
+  }
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #212121;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.section {
+  padding: 20px 0;
+}
+
+.section-label {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.full {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+// When a patient is selected — subtle grey fill, muted border
+.patient-selected {
+  ::ng-deep .mdc-notched-outline__leading,
+  ::ng-deep .mdc-notched-outline__notch,
+  ::ng-deep .mdc-notched-outline__trailing {
+    border-color: rgba(0, 0, 0, 0.2) !important;
+  }
+
+  ::ng-deep .mdc-text-field--outlined {
+    background-color: rgba(0, 0, 0, 0.025);
+    border-radius: 4px;
+  }
+
+  ::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+    .mdc-notched-outline__leading,
+  ::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+    .mdc-notched-outline__notch,
+  ::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+    .mdc-notched-outline__trailing {
+    border-color: rgba(0, 0, 0, 0.3) !important;
+  }
+
+  // Force the inner content wrapper to be vertically centered
+  ::ng-deep .mat-mdc-form-field-infix {
+    display: flex;
+    align-items: center;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 56px;
+  }
+
+  // Align the suffix (X button) to center vertically
+  ::ng-deep .mat-mdc-form-field-icon-suffix {
+    display: flex;
+    align-items: center;
+    align-self: center;
+    padding-bottom: 0 !important;
+  }
+}
+
+// Patient info inside prefix
+.patient-chip-prefix {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  margin-right: 4px;
+  margin-left: 4px; // slight nudge to the right from the field edge
+
+  .chip-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #212121;
+    white-space: nowrap;
+  }
+
+  .chip-cnp {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: rgba(0, 0, 0, 0.45);
+    border-left: 1px solid rgba(0, 0, 0, 0.15);
+    padding-left: 10px;
+    white-space: nowrap;
+  }
+}
+
+// Clear button — small, tight radius
+.clear-btn {
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: rgba(0, 0, 0, 0.4);
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+
+  ::ng-deep .mat-mdc-button-touch-target {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  ::ng-deep .mat-mdc-button-ripple,
+  ::ng-deep .mat-mdc-button-persistent-ripple,
+  ::ng-deep .mdc-icon-button__ripple {
+    border-radius: 6px !important;
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+  }
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+// Autocomplete option
+.patient-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+
+  .patient-option-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: rgba(0, 0, 0, 0.35);
+  }
+
+  .patient-option-info {
+    display: flex;
+    flex-direction: column;
+
+    .patient-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #212121;
+    }
+
+    .patient-cnp {
+      font-size: 0.75rem;
+      color: rgba(0, 0, 0, 0.5);
+      font-family: monospace;
+    }
+  }
+}
+
+.searching-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 0.85rem;
+}
+
+// Upload area
+.upload-area {
+  border: 2px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: center;
+  min-height: 140px;
+
+  &:hover {
+    border-color: #f57c00;
+    background: rgba(255, 152, 0, 0.03);
+  }
+
+  &.drag-over {
+    border-color: #f57c00;
+    background: rgba(255, 152, 0, 0.06);
+    transform: scale(1.01);
+  }
+
+  &.has-file {
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.02);
+  }
+}
+
+.upload-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: rgba(0, 0, 0, 0.25);
+  margin-bottom: 12px;
+
+  &.file-ready {
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+.upload-text {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+
+  &.file-name {
+    color: #212121;
+    word-break: break-all;
+    max-width: 480px;
+  }
+}
+
+.upload-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.38);
+}
+
+.remove-file-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: rgba(0, 0, 0, 0.35);
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.65);
+  }
+}
+
+.file-error {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--mat-sys-error, #b00020);
+}
+
+// Submit button
+.submit-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  background-color: #f57c00 !important;
+  color: white !important;
+
+  &[disabled] {
+    opacity: 0.6;
+  }
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .button-spinner {
+    ::ng-deep circle {
+      stroke: white;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .propose-diagnostic-card {
+    padding: 24px 16px;
+  }
+}

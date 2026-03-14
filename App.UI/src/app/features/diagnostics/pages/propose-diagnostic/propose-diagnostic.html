@@ -1,0 +1,166 @@
+<div class="propose-diagnostic-page">
+  <div class="propose-diagnostic-card">
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>medical_information</mat-icon>
+      </div>
+      <h1>Propose Diagnostic</h1>
+      <p class="subtitle">Search for a patient and submit a diagnostic with a document</p>
+    </div>
+
+    <form [formGroup]="diagnosticForm" (ngSubmit)="onSubmit()">
+      <!-- Patient Search -->
+      <div class="section">
+        <p class="section-label">Patient</p>
+
+        <mat-form-field appearance="outline" class="full" [class.patient-selected]="selectedPatient">
+          <mat-label *ngIf="!selectedPatient">Search patient by name</mat-label>
+
+          <div matPrefix *ngIf="selectedPatient" class="patient-chip-prefix">
+            <span class="chip-name">{{ selectedPatient.firstName }} {{ selectedPatient.lastName }}</span>
+            <span class="chip-cnp">CNP: {{ selectedPatient.cnp }}</span>
+          </div>
+
+          <input
+            matInput
+            formControlName="patientSearch"
+            [placeholder]="selectedPatient ? '' : 'e.g. John Doe'"
+            [matAutocomplete]="auto"
+            [style.display]="selectedPatient ? 'none' : 'block'"
+          />
+
+          <button
+            *ngIf="selectedPatient"
+            matSuffix
+            mat-icon-button
+            type="button"
+            class="clear-btn"
+            (click)="clearPatient($event)"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+          <mat-icon matSuffix *ngIf="!selectedPatient">search</mat-icon>
+
+          <mat-autocomplete
+            #auto="matAutocomplete"
+            [displayWith]="displayPatient"
+            (optionSelected)="onPatientSelected($event)"
+          >
+            <mat-option *ngFor="let patient of filteredPatients" [value]="patient">
+              <div class="patient-option">
+                <mat-icon class="patient-option-icon">person</mat-icon>
+                <div class="patient-option-info">
+                  <span class="patient-name">{{ patient.firstName }} {{ patient.lastName }}</span>
+                  <span class="patient-cnp">CNP: {{ patient.cnp }}</span>
+                </div>
+              </div>
+            </mat-option>
+            <mat-option *ngIf="isSearching" disabled>
+              <div class="searching-indicator">
+                <mat-spinner diameter="18"></mat-spinner>
+                <span>Searching...</span>
+              </div>
+            </mat-option>
+            <mat-option *ngIf="!isSearching && filteredPatients.length === 0 && searchPerformed" disabled>
+              No patients found
+            </mat-option>
+          </mat-autocomplete>
+
+          <mat-error *ngIf="diagnosticForm.get('patientSearch')?.hasError('required')">
+            Please select a patient
+          </mat-error>
+          <mat-error *ngIf="diagnosticForm.get('patientSearch')?.hasError('invalidPatient')">
+            Please select a valid patient from the list
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Description -->
+      <div class="section">
+        <p class="section-label">Diagnostic details</p>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Description</mat-label>
+          <textarea
+            matInput
+            formControlName="description"
+            placeholder="Describe the diagnostic findings..."
+            rows="5"
+          ></textarea>
+          <mat-icon matSuffix>description</mat-icon>
+          <mat-error *ngIf="diagnosticForm.get('description')?.hasError('required')">
+            Description is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- File Upload -->
+      <div class="section">
+        <p class="section-label">Document</p>
+
+        <div
+          class="upload-area"
+          [class.has-file]="selectedFile"
+          [class.drag-over]="isDragOver"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()"
+        >
+          <input
+            #fileInput
+            type="file"
+            hidden
+            (change)="onFileSelected($event)"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+          />
+
+          <ng-container *ngIf="!selectedFile">
+            <mat-icon class="upload-icon">cloud_upload</mat-icon>
+            <p class="upload-text">Click or drag & drop a file here</p>
+            <p class="upload-hint">PDF, DOC, DOCX, JPG, PNG accepted</p>
+          </ng-container>
+
+          <ng-container *ngIf="selectedFile">
+            <mat-icon class="upload-icon file-ready">task</mat-icon>
+            <p class="upload-text file-name">{{ selectedFile.name }}</p>
+            <p class="upload-hint">{{ formatFileSize(selectedFile.size) }}</p>
+            <button
+              mat-icon-button
+              type="button"
+              class="remove-file-btn"
+              (click)="removeFile($event)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </ng-container>
+        </div>
+
+        <mat-error *ngIf="fileError" class="file-error">{{ fileError }}</mat-error>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Submit -->
+      <button
+        mat-flat-button
+        type="submit"
+        class="submit-btn"
+        [disabled]="diagnosticForm.invalid || !selectedFile || !selectedPatient || isLoading"
+      >
+        <ng-container *ngIf="!isLoading; else loadingTpl">
+          <mat-icon>send</mat-icon>
+          Submit Diagnostic
+        </ng-container>
+        <ng-template #loadingTpl>
+          <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
+          Submitting...
+        </ng-template>
+      </button>
+    </form>
+  </div>
+</div>

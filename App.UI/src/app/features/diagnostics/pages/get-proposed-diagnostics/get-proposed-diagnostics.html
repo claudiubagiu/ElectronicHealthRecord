@@ -1,0 +1,76 @@
+<div class="diagnostics-page">
+  <div class="diagnostics-card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>assignment</mat-icon>
+      </div>
+      <h1>My Diagnostics</h1>
+      <p class="subtitle">Review diagnostics proposed by your doctors</p>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-container" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading your diagnostics...</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="state-container empty" *ngIf="!isLoading && diagnostics.length === 0">
+      <mat-icon class="empty-icon">inbox</mat-icon>
+      <p>No diagnostics proposed yet.</p>
+    </div>
+
+    <!-- List -->
+    <div class="diagnostics-list" *ngIf="!isLoading && diagnostics.length > 0">
+      <div class="diagnostic-item" *ngFor="let d of diagnostics">
+
+        <!-- Top row: description + date -->
+        <div class="item-header">
+          <span class="item-title">{{ d.description }}</span>
+          <span class="item-date">{{ d.createdAt | date: 'dd MMM yyyy, HH:mm' }}</span>
+        </div>
+
+        <!-- Doctor -->
+        <div class="item-meta">
+          <mat-icon class="meta-icon">medical_services</mat-icon>
+          <span>Proposed by <strong>{{ d.doctorName }}</strong></span>
+        </div>
+
+        <!-- File -->
+        <div class="item-file" (click)="openFile(d)">
+          <mat-icon class="file-icon">description</mat-icon>
+          <span class="file-name">{{ d.fileName }}</span>
+          <mat-icon class="open-icon">open_in_new</mat-icon>
+        </div>
+
+        <!-- Actions -->
+        <div class="item-actions">
+          <button
+            mat-stroked-button
+            class="decline-btn"
+            [disabled]="loadingId === d.id"
+            (click)="onDecline(d)"
+          >
+            <mat-spinner *ngIf="loadingId === d.id" diameter="16" class="btn-spinner"></mat-spinner>
+            <mat-icon *ngIf="loadingId !== d.id">close</mat-icon>
+            Decline
+          </button>
+          <button
+            mat-flat-button
+            class="approve-btn"
+            [disabled]="loadingId === d.id"
+            (click)="onApprove(d)"
+          >
+            <mat-spinner *ngIf="loadingId === d.id" diameter="16" class="btn-spinner"></mat-spinner>
+            <mat-icon *ngIf="loadingId !== d.id">check</mat-icon>
+            Approve
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -7,7 +7,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { Web3Service } from '../../../core/services/web3.service';
 
@@ -31,6 +31,7 @@ import { Web3Service } from '../../../core/services/web3.service';
 })
 export class Navbar {
   private authService = inject(AuthService);
+  private router = inject(Router);
   private web3Service = inject(Web3Service);
 
   isSidenavOpen = false;
@@ -49,5 +50,6 @@ export class Navbar {
 
   logout(): void {
     this.authService.logout();
+    this.router.navigate(['/']);
   }
 }

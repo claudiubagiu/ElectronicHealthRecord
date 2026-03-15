@@ -216,7 +216,26 @@ services:
     volumes:
       - diagnostics_database:/var/opt/mssql
     networks:
+      - proxy 
+
+  hardhat:
+    build:
+      context: ./Blockchain.Dev
+      dockerfile: Dockerfile
+    container_name: hardhat
+    ports:
+      - "8547:8545"  # Port extern diferit de ganache
+    volumes:
+      - ./Blockchain.Dev/contracts:/app/contracts
+      - ./Blockchain.Dev/scripts:/app/scripts
+      - ./Blockchain.Dev/artifacts:/app/artifacts
+      - ./Blockchain.Dev/cache:/app/cache
+    environment:
+      - NODE_ENV=development
+    networks:
       - proxy
+      - blockchain-network
+    restart: unless-stopped
 
 volumes:
   auth_database:

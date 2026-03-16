@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { AppError } from '../errors/app.error';
 
 /* ============================
-   DTOs (Data Transfer Objects)
+   DTOs
    ============================ */
 
 export interface EncryptedPayload {
@@ -31,51 +31,39 @@ export interface EncryptedData {
   };
 }
 
-export interface IpfsUploadResponse {
-  IpfsHash: string;
-  PinSize: number;
-  Timestamp: string;
+interface IpfsUploadResponse {
+  cid: string;
 }
 
 /* ============================
-   IPFS Service (Pinata)
+   IPFS Service
    ============================ */
 
 @Injectable({
   providedIn: 'root',
 })
 export class IpfsService {
-  private readonly PINATA_API_URL = 'https://api.pinata.cloud/pinning';
-  private readonly PINATA_GATEWAY_URL = 'https://gateway.pinata.cloud/ipfs';
+  private readonly IPFS_API_URL = 'http://ipfs.api.docker.localhost/api/Ipfs';
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /* ============================
      Upload encrypted data to IPFS
      ============================ */
   async uploadEncryptedData(payload: EncryptedPayload): Promise<string> {
-    const formData = new FormData();
-
-    const jsonBlob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-
-    formData.append('file', jsonBlob, 'encrypted-data.json');
-
-    const headers = new HttpHeaders({
-      pinata_api_key: environment.pinataApiKey,
-      pinata_secret_api_key: environment.pinataSecretKey,
-    });
-
     try {
       const response = await firstValueFrom(
-        this.http.post<IpfsUploadResponse>(`${this.PINATA_API_URL}/pinFileToIPFS`, formData, {
-          headers,
-        })
+        this.http.post<IpfsUploadResponse>(`${this.IPFS_API_URL}/upload`, payload)
       );
 
-      return response.IpfsHash;
+      return response.cid;
     } catch (error) {
-      console.error('[IPFS] Upload failed:', error);
-      throw new Error('Încărcarea pe IPFS a eșuat');
+      throw new AppError({
+        message: 'Failed to upload data to IPFS. Please try again.',
+        status: 500,
+        title: 'IPFS Upload Failed',
+        type: 'IPFS_UPLOAD_FAILED',
+      });
     }
   }
 
@@ -85,7 +73,7 @@ export class IpfsService {
   async downloadEncryptedData(cid: string): Promise<EncryptedData> {
     try {
       const data = await firstValueFrom(
-        this.http.get<EncryptedPayload>(`${this.PINATA_GATEWAY_URL}/${cid}`)
+        this.http.get<EncryptedPayload>(`${this.IPFS_API_URL}/download/${cid}`)
       );
 
       return {
@@ -94,10 +82,15 @@ export class IpfsService {
         iv: new Uint8Array(data.iv),
         fileName: data.fileName,
         timestamp: data.timestamp,
+        litMetadata: data.litMetadata,
       };
     } catch (error) {
-      console.error('[IPFS] Download failed:', error);
-      throw new Error('Descărcarea de pe IPFS a eșuat');
+      throw new AppError({
+        message: 'Failed to download data from IPFS. Please try again.',
+        status: 500,
+        title: 'IPFS Download Failed',
+        type: 'IPFS_DOWNLOAD_FAILED',
+      });
     }
   }
 }

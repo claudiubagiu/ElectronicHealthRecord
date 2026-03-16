@@ -218,24 +218,22 @@ services:
     networks:
       - proxy 
 
-  hardhat:
+  ipfs.api:
+    image: ${DOCKER_REGISTRY-}ipfsapi
     build:
-      context: ./Blockchain.Dev
+      context: Ipfs.Api
       dockerfile: Dockerfile
-    container_name: hardhat
-    ports:
-      - "8547:8545"  # Port extern diferit de ganache
-    volumes:
-      - ./Blockchain.Dev/contracts:/app/contracts
-      - ./Blockchain.Dev/scripts:/app/scripts
-      - ./Blockchain.Dev/artifacts:/app/artifacts
-      - ./Blockchain.Dev/cache:/app/cache
-    environment:
-      - NODE_ENV=development
+    container_name: ipfs-api
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ipfs-api.rule=Host(`ipfs.api.docker.localhost`)"
+      - "traefik.http.routers.ipfs-api.entrypoints=web"
+      - "traefik.http.routers.ipfs-api.middlewares=cors-frontend@docker"
+      - "traefik.http.routers.ipfs-api.service=ipfs-api"
+      - "traefik.http.services.ipfs-api.loadbalancer.server.port=8080"
     networks:
       - proxy
-      - blockchain-network
-    restart: unless-stopped
 
 volumes:
   auth_database:
@@ -247,5 +245,3 @@ volumes:
 networks:
   proxy:
     name: proxy
-  blockchain-network:
-    driver: bridge

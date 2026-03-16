@@ -50,6 +50,11 @@
             <mat-icon matListItemIcon>assignment</mat-icon>
             <span matListItemTitle>See Proposed Diagnostics</span>
           </a>
+          <a mat-list-item routerLink="/diagnostics" routerLinkActive="active-link"
+             (click)="sidenav.close()" *ngIf="roles.includes('Patient')">
+            <mat-icon matListItemIcon>assignment</mat-icon>
+            <span matListItemTitle>See Diagnostics</span>
+          </a>
         </ng-container>
 
         <a mat-list-item routerLink="/profile" routerLinkActive="active-link"
@@ -149,6 +154,11 @@
               <span>Propose Diagnostic</span>
             </button>
             <button mat-menu-item routerLink="/proposed-diagnostics"
+                    *ngIf="roles.includes('Patient')">
+              <mat-icon>assignment</mat-icon>
+              <span>See Proposed Diagnostics</span>
+            </button>
+            <button mat-menu-item routerLink="/diagnostics"
                     *ngIf="roles.includes('Patient')">
               <mat-icon>assignment</mat-icon>
               <span>See Diagnostics</span>

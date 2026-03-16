@@ -13,12 +13,10 @@ export interface EncryptedPayload {
   iv: number[];
   fileName: string;
   timestamp: number;
-}
-
-export interface IpfsUploadResponse {
-  IpfsHash: string;
-  PinSize: number;
-  Timestamp: string;
+  litMetadata?: {
+    ciphertext: string;
+    dataToEncryptHash: string;
+  };
 }
 
 export interface EncryptedData {
@@ -27,6 +25,16 @@ export interface EncryptedData {
   iv: Uint8Array;
   fileName: string;
   timestamp: number;
+  litMetadata?: {
+    ciphertext: string;
+    dataToEncryptHash: string;
+  };
+}
+
+export interface IpfsUploadResponse {
+  IpfsHash: string;
+  PinSize: number;
+  Timestamp: string;
 }
 
 /* ============================

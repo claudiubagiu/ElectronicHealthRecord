@@ -96,7 +96,8 @@ export class BlockchainService {
    * Caller must be the patient or an authorized doctor.
    */
   async getDiagnosis(diagnosisId: bigint): Promise<Diagnosis> {
-    const raw = await this.contract['getDiagnosis'](diagnosisId);
+    const signed = await this.getSigned();
+    const raw = await signed['getDiagnosis'](diagnosisId);
     return this.mapDiagnosis(raw);
   }
 
@@ -105,7 +106,8 @@ export class BlockchainService {
    * Caller must be the patient or an authorized doctor.
    */
   async getPatientDiagnoses(patientAddress: string): Promise<Diagnosis[]> {
-    const ids: bigint[] = await this.contract['getPatientDiagnosisIds'](patientAddress);
+    const signed = await this.getSigned();
+    const ids: bigint[] = await signed['getPatientDiagnosisIds'](patientAddress);
     return Promise.all(ids.map((id) => this.getDiagnosis(id)));
   }
 

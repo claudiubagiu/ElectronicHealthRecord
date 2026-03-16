@@ -5,6 +5,7 @@ import { guestGuard } from './core/guards/guest.guard';
 import { ProposeDiagnostic } from './features/diagnostics/pages/propose-diagnostic/propose-diagnostic';
 import { GetProposedDiagnostics } from './features/diagnostics/pages/get-proposed-diagnostics/get-proposed-diagnostics';
 import { roleGuard } from './core/guards/role.guard';
+import { GetDiagnostics } from './features/diagnostics/pages/get-diagnostics/get-diagnostics';
 
 export const routes: Routes = [
   { path: 'register', component: Register, canActivate: [guestGuard] },
@@ -17,6 +18,11 @@ export const routes: Routes = [
   {
     path: 'proposed-diagnostics',
     component: GetProposedDiagnostics,
+    canActivate: [roleGuard(['Patient'])],
+  },
+  {
+    path: 'diagnostics',
+    component: GetDiagnostics,
     canActivate: [roleGuard(['Patient'])],
   },
 ];

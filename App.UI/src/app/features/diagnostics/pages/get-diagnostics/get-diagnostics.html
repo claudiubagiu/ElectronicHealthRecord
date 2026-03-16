@@ -1,0 +1,69 @@
+<div class="diagnostics-page">
+  <div class="diagnostics-card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>folder_shared</mat-icon>
+      </div>
+      <h1>My Health Records</h1>
+      <p class="subtitle">Your approved diagnoses stored on the blockchain</p>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-container" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading your records...</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="state-container empty" *ngIf="!isLoading && diagnoses.length === 0">
+      <mat-icon class="empty-icon">inventory_2</mat-icon>
+      <p>No approved diagnoses yet.</p>
+    </div>
+
+    <!-- List -->
+    <div class="diagnostics-list" *ngIf="!isLoading && diagnoses.length > 0">
+      <div class="diagnostic-item" *ngFor="let d of diagnoses">
+
+        <!-- Top row: title + date -->
+        <div class="item-header">
+          <span class="item-title">{{ d.title }}</span>
+          <span class="item-date">{{ formatTimestamp(d.timestamp) | date: 'dd MMM yyyy, HH:mm' }}</span>
+        </div>
+
+        <!-- Doctor -->
+        <div class="item-meta">
+          <mat-icon class="meta-icon">medical_services</mat-icon>
+          <span>Diagnosed by <strong>{{ d.doctorName }}</strong></span>
+        </div>
+
+        <!-- Doctor wallet -->
+        <div class="item-meta">
+          <mat-icon class="meta-icon">account_balance_wallet</mat-icon>
+          <span class="address">{{ shortenAddress(d.doctorAddr) }}</span>
+        </div>
+
+        <!-- IPFS CID -->
+        <div class="item-meta">
+          <mat-icon class="meta-icon">link</mat-icon>
+          <span class="cid">{{ d.ipfsCid }}</span>
+        </div>
+
+        <!-- File download -->
+        <div class="item-file" (click)="openFile(d)">
+          <mat-icon class="file-icon">lock</mat-icon>
+          <span class="file-name">Encrypted document</span>
+          <mat-spinner
+            *ngIf="downloadingId === d.id"
+            diameter="16"
+            class="file-spinner">
+          </mat-spinner>
+          <mat-icon *ngIf="downloadingId !== d.id" class="open-icon">download</mat-icon>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

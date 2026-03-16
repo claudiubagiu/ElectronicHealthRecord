@@ -10,7 +10,7 @@ export class LitProtocolService {
   private authManager: any;
 
   // Replace with your deployed contract address
-  private readonly ACCESS_CONTRACT = '0xYourSmartContractAddress';
+  private readonly ACCESS_CONTRACT = '0x5fbdb2315678afecb367f032d93f642f64180aa3';
 
   async connect() {
     this.litClient = await createLitClient({ network: nagaDev });

@@ -12,7 +12,7 @@ using Users.Api.Data;
 namespace Users.Api.Migrations
 {
     [DbContext(typeof(UsersDbContext))]
-    [Migration("20260312180605_Users Migration")]
+    [Migration("20260315231617_Users Migration")]
     partial class UsersMigration
     {
         /// <inheritdoc />
@@ -55,6 +55,10 @@ namespace Users.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("WalletAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Doctors");
@@ -82,6 +86,10 @@ namespace Users.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WalletAddress")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

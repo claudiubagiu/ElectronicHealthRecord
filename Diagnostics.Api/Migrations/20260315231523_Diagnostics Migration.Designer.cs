@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diagnostics.Api.Migrations
 {
     [DbContext(typeof(DiagnosticsDbContext))]
-    [Migration("20260312204047_Diagnostics Migration")]
+    [Migration("20260315231523_Diagnostics Migration")]
     partial class DiagnosticsMigration
     {
         /// <inheritdoc />
@@ -76,6 +76,10 @@ namespace Diagnostics.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WalletAddress")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

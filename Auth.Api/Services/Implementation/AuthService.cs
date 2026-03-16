@@ -87,6 +87,7 @@ namespace Auth.Api.Services.Implementation
                         Role = roles.First(),
                         FirstName = registerRequestDto.FirstName,
                         LastName = registerRequestDto.LastName,
+                        WalletAddress = registerRequestDto.WalletAddress,
                         CNP = registerRequestDto.CNP,
                         DateOfBirth = registerRequestDto.DateOfBirth,
                         Specialization = registerRequestDto.Specialization,

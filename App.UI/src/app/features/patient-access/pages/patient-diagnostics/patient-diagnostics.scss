@@ -1,0 +1,169 @@
+// App.UI/src/app/features/patient-access/pages/patient-diagnostics/patient-diagnostics.scss
+.patient-diagnostics-page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  padding: 32px 16px;
+  box-sizing: border-box;
+}
+
+.patient-diagnostics-card {
+  width: 100%;
+  max-width: 720px;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(21, 101, 192, 0.1);
+  margin-bottom: 16px;
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: #1565c0;
+  }
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #212121;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: rgba(0, 0, 0, 0.45);
+
+  p { margin: 0; font-size: 0.9rem; }
+
+  &.empty .empty-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+.diagnostics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diagnostic-item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.015);
+  transition: background 0.15s ease;
+
+  &:hover { background: rgba(0, 0, 0, 0.03); }
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.item-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #212121;
+}
+
+.item-date {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.meta-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+.address, .cid {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.5);
+  word-break: break-all;
+}
+
+.item-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(21, 101, 192, 0.05);
+  border: 1px solid rgba(21, 101, 192, 0.15);
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover { background: rgba(21, 101, 192, 0.1); }
+}
+
+.file-icon {
+  color: #1565c0;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1565c0;
+}
+
+.open-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #1565c0;
+}
+
+.file-spinner {
+  ::ng-deep circle { stroke: #1565c0; }
+}

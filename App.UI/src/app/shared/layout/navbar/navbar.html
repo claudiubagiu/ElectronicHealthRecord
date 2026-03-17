@@ -55,6 +55,16 @@
             <mat-icon matListItemIcon>assignment</mat-icon>
             <span matListItemTitle>See Diagnostics</span>
           </a>
+          <a mat-list-item routerLink="/patient-access" routerLinkActive="active-link"
+            (click)="sidenav.close()" *ngIf="roles.includes('Doctor')">
+            <mat-icon matListItemIcon>manage_accounts</mat-icon>
+            <span matListItemTitle>Patient Access</span>
+          </a>
+          <a mat-list-item routerLink="/access-management" routerLinkActive="active-link"
+            (click)="sidenav.close()" *ngIf="roles.includes('Patient')">
+            <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
+            <span matListItemTitle>Access Management</span>
+          </a>
         </ng-container>
 
         <a mat-list-item routerLink="/profile" routerLinkActive="active-link"
@@ -162,6 +172,16 @@
                     *ngIf="roles.includes('Patient')">
               <mat-icon>assignment</mat-icon>
               <span>See Diagnostics</span>
+            </button>
+            <button mat-menu-item routerLink="/patient-access"
+                    *ngIf="roles.includes('Doctor')">
+              <mat-icon>manage_accounts</mat-icon>
+              <span>Patient Access</span>
+            </button>
+            <button mat-menu-item routerLink="/access-management"
+                    *ngIf="roles.includes('Patient')">
+              <mat-icon>admin_panel_settings</mat-icon>
+              <span>Access Management</span>
             </button>
           </ng-container>
 

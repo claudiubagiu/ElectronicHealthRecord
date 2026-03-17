@@ -1,0 +1,133 @@
+<div class="patient-access-page">
+  <div class="patient-access-card">
+
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>manage_accounts</mat-icon>
+      </div>
+      <h1>Patient Access</h1>
+      <p class="subtitle">Request access to a patient's diagnostics or track your pending requests</p>
+    </div>
+
+    <mat-tab-group animationDuration="200ms" class="access-tabs">
+
+      <!-- ===== TAB 1: Request Access ===== -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">person_search</mat-icon>
+          Request Access
+        </ng-template>
+
+        <div class="tab-content">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Search patient by name</mat-label>
+            <input matInput [formControl]="searchControl" placeholder="e.g. John Doe" autocomplete="off" />
+            <mat-icon matSuffix *ngIf="!isSearching">search</mat-icon>
+            <mat-spinner matSuffix diameter="20" *ngIf="isSearching"></mat-spinner>
+          </mat-form-field>
+
+          <div class="results-list" *ngIf="searchPerformed">
+            <div *ngIf="searchResults.length === 0 && !isSearching" class="empty-state small">
+              <mat-icon>person_off</mat-icon>
+              <p>No patients found</p>
+            </div>
+
+            <div class="patient-row" *ngFor="let patient of searchResults">
+              <div class="patient-info">
+                <div class="patient-avatar"><mat-icon>person</mat-icon></div>
+                <div class="patient-details">
+                  <span class="patient-name">{{ patient.firstName }} {{ patient.lastName }}</span>
+                  <span class="patient-cnp">CNP: {{ patient.cnp }}</span>
+                </div>
+              </div>
+
+              <div class="patient-action">
+                <button mat-stroked-button class="request-btn"
+                  *ngIf="getPatientStatus(patient.id) === null"
+                  [disabled]="requestingId === patient.id"
+                  (click)="onRequestAccess(patient)">
+                  <mat-spinner diameter="16" *ngIf="requestingId === patient.id"></mat-spinner>
+                  <mat-icon *ngIf="requestingId !== patient.id">send</mat-icon>
+                  {{ requestingId === patient.id ? 'Sending...' : 'Request Access' }}
+                </button>
+
+                <span class="status-badge pending" *ngIf="getPatientStatus(patient.id) === 'Pending'">
+                  <mat-icon>schedule</mat-icon> Pending
+                </span>
+
+                <span class="status-badge approved" *ngIf="getPatientStatus(patient.id) === 'Approved'">
+                  <mat-icon>check_circle</mat-icon> Approved
+                </span>
+
+                <button mat-stroked-button class="request-btn"
+                  *ngIf="getPatientStatus(patient.id) === 'Rejected'"
+                  [disabled]="requestingId === patient.id"
+                  (click)="onRequestAccess(patient)"
+                  matTooltip="Your previous request was rejected. You can try again.">
+                  <mat-icon>refresh</mat-icon> Retry
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-state" *ngIf="!searchPerformed">
+            <mat-icon>manage_search</mat-icon>
+            <p>Type at least 2 characters to search for a patient</p>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ===== TAB 2: My Requests ===== -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">list_alt</mat-icon>
+          My Requests
+          <span class="tab-badge" *ngIf="myRequests.length > 0">{{ myRequests.length }}</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="loading-state" *ngIf="isLoadingRequests">
+            <mat-spinner diameter="36"></mat-spinner>
+          </div>
+
+          <div class="empty-state" *ngIf="!isLoadingRequests && myRequests.length === 0">
+            <mat-icon>inbox</mat-icon>
+            <p>You haven't sent any access requests yet</p>
+          </div>
+
+          <div class="requests-list" *ngIf="!isLoadingRequests && myRequests.length > 0">
+            <div class="request-row" *ngFor="let req of myRequests">
+              <div class="request-patient">
+                <div class="patient-avatar"><mat-icon>person</mat-icon></div>
+                <div class="patient-details">
+                  <span class="patient-name">{{ req.patientName }}</span>
+                  <span class="request-date">{{ formatDate(req.createdAt) }}</span>
+                </div>
+              </div>
+
+              <div class="row-right">
+                <span class="status-badge"
+                  [class.pending]="req.status === 'Pending'"
+                  [class.approved]="req.status === 'Approved'"
+                  [class.rejected]="req.status === 'Rejected'">
+                  <mat-icon *ngIf="req.status === 'Pending'">schedule</mat-icon>
+                  <mat-icon *ngIf="req.status === 'Approved'">check_circle</mat-icon>
+                  <mat-icon *ngIf="req.status === 'Rejected'">cancel</mat-icon>
+                  {{ req.status }}
+                </span>
+
+                <button mat-flat-button class="view-btn"
+                  *ngIf="req.status === 'Approved'"
+                  (click)="viewDiagnostics(req)">
+                  <mat-icon>folder_open</mat-icon>
+                  View Diagnostics
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+</div>

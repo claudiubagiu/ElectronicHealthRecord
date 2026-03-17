@@ -27,6 +27,33 @@ namespace Diagnostics.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AccessRequests",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DoctorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PatientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccessRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AccessRequests_Users_DoctorId",
+                        column: x => x.DoctorId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AccessRequests_Users_PatientId",
+                        column: x => x.PatientId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Diagnostics",
                 columns: table => new
                 {
@@ -56,6 +83,16 @@ namespace Diagnostics.Api.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AccessRequests_DoctorId",
+                table: "AccessRequests",
+                column: "DoctorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccessRequests_PatientId",
+                table: "AccessRequests",
+                column: "PatientId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Diagnostics_DoctorId",
                 table: "Diagnostics",
                 column: "DoctorId");
@@ -69,6 +106,9 @@ namespace Diagnostics.Api.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AccessRequests");
+
             migrationBuilder.DropTable(
                 name: "Diagnostics");
 

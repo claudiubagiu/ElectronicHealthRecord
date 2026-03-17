@@ -1,0 +1,142 @@
+<div class="access-management-page">
+  <div class="access-management-card">
+
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>admin_panel_settings</mat-icon>
+      </div>
+      <h1>Access Management</h1>
+      <p class="subtitle">Control which doctors can access your medical records</p>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <mat-tab-group animationDuration="200ms" class="access-tabs" *ngIf="!isLoading">
+
+      <!-- ===== TAB 1: Pending ===== -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">schedule</mat-icon>
+          Pending
+          <span class="tab-badge warning" *ngIf="pending.length > 0">{{ pending.length }}</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="empty-state" *ngIf="pending.length === 0">
+            <mat-icon>inbox</mat-icon>
+            <p>No pending requests</p>
+          </div>
+
+          <div class="rows-list">
+            <div class="request-row" *ngFor="let req of pending">
+              <div class="doctor-info">
+                <div class="doctor-avatar"><mat-icon>medical_services</mat-icon></div>
+                <div class="doctor-details">
+                  <span class="doctor-name">{{ req.doctorName }}</span>
+                  <span class="request-date">Requested on {{ formatDate(req.createdAt) }}</span>
+                </div>
+              </div>
+              <div class="row-actions">
+                <button
+                  mat-stroked-button
+                  class="reject-btn"
+                  [disabled]="actioningId === req.id"
+                  (click)="onReject(req)"
+                >
+                  <mat-icon>close</mat-icon> Reject
+                </button>
+                <button
+                  mat-flat-button
+                  class="approve-btn"
+                  [disabled]="actioningId === req.id"
+                  (click)="onApprove(req)"
+                >
+                  <mat-spinner diameter="16" *ngIf="actioningId === req.id"></mat-spinner>
+                  <mat-icon *ngIf="actioningId !== req.id">check</mat-icon>
+                  {{ actioningId === req.id ? 'Signing...' : 'Approve' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ===== TAB 2: Active Access ===== -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">verified_user</mat-icon>
+          Active Access
+          <span class="tab-badge success" *ngIf="active.length > 0">{{ active.length }}</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="empty-state" *ngIf="active.length === 0">
+            <mat-icon>lock</mat-icon>
+            <p>No doctors currently have access</p>
+          </div>
+
+          <div class="rows-list">
+            <div class="request-row" *ngFor="let req of active">
+              <div class="doctor-info">
+                <div class="doctor-avatar active"><mat-icon>medical_services</mat-icon></div>
+                <div class="doctor-details">
+                  <span class="doctor-name">{{ req.doctorName }}</span>
+                  <span class="request-date">Access granted on {{ formatDate(req.createdAt) }}</span>
+                </div>
+              </div>
+              <button
+                mat-stroked-button
+                class="revoke-btn"
+                [disabled]="actioningId === req.id"
+                (click)="onRevoke(req)"
+              >
+                <mat-spinner diameter="16" *ngIf="actioningId === req.id"></mat-spinner>
+                <mat-icon *ngIf="actioningId !== req.id">block</mat-icon>
+                {{ actioningId === req.id ? 'Signing...' : 'Revoke' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ===== TAB 3: History ===== -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">history</mat-icon>
+          History
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="empty-state" *ngIf="history.length === 0">
+            <mat-icon>history_toggle_off</mat-icon>
+            <p>No history yet</p>
+          </div>
+
+          <div class="rows-list">
+            <div class="request-row" *ngFor="let req of history">
+              <div class="doctor-info">
+                <div class="doctor-avatar"><mat-icon>medical_services</mat-icon></div>
+                <div class="doctor-details">
+                  <span class="doctor-name">{{ req.doctorName }}</span>
+                  <span class="request-date">{{ formatDate(req.createdAt) }}</span>
+                </div>
+              </div>
+              <span
+                class="status-badge"
+                [class.approved]="req.status === 'Approved'"
+                [class.rejected]="req.status === 'Rejected'"
+              >
+                <mat-icon *ngIf="req.status === 'Approved'">check_circle</mat-icon>
+                <mat-icon *ngIf="req.status === 'Rejected'">cancel</mat-icon>
+                {{ req.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+</div>

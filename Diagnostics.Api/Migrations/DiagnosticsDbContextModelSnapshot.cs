@@ -58,6 +58,33 @@ namespace Diagnostics.Api.Migrations
                     b.ToTable("Diagnostics");
                 });
 
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DoctorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoctorId");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("AccessRequests");
+                });
+
             modelBuilder.Entity("Diagnostics.Api.Models.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -95,6 +122,25 @@ namespace Diagnostics.Api.Migrations
 
                     b.HasOne("Diagnostics.Api.Models.Domain.User", "Patient")
                         .WithMany("DiagnosticsAsPatient")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", b =>
+                {
+                    b.HasOne("Diagnostics.Api.Models.Domain.User", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Diagnostics.Api.Models.Domain.User", "Patient")
+                        .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();

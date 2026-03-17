@@ -3,6 +3,8 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { BrowserProvider, JsonRpcSigner } from 'ethers';
 import { Web3State } from '../models/web3-state.model';
 import { AppError } from '../errors/app.error';
+import { createWalletClient, custom, getAddress } from 'viem';
+import { sepolia } from 'viem/chains';
 
 @Injectable({
   providedIn: 'root',
@@ -332,6 +334,22 @@ export class Web3Service implements OnDestroy {
   }
 
   // ==================== Getters ====================
+
+  /**
+   * Get a viem WalletClient for the connected wallet
+   * Required for Lit Protocol EOA auth context
+   * @returns WalletClient instance or undefined if wallet not connected
+   */
+  getViemWalletClient() {
+    const address = this.getAddressOrNull();
+    if (!address || !window.ethereum) return undefined;
+
+    return createWalletClient({
+      account: getAddress(address),
+      chain: sepolia,
+      transport: custom(window.ethereum),
+    });
+  }
 
   /**
    * Get current wallet address

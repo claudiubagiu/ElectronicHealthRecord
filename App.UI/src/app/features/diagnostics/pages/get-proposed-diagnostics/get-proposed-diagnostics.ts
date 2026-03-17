@@ -13,6 +13,7 @@ import { LitProtocolService } from '../../../../core/services/lit-protocol.servi
 import { CryptoService } from '../../../../core/services/crypto.service';
 import { DiagnosticDto } from '../../models/diagnostic.model';
 import { AppError } from '../../../../core/errors/app.error';
+import { getAddress } from 'ethers';
 
 @Component({
   selector: 'app-get-diagnostics',
@@ -73,7 +74,6 @@ export class GetProposedDiagnostics implements OnInit {
   async onApprove(diagnostic: DiagnosticDto): Promise<void> {
     this.loadingId = diagnostic.id;
     try {
-      // 1. Descarcă fișierul original din storage-ul off-chain
       const fileUrl = `${this.BASE_URL}${diagnostic.fileUrl}`;
       const fileResponse = await fetch(fileUrl);
       if (!fileResponse.ok) {
@@ -81,30 +81,20 @@ export class GetProposedDiagnostics implements OnInit {
       }
       const fileBuffer = await fileResponse.arrayBuffer();
 
-      // 2. Generează cheia AES-256
       const aesKey = await CryptoService.generateAESKey();
 
-      // 3. Criptează documentul cu AES-GCM
       const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, aesKey);
 
-      // 4. Exportă cheia AES ca raw bytes și convertește la base64 pentru Lit
       const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
       const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyRaw)));
 
-      // 5. Obține adresa wallet a pacientului (din MetaMask)
-      const patientAddress = this.web3Service.getAddress();
+      const patientAddress = getAddress(this.web3Service.getAddress());
 
-      // 6. Conectează-te la Lit Protocol și construiește ACCs
       await this.litService.connect();
       const accs = this.litService.createAccsBuilder(patientAddress);
 
-      // 7. Stochează cheia AES pe Lit Protocol (Lit o criptează cu ACCs)
       const litResult = await this.litService.encrypt(aesKeyBase64, accs);
-      // litResult = { ciphertext, dataToEncryptHash }
 
-      // 8. Pregătește payload-ul pentru IPFS
-      //    encryptedAesKey conține metadata Lit serializată (ciphertext + hash)
-      const litMetadataBytes = new TextEncoder().encode(JSON.stringify(litResult));
       const payload: EncryptedPayload = {
         encryptedFile: Array.from(new Uint8Array(encrypted)),
         encryptedAesKey: [],
@@ -117,12 +107,8 @@ export class GetProposedDiagnostics implements OnInit {
         timestamp: Date.now(),
       };
 
-      // 9. Urcă documentul criptat pe IPFS (Pinata)
       const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
 
-      console.log('[Approve] patient address (msg.sender will be):', patientAddress);
-
-      // 10. Scrie pe blockchain: CID + metadate
       await this.blockchainService.addDiagnosis(
         diagnostic.description,
         ipfsCid,
@@ -130,7 +116,6 @@ export class GetProposedDiagnostics implements OnInit {
         diagnostic.doctorName
       );
 
-      // 11. Șterge propunerea off-chain
       await this.diagnosticsService.deleteDiagnostic(diagnostic.id);
       this.diagnostics = this.diagnostics.filter((d) => d.id !== diagnostic.id);
 

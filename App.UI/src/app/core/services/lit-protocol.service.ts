@@ -30,7 +30,7 @@ export class LitProtocolService {
       createAccBuilder()
         // Condition 1: The user IS the patient (owner)
         .requireWalletOwnership(patientAddress)
-        .on('ethereum')
+        .on('sepolia')
         .or()
         // Condition 2: The smart contract says this user has access
         // Your contract must have a function like:
@@ -50,7 +50,7 @@ export class LitProtocolService {
             stateMutability: 'view',
             type: 'function',
           },
-          chain: 'ethereum',
+          chain: 'sepolia',
           returnValueTest: {
             key: '',
             comparator: '=',
@@ -65,7 +65,7 @@ export class LitProtocolService {
     return await this.litClient.encrypt({
       dataToEncrypt,
       unifiedAccessControlConditions: accs,
-      chain: 'ethereum',
+      chain: 'sepolia',
     });
   }
 
@@ -85,7 +85,7 @@ export class LitProtocolService {
       data: encryptedData,
       unifiedAccessControlConditions: accs,
       authContext,
-      chain: 'ethereum',
+      chain: 'sepolia',
     });
   }
 }

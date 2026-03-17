@@ -80,7 +80,7 @@ export class GetDiagnostics implements OnInit {
 
       const accs = this.litService.createAccsBuilder(diagnosis.patientAddr);
 
-      const walletClient = await this.web3Service.getSigner();
+      const walletClient = await this.web3Service.getViemWalletClient();
 
       const decryptResult = await this.litService.decrypt(
         {
@@ -91,8 +91,10 @@ export class GetDiagnostics implements OnInit {
         walletClient
       );
 
-      const aesKeyBase64: string = decryptResult.decryptedData;
-      const aesKeyRaw = Uint8Array.from(atob(aesKeyBase64), (c) => c.charCodeAt(0)).buffer;
+      const raw = decryptResult.decryptedData as Uint8Array;
+      const aesKeyBase64 = new TextDecoder().decode(raw);
+      const aesKeyRaw = Uint8Array.from(atob(aesKeyBase64), (c) => c.charCodeAt(0))
+        .buffer as ArrayBuffer;
 
       const aesKey = await CryptoService.importAESKey(aesKeyRaw);
 
@@ -120,7 +122,6 @@ export class GetDiagnostics implements OnInit {
 
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (error) {
-      console.error('[openFile] Decryption failed:', error);
       this.snackBar.open('Failed to decrypt file.', 'Close', {
         duration: 4000,
         horizontalPosition: 'center',

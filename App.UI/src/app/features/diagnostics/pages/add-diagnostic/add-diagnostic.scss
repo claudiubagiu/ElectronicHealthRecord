@@ -35,14 +35,14 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: rgba(255, 152, 0, 0.1);
+  background: rgba(21, 101, 192, 0.1);
   margin-bottom: 16px;
 
   mat-icon {
     font-size: 36px;
     width: 36px;
     height: 36px;
-    color: #f57c00;
+    color: #1565c0;
   }
 }
 
@@ -129,7 +129,7 @@ h1 {
     font-size: 18px;
     width: 18px;
     height: 18px;
-    color: #f57c00;
+    color: #1565c0;
   }
 
   .chip-name {
@@ -210,8 +210,8 @@ h1 {
   overflow: hidden;
 
   &.mat-expanded {
-    border-color: rgba(245, 124, 0, 0.35) !important;
-    box-shadow: 0 0 0 2px rgba(245, 124, 0, 0.08) !important;
+    border-color: rgba(21, 101, 192, 0.35) !important;
+    box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.08) !important;
   }
 
   ::ng-deep .mat-expansion-panel-header {
@@ -291,19 +291,33 @@ h1 {
 }
 
 .optional-field {
-  ::ng-deep .mdc-notched-outline__leading,
-  ::ng-deep .mdc-notched-outline__notch,
+  ::ng-deep .mdc-notched-outline__leading {
+    border-color: rgba(0, 0, 0, 0.1) !important;
+  }
+
+  ::ng-deep .mdc-notched-outline__notch {
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    border-right: none !important;
+    border-left: none !important;
+  }
+
   ::ng-deep .mdc-notched-outline__trailing {
     border-color: rgba(0, 0, 0, 0.1) !important;
-    border-style: dashed !important;
   }
 
   ::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover {
-    .mdc-notched-outline__leading,
-    .mdc-notched-outline__notch,
+    .mdc-notched-outline__leading {
+      border-color: rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .mdc-notched-outline__notch {
+      border-color: rgba(0, 0, 0, 0.25) !important;
+      border-right: none !important;
+      border-left: none !important;
+    }
+
     .mdc-notched-outline__trailing {
       border-color: rgba(0, 0, 0, 0.25) !important;
-      border-style: solid !important;
     }
   }
 }
@@ -321,15 +335,15 @@ h1 {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(245, 124, 0, 0.06);
-  border: 1px solid rgba(245, 124, 0, 0.2);
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.15);
 
   .cf-label {
     font-size: 0.82rem;
     font-weight: 700;
-    color: #e65100;
+    color: rgba(0, 0, 0, 0.55);
     min-width: 0;
     white-space: nowrap;
   }
@@ -345,15 +359,19 @@ h1 {
   }
 
   .cf-remove {
-    width: 24px !important;
-    height: 24px !important;
+    width: 28px !important;
+    height: 28px !important;
     flex-shrink: 0;
+    margin-left: auto;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     color: rgba(0, 0, 0, 0.35);
 
     mat-icon {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
     }
 
     &:hover {
@@ -383,10 +401,10 @@ h1 {
 
 .add-field-btn {
   flex-shrink: 0;
-  height: 40px;
-  margin-top: 4px;
-  border-color: rgba(245, 124, 0, 0.4) !important;
-  color: #f57c00 !important;
+  height: 56px;
+  margin-top: 0;
+  border-color: rgba(21, 101, 192, 0.4) !important;
+  color: #1565c0 !important;
   border-radius: 8px;
   font-size: 0.82rem;
 
@@ -403,7 +421,7 @@ h1 {
   }
 
   &:hover:not([disabled]) {
-    background: rgba(245, 124, 0, 0.06) !important;
+    background: rgba(21, 101, 192, 0.06) !important;
   }
 
   &[disabled] {
@@ -428,16 +446,16 @@ h1 {
   gap: 8px;
   padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(255, 193, 7, 0.1);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  background: rgba(21, 101, 192, 0.08);
+  border: 1px solid rgba(21, 101, 192, 0.25);
   font-size: 0.83rem;
-  color: #e65100;
+  color: #1565c0;
 
   mat-icon {
     font-size: 18px;
     width: 18px;
     height: 18px;
-    color: #f57c00;
+    color: #1565c0;
     flex-shrink: 0;
   }
 }
@@ -448,7 +466,7 @@ h1 {
   font-size: 1rem;
   font-weight: 600;
   border-radius: 12px;
-  background-color: #f57c00 !important;
+  background-color: #1565c0 !important;
   color: white !important;
   letter-spacing: 0.3px;
 

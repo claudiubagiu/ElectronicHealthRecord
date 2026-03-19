@@ -1,22 +1,26 @@
 <div class="add-diagnostic-page">
   <div class="add-diagnostic-card">
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
     <div class="card-header">
       <div class="icon-wrapper">
         <mat-icon>medical_information</mat-icon>
       </div>
-      <h1>Add Diagnostic</h1>
-      <p class="subtitle">Search for a patient and submit a diagnostic with a document</p>
+      <h1>Add Diagnosis</h1>
+      <p class="subtitle">Fill in the categories below. Fields marked with * are required.</p>
     </div>
 
-    <form [formGroup]="diagnosticForm" (ngSubmit)="onSubmit()">
-      <!-- Patient Search -->
-      <div class="section">
-        <p class="section-label">Patient</p>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <!-- ── Patient ────────────────────────────────────────────────────── -->
+      <div class="patient-section">
+        <p class="section-label">Patient *</p>
 
         <mat-form-field appearance="outline" class="full" [class.patient-selected]="selectedPatient">
           <mat-label *ngIf="!selectedPatient">Search patient by name</mat-label>
 
           <div matPrefix *ngIf="selectedPatient" class="patient-chip-prefix">
+            <mat-icon class="chip-icon">person</mat-icon>
             <span class="chip-name">{{ selectedPatient.firstName }} {{ selectedPatient.lastName }}</span>
             <span class="chip-cnp">CNP: {{ selectedPatient.cnp }}</span>
           </div>
@@ -24,41 +28,27 @@
           <input
             matInput
             formControlName="patientSearch"
-            [placeholder]="selectedPatient ? '' : 'e.g. John Doe'"
-            [matAutocomplete]="auto"
+            [placeholder]="selectedPatient ? '' : 'e.g. John Smith'"
+            [matAutocomplete]="patientAuto"
             [style.display]="selectedPatient ? 'none' : 'block'"
           />
 
-          <button
-            *ngIf="selectedPatient"
-            matSuffix
-            mat-icon-button
-            type="button"
-            class="clear-btn"
-            (click)="clearPatient($event)"
-          >
+          <button *ngIf="selectedPatient" matSuffix mat-icon-button type="button"
+                  class="clear-btn" (click)="clearPatient($event)">
             <mat-icon>close</mat-icon>
           </button>
-          <mat-icon matSuffix *ngIf="!selectedPatient">search</mat-icon>
+          <mat-icon matSuffix *ngIf="!selectedPatient && !isSearching">search</mat-icon>
+          <mat-spinner matSuffix diameter="18" *ngIf="isSearching"></mat-spinner>
 
-          <mat-autocomplete
-            #auto="matAutocomplete"
-            [displayWith]="displayPatient"
-            (optionSelected)="onPatientSelected($event)"
-          >
-            <mat-option *ngFor="let patient of filteredPatients" [value]="patient">
+          <mat-autocomplete #patientAuto="matAutocomplete" [displayWith]="displayPatient"
+                            (optionSelected)="onPatientSelected($event)">
+            <mat-option *ngFor="let p of filteredPatients" [value]="p">
               <div class="patient-option">
                 <mat-icon class="patient-option-icon">person</mat-icon>
                 <div class="patient-option-info">
-                  <span class="patient-name">{{ patient.firstName }} {{ patient.lastName }}</span>
-                  <span class="patient-cnp">CNP: {{ patient.cnp }}</span>
+                  <span class="patient-name">{{ p.firstName }} {{ p.lastName }}</span>
+                  <span class="patient-cnp-small">CNP: {{ p.cnp }}</span>
                 </div>
-              </div>
-            </mat-option>
-            <mat-option *ngIf="isSearching" disabled>
-              <div class="searching-indicator">
-                <mat-spinner diameter="18"></mat-spinner>
-                <span>Searching...</span>
               </div>
             </mat-option>
             <mat-option *ngIf="!isSearching && filteredPatients.length === 0 && searchPerformed" disabled>
@@ -66,101 +56,360 @@
             </mat-option>
           </mat-autocomplete>
 
-          <mat-error *ngIf="diagnosticForm.get('patientSearch')?.hasError('required')">
+          <mat-error *ngIf="form.get('patientSearch')?.hasError('required')">
             Please select a patient
           </mat-error>
-          <mat-error *ngIf="diagnosticForm.get('patientSearch')?.hasError('invalidPatient')">
+          <mat-error *ngIf="form.get('patientSearch')?.hasError('invalidPatient')">
             Please select a valid patient from the list
           </mat-error>
         </mat-form-field>
       </div>
 
-      <mat-divider></mat-divider>
+      <!-- ── Categories accordion ───────────────────────────────────────── -->
+      <mat-accordion class="categories-accordion" multi>
 
-      <!-- Description -->
-      <div class="section">
-        <p class="section-label">Diagnostic details</p>
+        <!-- ═══ 1. GENERAL INFORMATION ═════════════════════════════════════ -->
+        <mat-expansion-panel class="category-panel" [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="panel-title-inner">
+                <div class="panel-number" [class.valid]="isCategoryGeneralInfoValid">1</div>
+                <span>General Information</span>
+                <mat-icon class="check-icon" *ngIf="isCategoryGeneralInfoValid">check_circle</mat-icon>
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
 
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Description</mat-label>
-          <textarea
-            matInput
-            formControlName="description"
-            placeholder="Describe the diagnostic findings..."
-            rows="5"
-          ></textarea>
-          <mat-icon matSuffix>description</mat-icon>
-          <mat-error *ngIf="diagnosticForm.get('description')?.hasError('required')">
-            Description is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+          <div class="panel-content">
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Diagnosis title *</mat-label>
+              <input matInput formControlName="title" placeholder="e.g. Cardiology Consultation" />
+              <mat-icon matSuffix>title</mat-icon>
+              <mat-error *ngIf="form.get('title')?.hasError('required')">This field is required</mat-error>
+            </mat-form-field>
 
-      <mat-divider></mat-divider>
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Consultation date *</mat-label>
+              <input matInput type="date" formControlName="consultationDate" />
+              <mat-icon matSuffix>calendar_today</mat-icon>
+              <mat-error *ngIf="form.get('consultationDate')?.hasError('required')">This field is required</mat-error>
+            </mat-form-field>
 
-      <!-- File Upload -->
-      <div class="section">
-        <p class="section-label">Document</p>
+            <div class="custom-fields-list" *ngIf="customGeneralInfo.length > 0">
+              <div class="custom-field-chip" *ngFor="let cf of customGeneralInfo; let i = index">
+                <span class="cf-label">{{ cf.label }}:</span>
+                <span class="cf-value">{{ cf.value }}</span>
+                <button mat-icon-button type="button" class="cf-remove"
+                        (click)="removeCustomField('generalInfo', i)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
 
-        <div
-          class="upload-area"
-          [class.has-file]="selectedFile"
-          [class.drag-over]="isDragOver"
-          (dragover)="onDragOver($event)"
-          (dragleave)="onDragLeave($event)"
-          (drop)="onDrop($event)"
-          (click)="fileInput.click()"
-        >
-          <input
-            #fileInput
-            type="file"
-            hidden
-            (change)="onFileSelected($event)"
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-          />
+            <div class="add-field-row">
+              <mat-form-field appearance="outline" class="field-label-input">
+                <mat-label>Field name</mat-label>
+                <input matInput formControlName="newLabel_generalInfo" placeholder="e.g. Department" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="field-value-input">
+                <mat-label>Value</mat-label>
+                <input matInput formControlName="newValue_generalInfo" placeholder="e.g. Cardiology" />
+              </mat-form-field>
+              <button mat-stroked-button type="button" class="add-field-btn"
+                      (click)="addCustomField('generalInfo')"
+                      [disabled]="!form.get('newLabel_generalInfo')?.value || !form.get('newValue_generalInfo')?.value">
+                <mat-icon>add</mat-icon>
+                Add
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
 
-          <ng-container *ngIf="!selectedFile">
-            <mat-icon class="upload-icon">cloud_upload</mat-icon>
-            <p class="upload-text">Click or drag & drop a file here</p>
-            <p class="upload-hint">PDF, DOC, DOCX, JPG, PNG accepted</p>
-          </ng-container>
+        <!-- ═══ 2. ANAMNESIS ════════════════════════════════════════════════ -->
+        <mat-expansion-panel class="category-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="panel-title-inner">
+                <div class="panel-number" [class.valid]="isCategoryAnamnesisValid">2</div>
+                <span>Anamnesis</span>
+                <mat-icon class="check-icon" *ngIf="isCategoryAnamnesisValid">check_circle</mat-icon>
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
 
-          <ng-container *ngIf="selectedFile">
-            <mat-icon class="upload-icon file-ready">task</mat-icon>
-            <p class="upload-text file-name">{{ selectedFile.name }}</p>
-            <p class="upload-hint">{{ formatFileSize(selectedFile.size) }}</p>
-            <button
-              mat-icon-button
-              type="button"
-              class="remove-file-btn"
-              (click)="removeFile($event)"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          </ng-container>
+          <div class="panel-content">
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Chief complaint *</mat-label>
+              <textarea matInput formControlName="chiefComplaint" rows="3"
+                        placeholder="e.g. Chest pain during physical activity, onset 2 weeks ago"></textarea>
+              <mat-icon matSuffix>help_outline</mat-icon>
+              <mat-error *ngIf="form.get('chiefComplaint')?.hasError('required')">This field is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Personal medical history *</mat-label>
+              <textarea matInput formControlName="personalHistory" rows="3"
+                        placeholder="e.g. Hypertension diagnosed in 2020, type 2 diabetes"></textarea>
+              <mat-icon matSuffix>history</mat-icon>
+              <mat-error *ngIf="form.get('personalHistory')?.hasError('required')">This field is required</mat-error>
+            </mat-form-field>
+
+            <div class="optional-label">Optional fields</div>
+
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>Family history</mat-label>
+              <textarea matInput formControlName="familyHistory" rows="2"
+                        placeholder="e.g. Father deceased from myocardial infarction"></textarea>
+              <mat-icon matSuffix>family_restroom</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>Known allergies</mat-label>
+              <input matInput formControlName="allergies" placeholder="e.g. Penicillin, latex" />
+              <mat-icon matSuffix>warning_amber</mat-icon>
+            </mat-form-field>
+
+            <div class="custom-fields-list" *ngIf="customAnamnesis.length > 0">
+              <div class="custom-field-chip" *ngFor="let cf of customAnamnesis; let i = index">
+                <span class="cf-label">{{ cf.label }}:</span>
+                <span class="cf-value">{{ cf.value }}</span>
+                <button mat-icon-button type="button" class="cf-remove"
+                        (click)="removeCustomField('anamnesis', i)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="add-field-row">
+              <mat-form-field appearance="outline" class="field-label-input">
+                <mat-label>Field name</mat-label>
+                <input matInput formControlName="newLabel_anamnesis" placeholder="e.g. Lifestyle" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="field-value-input">
+                <mat-label>Value</mat-label>
+                <input matInput formControlName="newValue_anamnesis" placeholder="e.g. Smoker, sedentary" />
+              </mat-form-field>
+              <button mat-stroked-button type="button" class="add-field-btn"
+                      (click)="addCustomField('anamnesis')"
+                      [disabled]="!form.get('newLabel_anamnesis')?.value || !form.get('newValue_anamnesis')?.value">
+                <mat-icon>add</mat-icon>
+                Add
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- ═══ 3. CLINICAL EXAMINATION ════════════════════════════════════ -->
+        <mat-expansion-panel class="category-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="panel-title-inner">
+                <div class="panel-number" [class.valid]="isCategoryClinicalExamValid">3</div>
+                <span>Clinical Examination</span>
+                <mat-icon class="check-icon" *ngIf="isCategoryClinicalExamValid">check_circle</mat-icon>
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content">
+            <div class="row-fields">
+              <mat-form-field appearance="outline" class="half">
+                <mat-label>Blood pressure *</mat-label>
+                <input matInput formControlName="bloodPressure" placeholder="e.g. 120/80 mmHg" />
+                <mat-icon matSuffix>monitor_heart</mat-icon>
+                <mat-error *ngIf="form.get('bloodPressure')?.hasError('required')">This field is required</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half">
+                <mat-label>Pulse *</mat-label>
+                <input matInput formControlName="pulse" placeholder="e.g. 78 bpm" />
+                <mat-icon matSuffix>favorite</mat-icon>
+                <mat-error *ngIf="form.get('pulse')?.hasError('required')">This field is required</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="optional-label">Optional fields</div>
+
+            <div class="row-fields">
+              <mat-form-field appearance="outline" class="half optional-field">
+                <mat-label>Temperature</mat-label>
+                <input matInput formControlName="temperature" placeholder="e.g. 98.6°F" />
+                <mat-icon matSuffix>thermostat</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half optional-field">
+                <mat-label>Weight / Height</mat-label>
+                <input matInput formControlName="weightHeight" placeholder="e.g. 165 lbs / 5'9&quot;" />
+                <mat-icon matSuffix>height</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>Clinical notes</mat-label>
+              <textarea matInput formControlName="clinicalNotes" rows="3"
+                        placeholder="e.g. Heart sounds rhythmic, no murmurs detected"></textarea>
+              <mat-icon matSuffix>notes</mat-icon>
+            </mat-form-field>
+
+            <div class="custom-fields-list" *ngIf="customClinicalExam.length > 0">
+              <div class="custom-field-chip" *ngFor="let cf of customClinicalExam; let i = index">
+                <span class="cf-label">{{ cf.label }}:</span>
+                <span class="cf-value">{{ cf.value }}</span>
+                <button mat-icon-button type="button" class="cf-remove"
+                        (click)="removeCustomField('clinicalExam', i)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="add-field-row">
+              <mat-form-field appearance="outline" class="field-label-input">
+                <mat-label>Field name</mat-label>
+                <input matInput formControlName="newLabel_clinicalExam" placeholder="e.g. O₂ Saturation" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="field-value-input">
+                <mat-label>Value</mat-label>
+                <input matInput formControlName="newValue_clinicalExam" placeholder="e.g. 97%" />
+              </mat-form-field>
+              <button mat-stroked-button type="button" class="add-field-btn"
+                      (click)="addCustomField('clinicalExam')"
+                      [disabled]="!form.get('newLabel_clinicalExam')?.value || !form.get('newValue_clinicalExam')?.value">
+                <mat-icon>add</mat-icon>
+                Add
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- ═══ 4. DIAGNOSIS & TREATMENT ════════════════════════════════════ -->
+        <mat-expansion-panel class="category-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="panel-title-inner">
+                <div class="panel-number" [class.valid]="isCategoryDiagnosisValid">4</div>
+                <span>Diagnosis & Treatment</span>
+                <mat-icon class="check-icon" *ngIf="isCategoryDiagnosisValid">check_circle</mat-icon>
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content">
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Primary diagnosis *</mat-label>
+              <input matInput formControlName="primaryDiagnosis"
+                     placeholder="e.g. Stable Angina Pectoris" />
+              <mat-icon matSuffix>local_hospital</mat-icon>
+              <mat-error *ngIf="form.get('primaryDiagnosis')?.hasError('required')">This field is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Prescribed treatment *</mat-label>
+              <textarea matInput formControlName="treatment" rows="3"
+                        placeholder="e.g. Metoprolol 50mg – 1 tablet in the morning&#10;Aspirin 75mg – 1 tablet in the evening"></textarea>
+              <mat-icon matSuffix>medication</mat-icon>
+              <mat-error *ngIf="form.get('treatment')?.hasError('required')">This field is required</mat-error>
+            </mat-form-field>
+
+            <div class="optional-label">Optional fields</div>
+
+            <div class="row-fields">
+              <mat-form-field appearance="outline" class="half optional-field">
+                <mat-label>ICD-10 code</mat-label>
+                <input matInput formControlName="icdCode" placeholder="e.g. I20.9" />
+                <mat-icon matSuffix>tag</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half optional-field">
+                <mat-label>Follow-up date</mat-label>
+                <input matInput type="date" formControlName="followUpDate" />
+                <mat-icon matSuffix>event</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>Secondary diagnosis</mat-label>
+              <input matInput formControlName="secondaryDiagnosis"
+                     placeholder="e.g. Grade II Arterial Hypertension" />
+              <mat-icon matSuffix>local_hospital</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>Recommended investigations</mat-label>
+              <textarea matInput formControlName="recommendedInvestigations" rows="2"
+                        placeholder="e.g. Resting ECG, Echocardiography, Lipid panel"></textarea>
+              <mat-icon matSuffix>biotech</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>General recommendations</mat-label>
+              <textarea matInput formControlName="generalRecommendations" rows="2"
+                        placeholder="e.g. Avoid intense physical activity, low-sodium diet"></textarea>
+              <mat-icon matSuffix>tips_and_updates</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>Final notes</mat-label>
+              <textarea matInput formControlName="finalNotes" rows="2"
+                        placeholder="e.g. Patient advised to monitor blood pressure daily"></textarea>
+              <mat-icon matSuffix>comment</mat-icon>
+            </mat-form-field>
+
+            <div class="custom-fields-list" *ngIf="customDiagnosis.length > 0">
+              <div class="custom-field-chip" *ngFor="let cf of customDiagnosis; let i = index">
+                <span class="cf-label">{{ cf.label }}:</span>
+                <span class="cf-value">{{ cf.value }}</span>
+                <button mat-icon-button type="button" class="cf-remove"
+                        (click)="removeCustomField('diagnosis', i)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="add-field-row">
+              <mat-form-field appearance="outline" class="field-label-input">
+                <mat-label>Field name</mat-label>
+                <input matInput formControlName="newLabel_diagnosis" placeholder="e.g. Prognosis" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="field-value-input">
+                <mat-label>Value</mat-label>
+                <input matInput formControlName="newValue_diagnosis" placeholder="e.g. Favorable" />
+              </mat-form-field>
+              <button mat-stroked-button type="button" class="add-field-btn"
+                      (click)="addCustomField('diagnosis')"
+                      [disabled]="!form.get('newLabel_diagnosis')?.value || !form.get('newValue_diagnosis')?.value">
+                <mat-icon>add</mat-icon>
+                Add
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+      </mat-accordion>
+
+      <!-- ── Submit ────────────────────────────────────────────────────────── -->
+      <div class="submit-section">
+        <div class="form-status" *ngIf="!isFormReady && form.touched">
+          <mat-icon>info</mat-icon>
+          <span>Please complete all required fields in each category</span>
         </div>
 
-        <mat-error *ngIf="fileError" class="file-error">{{ fileError }}</mat-error>
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit-btn"
+          [disabled]="!isFormReady || isLoading"
+        >
+          <ng-container *ngIf="!isLoading; else loadingTpl">
+            <mat-icon>cloud_upload</mat-icon>
+            Generate PDF & publish to blockchain
+          </ng-container>
+          <ng-template #loadingTpl>
+            <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
+            Processing...
+          </ng-template>
+        </button>
       </div>
 
-      <mat-divider></mat-divider>
-
-      <!-- Submit -->
-      <button
-        mat-flat-button
-        type="submit"
-        class="submit-btn"
-        [disabled]="diagnosticForm.invalid || !selectedFile || !selectedPatient || isLoading"
-      >
-        <ng-container *ngIf="!isLoading; else loadingTpl">
-          <mat-icon>send</mat-icon>
-          Submit Diagnostic
-        </ng-container>
-        <ng-template #loadingTpl>
-          <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
-          Submitting...
-        </ng-template>
-      </button>
     </form>
   </div>
 </div>

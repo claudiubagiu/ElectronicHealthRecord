@@ -21,6 +21,7 @@ import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DiagnosticsService } from '../../services/diagnostics.service';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
@@ -28,9 +29,12 @@ import { IpfsService, EncryptedPayload } from '../../../../core/services/ipfs.se
 import { LitProtocolService } from '../../../../core/services/lit-protocol.service';
 import { CryptoService } from '../../../../core/services/crypto.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { DiagnosticPdfService, CustomField } from '../../services/diagnostic-pdf.service';
 import { PatientDto } from '../../models/diagnostic.model';
 import { AppError } from '../../../../core/errors/app.error';
 import { getAddress } from 'ethers';
+
+export type { CustomField };
 
 @Component({
   selector: 'app-add-diagnostic',
@@ -48,6 +52,7 @@ import { getAddress } from 'ethers';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatAutocompleteModule,
+    MatExpansionModule,
     MatTooltipModule,
   ],
 })
@@ -57,20 +62,23 @@ export class AddDiagnostic implements OnInit, OnDestroy {
   private ipfsService = inject(IpfsService);
   private litService = inject(LitProtocolService);
   private authService = inject(AuthService);
+  private pdfService = inject(DiagnosticPdfService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
 
-  diagnosticForm!: FormGroup;
+  form!: FormGroup;
   filteredPatients: PatientDto[] = [];
   selectedPatient: PatientDto | null = null;
-  selectedFile: File | null = null;
   isLoading = false;
   isSearching = false;
   searchPerformed = false;
-  isDragOver = false;
-  fileError: string | null = null;
+
+  customGeneralInfo: CustomField[] = [];
+  customAnamnesis: CustomField[] = [];
+  customClinicalExam: CustomField[] = [];
+  customDiagnosis: CustomField[] = [];
 
   ngOnInit(): void {
     this.buildForm();
@@ -83,9 +91,48 @@ export class AddDiagnostic implements OnInit, OnDestroy {
   }
 
   buildForm(): void {
-    this.diagnosticForm = this.fb.group({
+    const today = new Date().toISOString().split('T')[0];
+
+    this.form = this.fb.group({
+      // Patient search
       patientSearch: ['', [Validators.required, this.patientSelectedValidator.bind(this)]],
-      description: ['', Validators.required],
+
+      // General info
+      title: ['', Validators.required],
+      consultationDate: [today, Validators.required],
+
+      // Anamnesis
+      chiefComplaint: ['', Validators.required],
+      personalHistory: ['', Validators.required],
+      familyHistory: [''],
+      allergies: [''],
+
+      // Clinical examination
+      bloodPressure: ['', Validators.required],
+      pulse: ['', Validators.required],
+      temperature: [''],
+      weightHeight: [''],
+      clinicalNotes: [''],
+
+      // Diagnosis & Treatment
+      primaryDiagnosis: ['', Validators.required],
+      icdCode: [''],
+      secondaryDiagnosis: [''],
+      recommendedInvestigations: [''],
+      treatment: ['', Validators.required],
+      generalRecommendations: [''],
+      followUpDate: [''],
+      finalNotes: [''],
+
+      // Temporary new custom field inputs (reset after adding)
+      newLabel_generalInfo: [''],
+      newValue_generalInfo: [''],
+      newLabel_anamnesis: [''],
+      newValue_anamnesis: [''],
+      newLabel_clinicalExam: [''],
+      newValue_clinicalExam: [''],
+      newLabel_diagnosis: [''],
+      newValue_diagnosis: [''],
     });
   }
 
@@ -98,7 +145,7 @@ export class AddDiagnostic implements OnInit, OnDestroy {
   }
 
   setupPatientSearch(): void {
-    this.diagnosticForm
+    this.form
       .get('patientSearch')!
       .valueChanges.pipe(
         debounceTime(300),
@@ -138,99 +185,158 @@ export class AddDiagnostic implements OnInit, OnDestroy {
 
   onPatientSelected(event: MatAutocompleteSelectedEvent): void {
     this.selectedPatient = event.option.value as PatientDto;
-    this.diagnosticForm.get('patientSearch')!.updateValueAndValidity();
+    this.form.get('patientSearch')!.updateValueAndValidity();
   }
 
   clearPatient(event: Event): void {
     event.stopPropagation();
     this.selectedPatient = null;
-    this.diagnosticForm.get('patientSearch')!.setValue('');
+    this.form.get('patientSearch')!.setValue('');
     this.filteredPatients = [];
     this.searchPerformed = false;
   }
 
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.setFile(input.files[0]);
+  // ── Custom fields ─────────────────────────────────────────────────────────────
+
+  addCustomField(category: 'generalInfo' | 'anamnesis' | 'clinicalExam' | 'diagnosis'): void {
+    const labelKey = `newLabel_${category}` as const;
+    const valueKey = `newValue_${category}` as const;
+
+    const label = (this.form.get(labelKey)?.value ?? '').trim();
+    const value = (this.form.get(valueKey)?.value ?? '').trim();
+
+    if (!label || !value) return;
+
+    const field: CustomField = { label, value };
+
+    switch (category) {
+      case 'generalInfo':
+        this.customGeneralInfo = [...this.customGeneralInfo, field];
+        break;
+      case 'anamnesis':
+        this.customAnamnesis = [...this.customAnamnesis, field];
+        break;
+      case 'clinicalExam':
+        this.customClinicalExam = [...this.customClinicalExam, field];
+        break;
+      case 'diagnosis':
+        this.customDiagnosis = [...this.customDiagnosis, field];
+        break;
+    }
+
+    this.form.get(labelKey)?.setValue('');
+    this.form.get(valueKey)?.setValue('');
+  }
+
+  removeCustomField(
+    category: 'generalInfo' | 'anamnesis' | 'clinicalExam' | 'diagnosis',
+    index: number
+  ): void {
+    switch (category) {
+      case 'generalInfo':
+        this.customGeneralInfo = this.customGeneralInfo.filter((_, i) => i !== index);
+        break;
+      case 'anamnesis':
+        this.customAnamnesis = this.customAnamnesis.filter((_, i) => i !== index);
+        break;
+      case 'clinicalExam':
+        this.customClinicalExam = this.customClinicalExam.filter((_, i) => i !== index);
+        break;
+      case 'diagnosis':
+        this.customDiagnosis = this.customDiagnosis.filter((_, i) => i !== index);
+        break;
     }
   }
 
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver = true;
+  // ── Validation helpers ────────────────────────────────────────────────────────
+
+  get isCategoryGeneralInfoValid(): boolean {
+    return !!this.form.get('title')?.valid && !!this.form.get('consultationDate')?.valid;
   }
 
-  onDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver = false;
+  get isCategoryAnamnesisValid(): boolean {
+    return !!this.form.get('chiefComplaint')?.valid && !!this.form.get('personalHistory')?.valid;
   }
 
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver = false;
-    const files = event.dataTransfer?.files;
-    if (files && files.length > 0) {
-      this.setFile(files[0]);
-    }
+  get isCategoryClinicalExamValid(): boolean {
+    return !!this.form.get('bloodPressure')?.valid && !!this.form.get('pulse')?.valid;
   }
 
-  setFile(file: File): void {
-    const allowed = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'image/jpeg',
-      'image/png',
-    ];
-    if (!allowed.includes(file.type)) {
-      this.fileError = 'File type not supported. Please upload PDF, DOC, DOCX, JPG or PNG.';
-      this.selectedFile = null;
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      this.fileError = 'File size exceeds 20MB limit.';
-      this.selectedFile = null;
-      return;
-    }
-    this.fileError = null;
-    this.selectedFile = file;
+  get isCategoryDiagnosisValid(): boolean {
+    return !!this.form.get('primaryDiagnosis')?.valid && !!this.form.get('treatment')?.valid;
   }
 
-  removeFile(event: Event): void {
-    event.stopPropagation();
-    this.selectedFile = null;
-    this.fileError = null;
+  get isFormReady(): boolean {
+    return (
+      !!this.selectedPatient &&
+      this.isCategoryGeneralInfoValid &&
+      this.isCategoryAnamnesisValid &&
+      this.isCategoryClinicalExamValid &&
+      this.isCategoryDiagnosisValid
+    );
   }
 
-  formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
+  // ── Submit ────────────────────────────────────────────────────────────────────
 
   async onSubmit(): Promise<void> {
-    if (this.diagnosticForm.invalid || !this.selectedFile || !this.selectedPatient) return;
+    if (!this.isFormReady) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     this.isLoading = true;
 
     try {
-      const fileBuffer = await this.selectedFile.arrayBuffer();
+      const user = this.authService.getDecodedToken();
+      const doctorName = user ? `${user.firstName} ${user.lastName}` : 'Doctor';
+      const v = this.form.value;
 
+      // 1. Generate PDF
+      const pdfBlob = await this.pdfService.generateDiagnosticPdf({
+        title: v.title,
+        consultationDate: v.consultationDate,
+        patient: `${this.selectedPatient!.firstName} ${this.selectedPatient!.lastName}`,
+        patientCNP: this.selectedPatient!.cnp,
+        doctor: doctorName,
+        chiefComplaint: v.chiefComplaint,
+        personalHistory: v.personalHistory,
+        familyHistory: v.familyHistory || undefined,
+        allergies: v.allergies || undefined,
+        bloodPressure: v.bloodPressure,
+        pulse: v.pulse,
+        temperature: v.temperature || undefined,
+        weightHeight: v.weightHeight || undefined,
+        clinicalNotes: v.clinicalNotes || undefined,
+        primaryDiagnosis: v.primaryDiagnosis,
+        icdCode: v.icdCode || undefined,
+        secondaryDiagnosis: v.secondaryDiagnosis || undefined,
+        recommendedInvestigations: v.recommendedInvestigations || undefined,
+        treatment: v.treatment,
+        generalRecommendations: v.generalRecommendations || undefined,
+        followUpDate: v.followUpDate || undefined,
+        finalNotes: v.finalNotes || undefined,
+        customGeneralInfo: this.customGeneralInfo,
+        customAnamnesis: this.customAnamnesis,
+        customClinicalExam: this.customClinicalExam,
+        customDiagnosis: this.customDiagnosis,
+      });
+
+      const fileBuffer = await pdfBlob.arrayBuffer();
+
+      // 2. AES encryption
       const aesKey = await CryptoService.generateAESKey();
       const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, aesKey);
-
       const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
       const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyRaw)));
 
-      const patientAddress = getAddress(this.selectedPatient.walletAddress);
+      // 3. Lit Protocol
+      const patientAddress = getAddress(this.selectedPatient!.walletAddress);
       await this.litService.connect();
       const accs = this.litService.createAccsBuilder(patientAddress);
       const litResult = await this.litService.encrypt(aesKeyBase64, accs);
 
+      // 4. Upload to IPFS
+      const fileName = `diagnostic_${v.title.replace(/\s+/g, '_').toLowerCase()}.pdf`;
       const payload: EncryptedPayload = {
         encryptedFile: Array.from(new Uint8Array(encrypted)),
         encryptedAesKey: [],
@@ -239,23 +345,16 @@ export class AddDiagnostic implements OnInit, OnDestroy {
           dataToEncryptHash: litResult.dataToEncryptHash,
         },
         iv: Array.from(iv),
-        fileName: this.selectedFile.name,
+        fileName,
         timestamp: Date.now(),
       };
 
       const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
 
-      const user = this.authService.getDecodedToken();
-      const doctorName = user ? `${user.firstName} ${user.lastName}` : 'Doctor';
+      // 5. Store CID on blockchain
+      await this.blockchainService.addDiagnosis(v.title, ipfsCid, patientAddress, doctorName);
 
-      await this.blockchainService.addDiagnosis(
-        this.diagnosticForm.value.description,
-        ipfsCid,
-        patientAddress,
-        doctorName
-      );
-
-      this.snackBar.open('Diagnostic submitted successfully!', 'OK', {
+      this.snackBar.open('Diagnosis added successfully!', 'OK', {
         duration: 3000,
         horizontalPosition: 'center',
         verticalPosition: 'top',
@@ -264,9 +363,8 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       this.router.navigate(['/']);
     } catch (error: unknown) {
       const message =
-        error instanceof AppError
-          ? error.message
-          : 'Failed to submit diagnostic. Please try again.';
+        error instanceof AppError ? error.message : 'Failed to add diagnosis. Please try again.';
+
       this.snackBar.open(message, 'Close', {
         duration: 4000,
         horizontalPosition: 'center',

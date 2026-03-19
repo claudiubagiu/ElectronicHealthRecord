@@ -3,6 +3,7 @@ export interface PatientDto {
   identityId: string;
   firstName: string;
   lastName: string;
+  walletAddress: string;
   cnp: string;
   dateOfBirth: string;
 }

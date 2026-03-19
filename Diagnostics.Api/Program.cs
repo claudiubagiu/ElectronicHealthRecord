@@ -25,8 +25,6 @@ builder.Services.AddDbContext<DiagnosticsDbContext>(options =>
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
-builder.Services.AddScoped<IDiagnosticsService, DiagnosticsService>();
-builder.Services.AddScoped<IDiagnosticsRepository, DiagnosticsRepository>();
 builder.Services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
 builder.Services.AddScoped<IAccessRequestService, AccessRequestService>();
 

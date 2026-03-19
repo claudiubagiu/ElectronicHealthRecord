@@ -23,13 +23,19 @@ import {
 } from '@angular/material/autocomplete';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DiagnosticsService } from '../../services/diagnostics.service';
+import { BlockchainService } from '../../../../core/services/blockchain.service';
+import { IpfsService, EncryptedPayload } from '../../../../core/services/ipfs.service';
+import { LitProtocolService } from '../../../../core/services/lit-protocol.service';
+import { CryptoService } from '../../../../core/services/crypto.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { PatientDto } from '../../models/diagnostic.model';
 import { AppError } from '../../../../core/errors/app.error';
+import { getAddress } from 'ethers';
 
 @Component({
-  selector: 'app-propose-diagnostic',
-  templateUrl: './propose-diagnostic.html',
-  styleUrls: ['./propose-diagnostic.scss'],
+  selector: 'app-add-diagnostic',
+  templateUrl: './add-diagnostic.html',
+  styleUrls: ['./add-diagnostic.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -45,8 +51,12 @@ import { AppError } from '../../../../core/errors/app.error';
     MatTooltipModule,
   ],
 })
-export class ProposeDiagnostic implements OnInit, OnDestroy {
+export class AddDiagnostic implements OnInit, OnDestroy {
   private diagnosticsService = inject(DiagnosticsService);
+  private blockchainService = inject(BlockchainService);
+  private ipfsService = inject(IpfsService);
+  private litService = inject(LitProtocolService);
+  private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -98,7 +108,6 @@ export class ProposeDiagnostic implements OnInit, OnDestroy {
           if (typeof value === 'string') {
             this.selectedPatient = null;
           }
-
           if (typeof value !== 'string' || value.trim().length < 2) {
             this.filteredPatients = [];
             this.searchPerformed = false;
@@ -107,7 +116,7 @@ export class ProposeDiagnostic implements OnInit, OnDestroy {
           this.isSearching = true;
           this.searchPerformed = true;
           return this.diagnosticsService.searchPatients(value.trim());
-        }),
+        })
       )
       .subscribe({
         next: (patients) => {
@@ -209,12 +218,42 @@ export class ProposeDiagnostic implements OnInit, OnDestroy {
     this.isLoading = true;
 
     try {
-      const formData = new FormData();
-      formData.append('patientId', this.selectedPatient.id);
-      formData.append('description', this.diagnosticForm.value.description);
-      formData.append('file', this.selectedFile);
+      const fileBuffer = await this.selectedFile.arrayBuffer();
 
-      await this.diagnosticsService.createDiagnostic(formData);
+      const aesKey = await CryptoService.generateAESKey();
+      const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, aesKey);
+
+      const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
+      const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyRaw)));
+
+      const patientAddress = getAddress(this.selectedPatient.walletAddress);
+      await this.litService.connect();
+      const accs = this.litService.createAccsBuilder(patientAddress);
+      const litResult = await this.litService.encrypt(aesKeyBase64, accs);
+
+      const payload: EncryptedPayload = {
+        encryptedFile: Array.from(new Uint8Array(encrypted)),
+        encryptedAesKey: [],
+        litMetadata: {
+          ciphertext: litResult.ciphertext,
+          dataToEncryptHash: litResult.dataToEncryptHash,
+        },
+        iv: Array.from(iv),
+        fileName: this.selectedFile.name,
+        timestamp: Date.now(),
+      };
+
+      const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
+
+      const user = this.authService.getDecodedToken();
+      const doctorName = user ? `${user.firstName} ${user.lastName}` : 'Doctor';
+
+      await this.blockchainService.addDiagnosis(
+        this.diagnosticForm.value.description,
+        ipfsCid,
+        patientAddress,
+        doctorName
+      );
 
       this.snackBar.open('Diagnostic submitted successfully!', 'OK', {
         duration: 3000,
@@ -224,21 +263,16 @@ export class ProposeDiagnostic implements OnInit, OnDestroy {
 
       this.router.navigate(['/']);
     } catch (error: unknown) {
-      if (error instanceof AppError) {
-        this.snackBar.open(error.message, 'Close', {
-          duration: 4000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error',
-        });
-      } else {
-        this.snackBar.open('Failed to submit diagnostic. Please try again.', 'Close', {
-          duration: 4000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error',
-        });
-      }
+      const message =
+        error instanceof AppError
+          ? error.message
+          : 'Failed to submit diagnostic. Please try again.';
+      this.snackBar.open(message, 'Close', {
+        duration: 4000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: 'snackbar-error',
+      });
     } finally {
       this.isLoading = false;
     }

@@ -197,8 +197,6 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_healthy
-    volumes:
-      - diagnostics_files:/app/uploads
     networks:
       - proxy
 
@@ -239,7 +237,6 @@ volumes:
   auth_database:
   users_database:
   diagnostics_database:
-  diagnostics_files:
   rabbitmq_data:
 
 networks:

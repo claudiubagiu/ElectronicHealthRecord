@@ -40,20 +40,15 @@
 
         <!-- Role-based links -->
         <ng-container *ngIf="roles$ | async as roles">
-          <a mat-list-item routerLink="/propose-diagnostic" routerLinkActive="active-link"
+          <a mat-list-item routerLink="/add-diagnostic" routerLinkActive="active-link"
              (click)="sidenav.close()" *ngIf="roles.includes('Doctor')">
             <mat-icon matListItemIcon>medical_services</mat-icon>
-            <span matListItemTitle>Propose Diagnostic</span>
-          </a>
-          <a mat-list-item routerLink="/proposed-diagnostics" routerLinkActive="active-link"
-             (click)="sidenav.close()" *ngIf="roles.includes('Patient')">
-            <mat-icon matListItemIcon>assignment</mat-icon>
-            <span matListItemTitle>See Proposed Diagnostics</span>
+            <span matListItemTitle>Add Diagnostic</span>
           </a>
           <a mat-list-item routerLink="/diagnostics" routerLinkActive="active-link"
              (click)="sidenav.close()" *ngIf="roles.includes('Patient')">
             <mat-icon matListItemIcon>assignment</mat-icon>
-            <span matListItemTitle>See Diagnostics</span>
+            <span matListItemTitle>My Diagnostics</span>
           </a>
           <a mat-list-item routerLink="/patient-access" routerLinkActive="active-link"
             (click)="sidenav.close()" *ngIf="roles.includes('Doctor')">
@@ -116,18 +111,10 @@
       <!-- Navigation links (desktop) -->
       <nav class="nav-links">
         <a mat-button routerLink="/" routerLinkActive="active-link"
-           [routerLinkActiveOptions]="{ exact: true }">
-          Home
-        </a>
-        <a mat-button routerLink="/about" routerLinkActive="active-link">
-          About
-        </a>
-        <a mat-button routerLink="/services" routerLinkActive="active-link">
-          Services
-        </a>
-        <a mat-button routerLink="/contact" routerLinkActive="active-link">
-          Contact
-        </a>
+           [routerLinkActiveOptions]="{ exact: true }">Home</a>
+        <a mat-button routerLink="/about"    routerLinkActive="active-link">About</a>
+        <a mat-button routerLink="/services" routerLinkActive="active-link">Services</a>
+        <a mat-button routerLink="/contact"  routerLinkActive="active-link">Contact</a>
       </nav>
 
       <!-- ===== Desktop: Authenticated => Profile with menu ===== -->
@@ -156,22 +143,17 @@
             <span>Settings</span>
           </button>
 
-            <!-- Role-based items -->
+          <!-- Role-based items -->
           <ng-container *ngIf="roles$ | async as roles">
-            <button mat-menu-item routerLink="/propose-diagnostic"
+            <button mat-menu-item routerLink="/add-diagnostic"
                     *ngIf="roles.includes('Doctor')">
               <mat-icon>medical_services</mat-icon>
-              <span>Propose Diagnostic</span>
-            </button>
-            <button mat-menu-item routerLink="/proposed-diagnostics"
-                    *ngIf="roles.includes('Patient')">
-              <mat-icon>assignment</mat-icon>
-              <span>See Proposed Diagnostics</span>
+              <span>Add Diagnostic</span>
             </button>
             <button mat-menu-item routerLink="/diagnostics"
                     *ngIf="roles.includes('Patient')">
               <mat-icon>assignment</mat-icon>
-              <span>See Diagnostics</span>
+              <span>My Diagnostics</span>
             </button>
             <button mat-menu-item routerLink="/patient-access"
                     *ngIf="roles.includes('Doctor')">

@@ -53,35 +53,6 @@ namespace Diagnostics.Api.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "Diagnostics",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PatientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DoctorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Diagnostics", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Diagnostics_Users_DoctorId",
-                        column: x => x.DoctorId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Diagnostics_Users_PatientId",
-                        column: x => x.PatientId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_AccessRequests_DoctorId",
                 table: "AccessRequests",
@@ -91,16 +62,6 @@ namespace Diagnostics.Api.Migrations
                 name: "IX_AccessRequests_PatientId",
                 table: "AccessRequests",
                 column: "PatientId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Diagnostics_DoctorId",
-                table: "Diagnostics",
-                column: "DoctorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Diagnostics_PatientId",
-                table: "Diagnostics",
-                column: "PatientId");
         }
 
         /// <inheritdoc />
@@ -108,9 +69,6 @@ namespace Diagnostics.Api.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AccessRequests");
-
-            migrationBuilder.DropTable(
-                name: "Diagnostics");
 
             migrationBuilder.DropTable(
                 name: "Users");

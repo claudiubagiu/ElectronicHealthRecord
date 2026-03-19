@@ -22,42 +22,6 @@ namespace Diagnostics.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Diagnostics.Api.Models.Domain.Diagnostic", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("DoctorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("PatientId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DoctorId");
-
-                    b.HasIndex("PatientId");
-
-                    b.ToTable("Diagnostics");
-                });
-
             modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -112,25 +76,6 @@ namespace Diagnostics.Api.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Diagnostics.Api.Models.Domain.Diagnostic", b =>
-                {
-                    b.HasOne("Diagnostics.Api.Models.Domain.User", "Doctor")
-                        .WithMany("DiagnosticsAsDoctor")
-                        .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Diagnostics.Api.Models.Domain.User", "Patient")
-                        .WithMany("DiagnosticsAsPatient")
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Doctor");
-
-                    b.Navigation("Patient");
-                });
-
             modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", b =>
                 {
                     b.HasOne("Diagnostics.Api.Models.Domain.User", "Doctor")
@@ -148,13 +93,6 @@ namespace Diagnostics.Api.Migrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("Diagnostics.Api.Models.Domain.User", b =>
-                {
-                    b.Navigation("DiagnosticsAsDoctor");
-
-                    b.Navigation("DiagnosticsAsPatient");
                 });
 #pragma warning restore 612, 618
         }

@@ -54,26 +54,25 @@ export class BlockchainService {
   // ── Diagnosis Registry ───────────────────────────────────────────────────────
 
   /**
-   * Patient approves a doctor's off-chain proposal and stores it on-chain.
+   * Doctor directly creates and stores a diagnosis on-chain for a patient.
    * Document must already be Lit-encrypted and uploaded to IPFS before calling this.
    *
    * @param title      Short title (e.g. "MRI – Lumbar Spine")
    * @param ipfsCid    IPFS CID of the Lit-encrypted document
-   * @param doctorAddr Wallet address of the proposing doctor (from off-chain proposal)
+   * @param patientAddr Wallet address of patient
    * @param doctorName Display name of the doctor
    * @returns          On-chain diagnosis ID
    */
   async addDiagnosis(
     title: string,
     ipfsCid: string,
-    doctorAddr: string,
+    patientAddr: string,
     doctorName: string
   ): Promise<bigint> {
     const signed = await this.getSigned();
-    const tx = await signed['addDiagnosis'](title, ipfsCid, doctorAddr, doctorName);
+    const tx = await signed['addDiagnosis'](title, ipfsCid, patientAddr, doctorName);
     const receipt: ContractTransactionReceipt = await tx.wait();
 
-    // Parse DiagnosisAdded event to extract the on-chain ID
     const iface = this.contract.interface;
     for (const log of receipt.logs) {
       try {
@@ -81,11 +80,8 @@ export class BlockchainService {
         if (parsed?.name === 'DiagnosisAdded') {
           return parsed.args['diagnosisId'] as bigint;
         }
-      } catch {
-        // skip unrelated logs
-      }
+      } catch {}
     }
-
     throw new Error('DiagnosisAdded event not found in receipt');
   }
 

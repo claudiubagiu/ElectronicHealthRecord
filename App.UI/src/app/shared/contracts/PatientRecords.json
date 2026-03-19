@@ -1,5 +1,5 @@
 {
-  "address": "0x53E55527C826c28943E7fe3cE8412F37C75A110D",
+  "address": "0xfdac527b70F2Ef6B6f03ff5F6d688d76C1402bbA",
   "abi": [
     {
       "anonymous": false,
@@ -90,7 +90,7 @@
         },
         {
           "internalType": "address",
-          "name": "doctorAddr",
+          "name": "patientAddr",
           "type": "address"
         },
         {

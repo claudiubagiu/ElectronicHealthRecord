@@ -112,11 +112,11 @@ export class Register implements OnInit {
         roles: [this.selectedRole],
         walletAddress: '',
         signature: '',
-        // Patient fields
+        publicKey: '',
+        encryptedPrivateKey: '',
         dateOfBirth:
           this.selectedRole === 'Patient' ? this.registerForm.value.dateOfBirth : undefined,
         cnp: this.selectedRole === 'Patient' ? this.registerForm.value.cnp : undefined,
-        // Doctor fields
         specialization:
           this.selectedRole === 'Doctor' ? this.registerForm.value.specialization : undefined,
         licenseNumber:

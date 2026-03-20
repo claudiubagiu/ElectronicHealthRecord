@@ -13,6 +13,8 @@ namespace Auth.Api.Models.DTOs
         public required string LastName { get; set; }
         public required string WalletAddress { get; set; }
         public required string Signature { get; set; }
+        public required string PublicKey { get; set; }
+        public required string EncryptedPrivateKey { get; set; }
         public string? CNP { get; set; }
         public DateTime? DateOfBirth { get; set; }
         public string? Specialization { get; set; }

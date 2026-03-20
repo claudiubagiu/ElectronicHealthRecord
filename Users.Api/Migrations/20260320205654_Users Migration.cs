@@ -22,7 +22,9 @@ namespace Users.Api.Migrations
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Specialization = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LicenseNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    HospitalAffiliation = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    HospitalAffiliation = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EncryptedPrivateKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -39,7 +41,9 @@ namespace Users.Api.Migrations
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CNP = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EncryptedPrivateKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -88,6 +88,8 @@ namespace Auth.Api.Services.Implementation
                         FirstName = registerRequestDto.FirstName,
                         LastName = registerRequestDto.LastName,
                         WalletAddress = registerRequestDto.WalletAddress,
+                        PublicKey = registerRequestDto.PublicKey,
+                        EncryptedPrivateKey = registerRequestDto.EncryptedPrivateKey,
                         CNP = registerRequestDto.CNP,
                         DateOfBirth = registerRequestDto.DateOfBirth,
                         Specialization = registerRequestDto.Specialization,

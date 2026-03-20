@@ -9,5 +9,7 @@
         public required string WalletAddress { get; set; }
         public required string CNP { get; set; }
         public required DateTime DateOfBirth { get; set; }
+        public required string PublicKey { get; set; }
+        public required string EncryptedPrivateKey { get; set; }
     }
 }

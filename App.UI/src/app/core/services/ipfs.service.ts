@@ -2,38 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AppError } from '../errors/app.error';
+import { EncryptedData, EncryptedPayload, IpfsUploadResponse } from '../models/ipfs.model';
 
-/* ============================
-   DTOs
-   ============================ */
-
-export interface EncryptedPayload {
-  encryptedFile: number[];
-  encryptedAesKey: number[];
-  iv: number[];
-  fileName: string;
-  timestamp: number;
-  litMetadata?: {
-    ciphertext: string;
-    dataToEncryptHash: string;
-  };
-}
-
-export interface EncryptedData {
-  encryptedFile: Uint8Array;
-  encryptedAesKey: Uint8Array;
-  iv: Uint8Array;
-  fileName: string;
-  timestamp: number;
-  litMetadata?: {
-    ciphertext: string;
-    dataToEncryptHash: string;
-  };
-}
-
-interface IpfsUploadResponse {
-  cid: string;
-}
 
 /* ============================
    IPFS Service

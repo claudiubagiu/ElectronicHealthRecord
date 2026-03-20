@@ -12,6 +12,7 @@ import {
   RegisterRequest,
 } from '../models/auth.model';
 import { E2eeKeyService } from './e2ee-key.service';
+import { AppError } from '../errors/app.error';
 
 @Injectable({
   providedIn: 'root',
@@ -59,13 +60,19 @@ export class AuthService implements OnDestroy {
 
   /**
    * Full login flow:
-   * 1. Connect wallet (if not connected)
-   * 2. Get nonce from backend
-   * 3. Sign nonce with MetaMask
-   * 4. Send signature to backend for verification
-   * 5. Store JWT token
-   * 6. Recover E2EE RSA private key from server (decrypt with wallet-derived AES key)
-   * @throws {AuthError} If any step fails
+   * 1. Connect wallet (if not connected).
+   * 2. Get nonce from backend.
+   * 3. Sign nonce with MetaMask.
+   * 4. Send signature to backend for verification.
+   * 5. Store JWT token.
+   * 6. Recover E2EE RSA private key from server (decrypt with wallet-derived AES key).
+   *
+   * The E2EE key recovery is non-blocking: if it fails, the user is still
+   * logged in but will not be able to decrypt existing encrypted data until
+   * the key is recovered successfully.
+   *
+   * @returns The login response containing the JWT token.
+   * @throws {AppError} If wallet connection, nonce retrieval, signing, or backend verification fails.
    */
   async login(): Promise<LoginResponse> {
     // Step 1: Ensure wallet is connected
@@ -93,11 +100,15 @@ export class AuthService implements OnDestroy {
       )
     );
 
-    // Step 5: Recover E2EE RSA private key after login
+    // Step 5: Recover E2EE RSA private key after login (non-blocking)
     try {
       await this.e2eeService.recoverPrivateKey();
     } catch (error) {
-      console.error('[Auth] Failed to recover E2EE private key during login:', error);
+      if (error instanceof AppError) {
+        console.error(`[Auth] E2EE key recovery failed [${error.type}]:`, error.message);
+      } else {
+        console.error('[Auth] Unexpected error during E2EE key recovery:', error);
+      }
     }
 
     return response;
@@ -105,13 +116,16 @@ export class AuthService implements OnDestroy {
 
   /**
    * Full register flow:
-   * 1. Connect wallet (if not connected)
-   * 2. Get nonce from backend
-   * 3. Sign nonce with MetaMask
-   * 4. Generate RSA key pair, encrypt private key with wallet-derived AES key
-   * 5. Send registration payload (including E2EE keys) to backend for verification
-   * 6. Store JWT token
-   * @throws {AuthError} If any step fails
+   * 1. Connect wallet (if not connected).
+   * 2. Get nonce from backend.
+   * 3. Sign nonce with MetaMask.
+   * 4. Generate RSA key pair, encrypt private key with wallet-derived AES key.
+   * 5. Send registration payload (including E2EE keys) to backend for verification.
+   * 6. Store JWT token.
+   *
+   * @param registerRequest - The registration form data (personal info, role, etc.).
+   * @returns The login response containing the JWT token.
+   * @throws {AppError} If any step in the registration flow fails.
    */
   async register(registerRequest: RegisterRequest): Promise<LoginResponse> {
     // Step 1: Ensure wallet is connected
@@ -150,7 +164,7 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * Logout: clear token, clear E2EE private key from memory, and disconnect wallet
+   * Logout: clear token, clear E2EE private key from memory, and disconnect wallet.
    */
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
@@ -166,8 +180,12 @@ export class AuthService implements OnDestroy {
   // ==================== Nonce ====================
 
   /**
-   * Get nonce for a wallet address from the backend
-   * @throws {AppError} If nonce fetch fails
+   * Get nonce for a wallet address from the backend.
+   * The nonce is a one-time challenge used to verify wallet ownership.
+   *
+   * @param walletAddress - The Ethereum wallet address to get a nonce for.
+   * @returns The nonce string to be signed by the wallet.
+   * @throws {AppError} If the HTTP request fails (propagated from errorInterceptor).
    */
   private async getNonce(walletAddress: string): Promise<string> {
     const response = await firstValueFrom(
@@ -179,14 +197,14 @@ export class AuthService implements OnDestroy {
   // ==================== Token Management ====================
 
   /**
-   * Get stored token
+   * Get the stored JWT token, or null if not authenticated.
    */
   getToken(): string | null {
     return this.authStateSubject.value.token;
   }
 
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated (has a valid, non-expired token).
    */
   isAuthenticated(): boolean {
     const token = this.getToken();
@@ -195,14 +213,15 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * Get decoded token payload
+   * Get the decoded JWT token payload, or null if not authenticated.
    */
   getDecodedToken(): DecodedToken | null {
     return this.authStateSubject.value.user;
   }
 
   /**
-   * Get user roles from token
+   * Get user roles from the decoded token.
+   * @returns An array of role strings, or an empty array if not authenticated.
    */
   getRoles(): string[] {
     const user = this.getDecodedToken();
@@ -211,7 +230,8 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * Check if user has a specific role
+   * Check if the current user has a specific role.
+   * @param role - The role name to check for.
    */
   hasRole(role: string): boolean {
     return this.getRoles().includes(role);
@@ -220,7 +240,7 @@ export class AuthService implements OnDestroy {
   // ==================== Private Helpers ====================
 
   /**
-   * Store token in localStorage and update auth state
+   * Store token in localStorage and update the auth state subject.
    */
   private setToken(token: string): void {
     localStorage.setItem(this.TOKEN_KEY, token);
@@ -233,7 +253,8 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * Load token from localStorage on service initialization
+   * Load token from localStorage on service initialization.
+   * If the token is expired, it is removed from storage.
    */
   private loadTokenFromStorage(): void {
     const token = localStorage.getItem(this.TOKEN_KEY);
@@ -251,7 +272,8 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * Decode JWT token payload
+   * Decode JWT token payload (base64 → JSON).
+   * @returns The decoded token or null if decoding fails.
    */
   private decodeToken(token: string): DecodedToken | null {
     try {
@@ -265,7 +287,7 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * Check if a JWT token is expired
+   * Check if a JWT token is expired by comparing its `exp` claim to the current time.
    */
   private isTokenExpired(token: string): boolean {
     const decoded = this.decodeToken(token);
@@ -276,7 +298,8 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * Watch for wallet address changes and auto-logout if wallet switches
+   * Watch for wallet address changes and auto-logout if the wallet switches.
+   * This prevents stale authentication when the user changes MetaMask accounts.
    */
   private watchWalletChanges(): void {
     this.walletSubscription = this.web3Service.walletAddress$

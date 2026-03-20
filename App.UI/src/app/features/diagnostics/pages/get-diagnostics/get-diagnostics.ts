@@ -43,7 +43,6 @@ export class GetDiagnostics implements OnInit {
     await this.web3Service['initPromise'];
 
     const address = this.web3Service.getAddressOrNull();
-    console.log('[GetDiagnostics] wallet address:', address);
 
     if (!address) {
       this.snackBar.open('Wallet not connected.', 'Close', {

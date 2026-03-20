@@ -1,40 +1,56 @@
 import { Routes } from '@angular/router';
-import { Register } from './features/auth/pages/register/register';
-import { Login } from './features/auth/pages/login/login';
 import { guestGuard } from './core/guards/guest.guard';
-import { AddDiagnostic } from './features/diagnostics/pages/add-diagnostic/add-diagnostic'
 import { roleGuard } from './core/guards/role.guard';
-import { GetDiagnostics } from './features/diagnostics/pages/get-diagnostics/get-diagnostics';
-import { PatientAccess } from './features/patient-access/pages/patient-access/patient-access';
-import { AccessManagement } from './features/access-management/pages/access-management/access-management';
-import { PatientDiagnostics } from './features/patient-access/pages/patient-diagnostics/patient-diagnostics';
 
 export const routes: Routes = [
-  { path: 'register', component: Register, canActivate: [guestGuard] },
-  { path: 'login', component: Login, canActivate: [guestGuard] },
+  {
+    path: 'register',
+    loadComponent: () => import('./features/auth/pages/register/register').then((m) => m.Register),
+    canActivate: [guestGuard],
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./features/auth/pages/login/login').then((m) => m.Login),
+    canActivate: [guestGuard],
+  },
   {
     path: 'add-diagnostic',
-    component: AddDiagnostic,
+    loadComponent: () =>
+      import('./features/diagnostics/pages/add-diagnostic/add-diagnostic').then(
+        (m) => m.AddDiagnostic
+      ),
     canActivate: [roleGuard(['Doctor'])],
   },
   {
     path: 'diagnostics',
-    component: GetDiagnostics,
+    loadComponent: () =>
+      import('./features/diagnostics/pages/get-diagnostics/get-diagnostics').then(
+        (m) => m.GetDiagnostics
+      ),
     canActivate: [roleGuard(['Patient'])],
   },
   {
     path: 'patient-access',
-    component: PatientAccess,
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-access/patient-access').then(
+        (m) => m.PatientAccess
+      ),
     canActivate: [roleGuard(['Doctor'])],
   },
   {
     path: 'access-management',
-    component: AccessManagement,
+    loadComponent: () =>
+      import('./features/access-management/pages/access-management/access-management').then(
+        (m) => m.AccessManagement
+      ),
     canActivate: [roleGuard(['Patient'])],
   },
   {
     path: 'patient/:patientId/diagnostics',
-    component: PatientDiagnostics,
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-diagnostics/patient-diagnostics').then(
+        (m) => m.PatientDiagnostics
+      ),
     canActivate: [roleGuard(['Doctor'])],
   },
 ];

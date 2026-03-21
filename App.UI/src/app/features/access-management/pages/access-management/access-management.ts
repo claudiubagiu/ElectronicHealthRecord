@@ -1,21 +1,18 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AccessManagementService } from '../../services/access-management.service';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { AccessRequestDto } from '../../../patient-access/models/access-request.model';
+import { AccessRequestDto } from '../../../../core/models/access-request.model';
+import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 
 @Component({
   selector: 'app-access-management',
   templateUrl: './access-management.html',
   styleUrls: ['./access-management.scss'],
   standalone: true,
-  imports: [CommonModule, MatTabsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [...MAT_COMMON_IMPORTS, MatTabsModule],
 })
 export class AccessManagement implements OnInit {
   private service = inject(AccessManagementService);

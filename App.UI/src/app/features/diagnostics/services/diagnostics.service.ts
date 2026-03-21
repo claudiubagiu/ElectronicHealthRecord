@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { PatientDto, DiagnosticDto } from '../models/diagnostic.model';
+import { DiagnosticDto } from '../models/diagnostic.model';
 import { environment } from '../../../../environments/environment';
 
 
@@ -10,14 +10,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class DiagnosticsService {
   private readonly DIAGNOSTICS_API = environment.apiUrls.diagnostics;
-  private readonly USERS_API = environment.apiUrls.users;
-
   private http = inject(HttpClient);
-
-  searchPatients(search: string): Promise<PatientDto[]> {
-    const params = new HttpParams().set('search', search);
-    return firstValueFrom(this.http.get<PatientDto[]>(`${this.USERS_API}/search`, { params }));
-  }
 
   createDiagnostic(formData: FormData): Promise<DiagnosticDto> {
     return firstValueFrom(this.http.post<DiagnosticDto>(this.DIAGNOSTICS_API, formData));

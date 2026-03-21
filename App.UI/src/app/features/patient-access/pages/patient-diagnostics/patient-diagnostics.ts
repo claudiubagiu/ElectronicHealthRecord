@@ -1,21 +1,18 @@
-// App.UI/src/app/features/patient-access/pages/patient-diagnostics/patient-diagnostics.ts
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { DiagnosticDecryptionService } from '../../../diagnostics/services/diagnostic-decryption.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { Diagnosis } from '../../../../core/models/blockchain.model';
+import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 
 @Component({
   selector: 'app-patient-diagnostics',
   templateUrl: './patient-diagnostics.html',
   styleUrls: ['./patient-diagnostics.scss'],
   standalone: true,
-  imports: [CommonModule, DatePipe, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [...MAT_COMMON_IMPORTS, DatePipe],
 })
 export class PatientDiagnostics implements OnInit {
   private route = inject(ActivatedRoute);

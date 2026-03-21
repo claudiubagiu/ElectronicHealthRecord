@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { AccessRequestDto } from '../../patient-access/models/access-request.model';
+import { AccessRequestDto } from '../../../core/models/access-request.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })

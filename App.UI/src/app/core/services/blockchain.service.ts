@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BrowserProvider, Contract, ContractTransactionReceipt } from 'ethers';
 import { Web3Service } from './web3.service';
-import PatientRecords from '../../shared/contracts/PatientRecords.json';
+import PatientRecords from '../contracts/PatientRecords.json'
 import { Diagnosis } from '../models/blockchain.model';
 import { AppError } from '../errors/app.error';
 

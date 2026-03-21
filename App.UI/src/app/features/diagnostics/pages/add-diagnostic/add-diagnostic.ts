@@ -2,33 +2,25 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
-  ReactiveFormsModule,
   Validators,
   AbstractControl,
   ValidationErrors,
 } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of, takeUntil } from 'rxjs';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { DiagnosticsService } from '../../services/diagnostics.service';
 import { DiagnosticSubmissionService } from '../../services/diagnostic-submission.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { CustomField } from '../../services/diagnostic-pdf.service';
-import { PatientDto } from '../../models/diagnostic.model';
+import { PatientDto } from '../../../../core/models/patient.model';
 import { AppError } from '../../../../core/errors/app.error';
+import { UsersService } from '../../../../core/services/users.service';
+import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
 
 export type { CustomField };
 
@@ -37,22 +29,10 @@ export type { CustomField };
   templateUrl: './add-diagnostic.html',
   styleUrls: ['./add-diagnostic.scss'],
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatDividerModule,
-    MatProgressSpinnerModule,
-    MatAutocompleteModule,
-    MatExpansionModule,
-    MatTooltipModule,
-  ],
+  imports: [...MAT_FORM_IMPORTS, MatAutocompleteModule, MatExpansionModule],
 })
 export class AddDiagnostic implements OnInit, OnDestroy {
-  private diagnosticsService = inject(DiagnosticsService);
+  private usersService = inject(UsersService);
   private submissionService = inject(DiagnosticSubmissionService);
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
@@ -154,7 +134,7 @@ export class AddDiagnostic implements OnInit, OnDestroy {
           }
           this.isSearching = true;
           this.searchPerformed = true;
-          return this.diagnosticsService.searchPatients(value.trim());
+          return this.usersService.searchPatients(value.trim());
         })
       )
       .subscribe({

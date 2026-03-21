@@ -1,17 +1,14 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AppError } from '../../../../core/errors/app.error';
+import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, RouterLink],
+  imports: [...MAT_COMMON_IMPORTS, RouterLink],
   templateUrl: './login.html',
   styleUrls: ['./login.scss'],
 })

@@ -1,43 +1,25 @@
-// App.UI/src/app/features/patient-access/pages/patient-access/patient-access.ts
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of, takeUntil } from 'rxjs';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { DiagnosticsService } from '../../../diagnostics/services/diagnostics.service';
 import { AccessRequestService } from '../../services/access-request.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { AccessRequestDto } from '../../models/access-request.model';
-import { PatientDto } from '../../../diagnostics/models/diagnostic.model';
+import { AccessRequestDto } from '../../../../core/models/access-request.model';
+import { PatientDto } from '../../../../core/models/patient.model';
+import { UsersService } from '../../../../core/services/users.service';
+import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
 
 @Component({
   selector: 'app-patient-access',
   templateUrl: './patient-access.html',
   styleUrls: ['./patient-access.scss'],
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatTabsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatTooltipModule,
-  ],
+  imports: [...MAT_FORM_IMPORTS, MatTabsModule, MatChipsModule],
 })
 export class PatientAccess implements OnInit, OnDestroy {
-  private diagnosticsService = inject(DiagnosticsService);
+  private usersService = inject(UsersService);
   private accessRequestService = inject(AccessRequestService);
   private notify = inject(NotificationService);
   private router = inject(Router);
@@ -77,7 +59,7 @@ export class PatientAccess implements OnInit, OnDestroy {
             return of([]);
           }
           this.isSearching = true;
-          return this.diagnosticsService.searchPatients(term);
+          return this.usersService.searchPatients(term);
         }),
         takeUntil(this.destroy$)
       )

@@ -1,20 +1,17 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { Web3Service } from '../../../../core/services/web3.service';
 import { DiagnosticDecryptionService } from '../../services/diagnostic-decryption.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { Diagnosis } from '../../../../core/models/blockchain.model';
+import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 
 @Component({
   selector: 'app-get-diagnostics',
   templateUrl: './get-diagnostics.html',
   styleUrls: ['./get-diagnostics.scss'],
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [...MAT_COMMON_IMPORTS],
 })
 export class GetDiagnostics implements OnInit {
   private blockchainService = inject(BlockchainService);

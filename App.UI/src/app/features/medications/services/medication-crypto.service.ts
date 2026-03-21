@@ -1,29 +1,21 @@
 import { Injectable, inject } from '@angular/core';
 import { CryptoService } from '../../../core/services/crypto.service';
 import { E2eeKeyService } from '../../../core/services/e2ee-key.service';
-import { AccessRequestService } from '../../patient-access/services/access-request.service';
 import { MedicationService } from './medication.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppError } from '../../../core/errors/app.error';
-import { EnvelopeDto } from '../models/medication.model';
-
-export interface MedicationFormData {
-  name: string;
-  dose: string;
-  frequency: string;
-  notes: string;
-}
-
-export interface MedicationSubmissionInput {
-  patientId: string;
-  medication: MedicationFormData;
-}
+import { EnvelopeDto, MedicationDto } from '../models/medication.model';
+import { MedicationFormData, MedicationSubmissionInput } from '../models/medication-form.model';
+import { AccessManagementService } from '../../access-management/services/access-management.service';
 
 @Injectable({ providedIn: 'root' })
-export class MedicationEncryptionService {
+export class MedicationCryptoService {
   private e2eeService = inject(E2eeKeyService);
   private medicationService = inject(MedicationService);
+  private accessService = inject(AccessManagementService);
   private authService = inject(AuthService);
+
+  // ==================== Encryption (Submit) ====================
 
   /**
    * Full encryption + submission pipeline:
@@ -37,13 +29,14 @@ export class MedicationEncryptionService {
   async submit(input: MedicationSubmissionInput): Promise<void> {
     const { patientId, medication } = input;
     const currentUser = this.authService.getDecodedToken();
-    if (!currentUser)
+    if (!currentUser) {
       throw new AppError({
         message: 'You must be logged in.',
         status: 401,
         title: 'Unauthorized',
         type: 'UNAUTHORIZED',
       });
+    }
 
     // 1. Serialize medication as JSON
     const jsonPayload = JSON.stringify(medication);
@@ -59,10 +52,7 @@ export class MedicationEncryptionService {
     // 4. Export AES key as raw bytes
     const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
 
-    // 5. Get all user IDs who need an envelope:
-    //    - The patient
-    //    - The current doctor (self)
-    //    - All other doctors with approved access to this patient
+    // 5. Get all user IDs who need an envelope
     const authorizedUserIds = await this.getAuthorizedUserIds(patientId);
 
     // 6. Fetch public keys in bulk
@@ -88,53 +78,60 @@ export class MedicationEncryptionService {
     });
   }
 
+  // ==================== Decryption ====================
+
   /**
-   * Returns unique user IDs: patient + current doctor + all other approved doctors.
+   * Decrypts a medication's encrypted data using the user's RSA private key.
+   *
+   * Flow:
+   * 1. Decode the envelope's encryptedAesKey from base64
+   * 2. Decrypt it with the RSA private key → raw AES key
+   * 3. Import the AES key
+   * 4. Decode encryptedData + IV from base64
+   * 5. Decrypt with AES-GCM → JSON string
+   * 6. Parse JSON → MedicationFormData
    */
-  private async getAuthorizedUserIds(patientId: string): Promise<string[]> {
-    // Fetch all access requests for this patient from Diagnostics.Api
-    // We reuse the existing access-request endpoint from the doctor's perspective
-    // but we need the patient's approved doctors list.
-    // Since the doctor has access, they can fetch this.
-    const ids = new Set<string>();
+  async decrypt(medication: MedicationDto): Promise<MedicationFormData> {
+    const privateKey = this.requirePrivateKey();
 
-    // Always include patient and self
-    ids.add(patientId);
-
-    // Fetch approved doctors for this patient via the access request endpoint
-    try {
-      const response = await this.e2eeService.getApprovedDoctorIds(patientId);
-      response.forEach((id) => ids.add(id));
-    } catch {
-      // If this fails, at minimum patient + self have envelopes
-      console.warn('Could not fetch approved doctors list, proceeding with patient + self only.');
+    if (!medication.encryptedAesKey) {
+      throw new AppError({
+        message: 'No encryption envelope found for this medication. You may not have access.',
+        status: 403,
+        title: 'No Envelope',
+        type: 'MEDICATION_NO_ENVELOPE',
+      });
     }
 
-    return Array.from(ids);
+    // 1. Decrypt AES key with RSA
+    const encryptedAesKeyBuffer = this.base64ToArrayBuffer(medication.encryptedAesKey);
+    const aesKeyRaw = await CryptoService.decryptAESKeyWithRSA(encryptedAesKeyBuffer, privateKey);
+
+    // 2. Import AES key
+    const aesKey = await crypto.subtle.importKey('raw', aesKeyRaw, { name: 'AES-GCM' }, false, [
+      'decrypt',
+    ]);
+
+    // 3. Decrypt the medication data
+    const encryptedDataBuffer = this.base64ToArrayBuffer(medication.encryptedData);
+    const ivBuffer = this.base64ToArrayBuffer(medication.iv);
+    const iv = new Uint8Array(ivBuffer);
+
+    const decryptedBuffer = await CryptoService.decryptFileWithAES(encryptedDataBuffer, aesKey, iv);
+
+    // 4. Parse JSON
+    const jsonString = new TextDecoder().decode(decryptedBuffer);
+    return JSON.parse(jsonString) as MedicationFormData;
   }
+
+  // ==================== Envelope Management ====================
 
   /**
    * Called by the patient after approving a doctor's access request.
    * Re-wraps the AES key of every existing medication so the new doctor can decrypt them.
-   *
-   * Flow:
-   * 1. Fetch all patient's medications (with the patient's own envelope)
-   * 2. Get patient's RSA private key from memory
-   * 3. Get the doctor's RSA public key from server
-   * 4. For each medication: decrypt AES key with patient's private key,
-   *    re-encrypt it with doctor's public key → new envelope
-   * 5. POST all new envelopes in bulk
    */
   async grantEnvelopesToDoctor(doctorId: string, patientId: string): Promise<void> {
-    const privateKey = this.e2eeService.getPrivateKey();
-    if (!privateKey) {
-      throw new AppError({
-        message: 'Your encryption key is not available. Please log in again.',
-        status: 401,
-        title: 'Key Not Available',
-        type: 'E2EE_KEY_NOT_AVAILABLE',
-      });
-    }
+    const privateKey = this.requirePrivateKey();
 
     // 1. Fetch patient's medications
     const medications = await this.medicationService.getByPatientId(patientId);
@@ -150,11 +147,9 @@ export class MedicationEncryptionService {
     for (const med of medications) {
       if (!med.encryptedAesKey) continue;
 
-      // Decrypt AES key with patient's private key
       const encryptedAesKeyBuffer = this.base64ToArrayBuffer(med.encryptedAesKey);
       const aesKeyRaw = await CryptoService.decryptAESKeyWithRSA(encryptedAesKeyBuffer, privateKey);
 
-      // Re-encrypt with doctor's public key
       const encryptedForDoctor = await CryptoService.encryptAESKeyWithRSA(aesKeyRaw, doctorRsaKey);
 
       envelopes.push({
@@ -168,6 +163,41 @@ export class MedicationEncryptionService {
     if (envelopes.length > 0) {
       await this.medicationService.addEnvelopesBulk({ envelopes });
     }
+  }
+
+  // ==================== Private Helpers ====================
+
+  /**
+   * Returns the RSA private key or throws if unavailable.
+   */
+  private requirePrivateKey(): CryptoKey {
+    const privateKey = this.e2eeService.getPrivateKey();
+    if (!privateKey) {
+      throw new AppError({
+        message: 'Your encryption key is not available. Please log in again.',
+        status: 401,
+        title: 'Key Not Available',
+        type: 'E2EE_KEY_NOT_AVAILABLE',
+      });
+    }
+    return privateKey;
+  }
+
+  /**
+   * Returns unique user IDs: patient + current doctor + all other approved doctors.
+   */
+  private async getAuthorizedUserIds(patientId: string): Promise<string[]> {
+    const ids = new Set<string>();
+    ids.add(patientId);
+
+    try {
+      const response = await this.accessService.getApprovedDoctorIds(patientId);
+      response.forEach((id) => ids.add(id));
+    } catch {
+      console.warn('Could not fetch approved doctors list, proceeding with patient + self only.');
+    }
+
+    return Array.from(ids);
   }
 
   private base64ToArrayBuffer(base64: string): ArrayBuffer {

@@ -13,10 +13,8 @@ import {
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
-import {
-  MedicationEncryptionService,
-  MedicationFormData,
-} from '../../services/medication-encryption.service';
+import { MedicationCryptoService } from '../../services/medication-crypto.service';
+import { MedicationFormData } from '../../models/medication-form.model';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { UsersService } from '../../../../core/services/users.service';
 import { PatientDto } from '../../../../core/models/patient.model';
@@ -33,7 +31,7 @@ export class AddMedication implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private usersService = inject(UsersService);
-  private encryptionService = inject(MedicationEncryptionService);
+  private medicationCryptoService = inject(MedicationCryptoService);
   private notify = inject(NotificationService);
   private destroy$ = new Subject<void>();
 
@@ -137,7 +135,7 @@ export class AddMedication implements OnInit, OnDestroy {
         notes: this.form.value.notes ?? '',
       };
 
-      await this.encryptionService.submit({
+      await this.medicationCryptoService.submit({
         patientId: this.selectedPatient!.id,
         medication,
       });
@@ -145,7 +143,8 @@ export class AddMedication implements OnInit, OnDestroy {
       this.notify.showSuccess('Medication added and encrypted successfully.');
       this.router.navigate(['/patient-access']);
     } catch (error) {
-      const message = error instanceof AppError ? error.message : 'Failed to add medication.';
+      const message =
+        error instanceof AppError ? error.message : 'Failed to add medication.';
       this.notify.showError(message);
     } finally {
       this.isLoading = false;

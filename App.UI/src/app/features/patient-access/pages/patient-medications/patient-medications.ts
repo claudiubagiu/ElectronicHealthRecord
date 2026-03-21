@@ -3,10 +3,10 @@ import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 import { MedicationService } from '../../../medications/services/medication.service';
-import { MedicationDecryptionService } from '../../../medications/services/medication-decryption.service';
+import { MedicationCryptoService } from '../../../medications/services/medication-crypto.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { MedicationDto } from '../../../medications/models/medication.model';
-import { MedicationFormData } from '../../../medications/services/medication-encryption.service';
+import { MedicationFormData } from '../../../medications/models/medication-form.model';
 
 export interface DecryptedMedication {
   id: string;
@@ -26,7 +26,7 @@ export interface DecryptedMedication {
 export class PatientMedications implements OnInit {
   private route = inject(ActivatedRoute);
   private medicationService = inject(MedicationService);
-  private decryptionService = inject(MedicationDecryptionService);
+  private medicationCryptoService = inject(MedicationCryptoService);
   private notify = inject(NotificationService);
 
   patientId = '';
@@ -56,7 +56,7 @@ export class PatientMedications implements OnInit {
       const decrypted: DecryptedMedication[] = [];
       for (const med of encrypted) {
         try {
-          const data = await this.decryptionService.decrypt(med);
+          const data = await this.medicationCryptoService.decrypt(med);
           decrypted.push({
             id: med.id,
             data,

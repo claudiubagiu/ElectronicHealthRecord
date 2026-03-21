@@ -7,7 +7,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AccessRequestDto } from '../../../../core/models/access-request.model';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 import { MedicationService } from '../../../medications/services/medication.service';
-import { MedicationEncryptionService } from '../../../medications/services/medication-encryption.service';
+import { MedicationCryptoService } from '../../../medications/services/medication-crypto.service';
 
 @Component({
   selector: 'app-access-management',
@@ -20,7 +20,7 @@ export class AccessManagement implements OnInit {
   private service = inject(AccessManagementService);
   private blockchainService = inject(BlockchainService);
   private medicationService = inject(MedicationService);
-  private medicationEncryptionService = inject(MedicationEncryptionService);
+  private medicationCryptoService = inject(MedicationCryptoService);
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
 
@@ -74,7 +74,7 @@ export class AccessManagement implements OnInit {
       const user = this.authService.getDecodedToken();
       if (user) {
         try {
-          await this.medicationEncryptionService.grantEnvelopesToDoctor(
+          await this.medicationCryptoService.grantEnvelopesToDoctor(
             request.doctorId,
             user.userId
           );

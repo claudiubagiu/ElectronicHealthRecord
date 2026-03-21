@@ -1,11 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 import { MedicationService } from '../../services/medication.service';
-import { MedicationDecryptionService } from '../../services/medication-decryption.service';
+import { MedicationCryptoService } from '../../services/medication-crypto.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { MedicationDto } from '../../models/medication.model';
-import { MedicationFormData } from '../../services/medication-encryption.service';
+import { MedicationFormData } from '../../models/medication-form.model';
 
 export interface DecryptedMedication {
   id: string;
@@ -24,7 +24,7 @@ export interface DecryptedMedication {
 })
 export class GetMedications implements OnInit {
   private medicationService = inject(MedicationService);
-  private decryptionService = inject(MedicationDecryptionService);
+  private medicationCryptoService = inject(MedicationCryptoService);
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
 
@@ -46,7 +46,7 @@ export class GetMedications implements OnInit {
       const decrypted: DecryptedMedication[] = [];
       for (const med of encrypted) {
         try {
-          const data = await this.decryptionService.decrypt(med);
+          const data = await this.medicationCryptoService.decrypt(med);
           decrypted.push({
             id: med.id,
             data,

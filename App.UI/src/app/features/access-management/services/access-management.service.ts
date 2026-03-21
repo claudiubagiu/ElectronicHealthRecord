@@ -26,4 +26,13 @@ export class AccessManagementService {
   revoke(requestId: string): Promise<AccessRequestDto> {
     return firstValueFrom(this.http.patch<AccessRequestDto>(`${this.API}/${requestId}/revoke`, {}));
   }
+
+  /**
+   * Fetches the IDs of all doctors with approved access to a patient.
+   * Used when creating medication envelopes.
+   */
+  async getApprovedDoctorIds(patientId: string): Promise<string[]> {
+    const requests = await this.getMyRequests(patientId);
+    return requests.filter((r) => r.status === 'Approved').map((r) => r.doctorId);
+  }
 }

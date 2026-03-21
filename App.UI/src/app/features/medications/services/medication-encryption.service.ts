@@ -91,9 +91,7 @@ export class MedicationEncryptionService {
   /**
    * Returns unique user IDs: patient + current doctor + all other approved doctors.
    */
-  private async getAuthorizedUserIds(
-    patientId: string,
-  ): Promise<string[]> {
+  private async getAuthorizedUserIds(patientId: string): Promise<string[]> {
     // Fetch all access requests for this patient from Diagnostics.Api
     // We reuse the existing access-request endpoint from the doctor's perspective
     // but we need the patient's approved doctors list.
@@ -113,6 +111,72 @@ export class MedicationEncryptionService {
     }
 
     return Array.from(ids);
+  }
+
+  /**
+   * Called by the patient after approving a doctor's access request.
+   * Re-wraps the AES key of every existing medication so the new doctor can decrypt them.
+   *
+   * Flow:
+   * 1. Fetch all patient's medications (with the patient's own envelope)
+   * 2. Get patient's RSA private key from memory
+   * 3. Get the doctor's RSA public key from server
+   * 4. For each medication: decrypt AES key with patient's private key,
+   *    re-encrypt it with doctor's public key → new envelope
+   * 5. POST all new envelopes in bulk
+   */
+  async grantEnvelopesToDoctor(doctorId: string, patientId: string): Promise<void> {
+    const privateKey = this.e2eeService.getPrivateKey();
+    if (!privateKey) {
+      throw new AppError({
+        message: 'Your encryption key is not available. Please log in again.',
+        status: 401,
+        title: 'Key Not Available',
+        type: 'E2EE_KEY_NOT_AVAILABLE',
+      });
+    }
+
+    // 1. Fetch patient's medications
+    const medications = await this.medicationService.getByPatientId(patientId);
+    if (medications.length === 0) return;
+
+    // 2. Fetch doctor's public key
+    const doctorPkResponse = await this.e2eeService.getPublicKey(doctorId);
+    const doctorRsaKey = await CryptoService.importPublicKey(doctorPkResponse.publicKey);
+
+    // 3. Re-wrap AES key for each medication
+    const envelopes: { medicationId: string; userId: string; encryptedAesKey: string }[] = [];
+
+    for (const med of medications) {
+      if (!med.encryptedAesKey) continue;
+
+      // Decrypt AES key with patient's private key
+      const encryptedAesKeyBuffer = this.base64ToArrayBuffer(med.encryptedAesKey);
+      const aesKeyRaw = await CryptoService.decryptAESKeyWithRSA(encryptedAesKeyBuffer, privateKey);
+
+      // Re-encrypt with doctor's public key
+      const encryptedForDoctor = await CryptoService.encryptAESKeyWithRSA(aesKeyRaw, doctorRsaKey);
+
+      envelopes.push({
+        medicationId: med.id,
+        userId: doctorId,
+        encryptedAesKey: this.arrayBufferToBase64(encryptedForDoctor),
+      });
+    }
+
+    // 4. Send bulk
+    if (envelopes.length > 0) {
+      await this.medicationService.addEnvelopesBulk({ envelopes });
+    }
+  }
+
+  private base64ToArrayBuffer(base64: string): ArrayBuffer {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer as ArrayBuffer;
   }
 
   private arrayBufferToBase64(buffer: ArrayBuffer): string {

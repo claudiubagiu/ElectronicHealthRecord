@@ -7,6 +7,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AccessRequestDto } from '../../../../core/models/access-request.model';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 import { MedicationService } from '../../../medications/services/medication.service';
+import { MedicationEncryptionService } from '../../../medications/services/medication-encryption.service';
 
 @Component({
   selector: 'app-access-management',
@@ -18,7 +19,8 @@ import { MedicationService } from '../../../medications/services/medication.serv
 export class AccessManagement implements OnInit {
   private service = inject(AccessManagementService);
   private blockchainService = inject(BlockchainService);
-  private medicationService = inject(MedicationService)
+  private medicationService = inject(MedicationService);
+  private medicationEncryptionService = inject(MedicationEncryptionService);
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
 
@@ -67,6 +69,19 @@ export class AccessManagement implements OnInit {
       // 2. After on-chain confirmation, update in backend
       const updated = await this.service.approve(request.id);
       this.updateLocal(updated);
+
+      // 3. Create medication envelopes for the newly approved doctor
+      const user = this.authService.getDecodedToken();
+      if (user) {
+        try {
+          await this.medicationEncryptionService.grantEnvelopesToDoctor(
+            request.doctorId,
+            user.userId
+          );
+        } catch (e) {
+          console.warn('Failed to create medication envelopes for doctor:', e);
+        }
+      }
 
       this.notify.showSuccess(`Access granted to ${request.doctorName}.`);
     } catch {

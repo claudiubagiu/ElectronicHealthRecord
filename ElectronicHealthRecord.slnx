@@ -5,5 +5,6 @@
     <Build />
   </Project>
   <Project Path="Ipfs.Api/Ipfs.Api.csproj" />
+  <Project Path="Medications.Api/Medications.Api.csproj" Id="b94e9c45-9771-4673-ab9b-4133ecc51e3a" />
   <Project Path="Users.Api/Users.Api.csproj" />
 </Solution>

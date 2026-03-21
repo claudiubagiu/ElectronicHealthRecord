@@ -42,6 +42,18 @@ const ROLE_NAV_ITEMS: NavItem[] = [
     icon: 'admin_panel_settings',
     roles: ['Patient'],
   },
+  {
+    label: 'Add Medication',
+    route: '/add-medication',
+    icon: 'medication',
+    roles: ['Doctor'],
+  },
+  {
+    label: 'My Medications',
+    route: '/medications',
+    icon: 'medication',
+    roles: ['Patient'],
+  },
 ];
 
 @Component({

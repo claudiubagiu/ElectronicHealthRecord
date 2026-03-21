@@ -365,3 +365,12 @@ h1 {
     height: 16px;
   }
 }
+
+.row-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.view-btn.medications {
+  background-color: #2e7d32 !important;
+}

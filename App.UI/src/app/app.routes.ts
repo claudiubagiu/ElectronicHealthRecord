@@ -53,4 +53,28 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(['Doctor'])],
   },
+  {
+    path: 'add-medication',
+    loadComponent: () =>
+      import('./features/medications/pages/add-medication/add-medication').then(
+        (m) => m.AddMedication
+      ),
+    canActivate: [roleGuard(['Doctor'])],
+  },
+  {
+    path: 'medications',
+    loadComponent: () =>
+      import('./features/medications/pages/get-medications/get-medications').then(
+        (m) => m.GetMedications
+      ),
+    canActivate: [roleGuard(['Patient'])],
+  },
+  {
+    path: 'patient/:patientId/medications',
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-medications/patient-medications').then(
+        (m) => m.PatientMedications
+      ),
+    canActivate: [roleGuard(['Doctor'])],
+  },
 ];

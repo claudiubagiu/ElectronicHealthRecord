@@ -1,0 +1,136 @@
+<div class="add-medication-page">
+  <div class="add-medication-card">
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>medication</mat-icon>
+      </div>
+      <h1>Add Medication</h1>
+      <p class="subtitle">
+        Search for a patient and prescribe medication. All data is end-to-end encrypted.
+      </p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Patient Search -->
+      <div class="patient-section">
+        <p class="section-label">Patient *</p>
+
+        <mat-form-field
+          appearance="outline"
+          class="full"
+          [class.patient-selected]="selectedPatient"
+        >
+          @if (!selectedPatient) {
+          <mat-label>Search patient by name</mat-label>
+          } @if (selectedPatient) {
+          <div matPrefix class="patient-chip-prefix">
+            <mat-icon class="chip-icon">person</mat-icon>
+            <span class="chip-name">
+              {{ selectedPatient.firstName }} {{ selectedPatient.lastName }}
+            </span>
+            <span class="chip-cnp">CNP: {{ selectedPatient.cnp }}</span>
+          </div>
+          }
+
+          <input
+            matInput
+            formControlName="patientSearch"
+            [placeholder]="selectedPatient ? '' : 'e.g. John Smith'"
+            [matAutocomplete]="patientAuto"
+            [style.display]="selectedPatient ? 'none' : 'block'"
+          />
+
+          @if (selectedPatient) {
+          <button matSuffix mat-icon-button type="button" (click)="clearPatient()">
+            <mat-icon>close</mat-icon>
+          </button>
+          } @if (!selectedPatient && isSearching) {
+          <mat-spinner matSuffix diameter="20"></mat-spinner>
+          } @if (!selectedPatient && !isSearching) {
+          <mat-icon matSuffix>search</mat-icon>
+          }
+
+          <mat-autocomplete
+            #patientAuto="matAutocomplete"
+            [displayWith]="displayPatient"
+            (optionSelected)="onPatientSelected($event)"
+          >
+            @for (patient of filteredPatients; track patient.id) {
+            <mat-option [value]="patient">
+              <div class="autocomplete-option">
+                <span class="option-name">{{ patient.firstName }} {{ patient.lastName }}</span>
+                <span class="option-cnp">CNP: {{ patient.cnp }}</span>
+              </div>
+            </mat-option>
+            } @if (searchPerformed && filteredPatients.length === 0 && !isSearching) {
+            <mat-option disabled>
+              <span class="no-results">No patients found</span>
+            </mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+      </div>
+
+      <!-- Medication Fields -->
+      <div class="medication-section">
+        <p class="section-label">Medication details *</p>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Medication name</mat-label>
+          <input matInput formControlName="name" placeholder="e.g. Metformin" />
+        </mat-form-field>
+
+        <div class="row-fields">
+          <mat-form-field appearance="outline" class="half">
+            <mat-label>Dose</mat-label>
+            <input matInput formControlName="dose" placeholder="e.g. 500mg" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half">
+            <mat-label>Frequency</mat-label>
+            <input matInput formControlName="frequency" placeholder="e.g. 2x/day" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Notes (optional)</mat-label>
+          <textarea
+            matInput
+            formControlName="notes"
+            rows="3"
+            placeholder="e.g. Take after meals"
+          ></textarea>
+        </mat-form-field>
+      </div>
+
+      <!-- Submit -->
+      <div class="submit-section">
+        @if (!isFormReady && form.touched) {
+        <div class="form-status">
+          <mat-icon>info</mat-icon>
+          <span>Please select a patient and fill in the required fields</span>
+        </div>
+        }
+
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit-btn"
+          [disabled]="!isFormReady || isLoading"
+        >
+          @if (!isLoading) {
+          <ng-container>
+            <mat-icon>lock</mat-icon>
+            Encrypt & Save Medication
+          </ng-container>
+          } @else {
+          <ng-container>
+            <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
+            Encrypting...
+          </ng-container>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

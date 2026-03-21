@@ -6,6 +6,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AccessRequestDto } from '../../../../core/models/access-request.model';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
+import { MedicationService } from '../../../medications/services/medication.service';
 
 @Component({
   selector: 'app-access-management',
@@ -17,6 +18,7 @@ import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports'
 export class AccessManagement implements OnInit {
   private service = inject(AccessManagementService);
   private blockchainService = inject(BlockchainService);
+  private medicationService = inject(MedicationService)
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
 
@@ -90,9 +92,16 @@ export class AccessManagement implements OnInit {
   async onRevoke(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
+      // 1. Blockchain — revoke on-chain
       await this.blockchainService.revokeAccess(request.doctorWalletAddress);
+
+      // 2. Backend — update access request status
       const updated = await this.service.revoke(request.id);
       this.updateLocal(updated);
+
+      // 3. Delete medication envelopes for this doctor
+      await this.medicationService.deleteEnvelopes(request.doctorId, request.patientId);
+
       this.notify.showSuccess(`Access revoked for ${request.doctorName}.`);
     } catch {
       this.notify.showError('Failed to revoke. Please try again.');

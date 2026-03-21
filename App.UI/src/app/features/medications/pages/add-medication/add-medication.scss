@@ -1,0 +1,227 @@
+.add-medication-page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  padding: 32px 16px;
+  box-sizing: border-box;
+  background: #fafafa;
+}
+
+.add-medication-card {
+  width: 100%;
+  max-width: 680px;
+  padding: 32px 40px 40px;
+  box-sizing: border-box;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+// ── Header ──
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(21, 101, 192, 0.1);
+  margin-bottom: 16px;
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: #1565c0;
+  }
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #212121;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: rgba(0, 0, 0, 0.5);
+  max-width: 480px;
+}
+
+// ── Sections ──
+
+.patient-section,
+.medication-section {
+  margin-bottom: 20px;
+}
+
+.section-label {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.full {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.half {
+  flex: 1;
+  margin-bottom: 4px;
+}
+
+.row-fields {
+  display: flex;
+  gap: 12px;
+}
+
+// ── Patient chip (selected state) ──
+
+.patient-selected {
+  ::ng-deep .mdc-notched-outline__leading,
+  ::ng-deep .mdc-notched-outline__notch,
+  ::ng-deep .mdc-notched-outline__trailing {
+    border-color: rgba(0, 0, 0, 0.2) !important;
+  }
+
+  ::ng-deep .mdc-text-field--outlined {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+  }
+}
+
+.patient-chip-prefix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.chip-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #1565c0;
+}
+
+.chip-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #212121;
+}
+
+.chip-cnp {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+// ── Autocomplete ──
+
+.autocomplete-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.option-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.option-cnp {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.no-results {
+  color: rgba(0, 0, 0, 0.4);
+  font-size: 0.85rem;
+}
+
+// ── Submit ──
+
+.submit-section {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(21, 101, 192, 0.08);
+  border: 1px solid rgba(21, 101, 192, 0.25);
+  font-size: 0.83rem;
+  color: #1565c0;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #1565c0;
+    flex-shrink: 0;
+  }
+}
+
+.submit-btn {
+  width: 100%;
+  height: 52px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  background-color: #1565c0 !important;
+  color: white !important;
+  letter-spacing: 0.3px;
+
+  &[disabled] {
+    opacity: 0.55;
+  }
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .button-spinner {
+    ::ng-deep circle {
+      stroke: white;
+    }
+  }
+}
+
+// ── Responsive ──
+
+@media (max-width: 600px) {
+  .add-medication-card {
+    padding: 24px 16px 32px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .row-fields {
+    flex-direction: column;
+    gap: 0;
+  }
+}

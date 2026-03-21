@@ -250,6 +250,20 @@ export class E2eeKeyService {
     }
   }
 
+  /**
+   * Fetches the IDs of all doctors with approved access to a patient.
+   * Used when creating medication envelopes.
+   */
+  async getApprovedDoctorIds(patientId: string): Promise<string[]> {
+    const accessRequestApi = environment.apiUrls.accessRequest;
+    const requests = await firstValueFrom(
+      this.http.get<{ doctorId: string; status: string }[]>(
+        `${accessRequestApi}/patient/${patientId}`
+      )
+    );
+    return requests.filter((r) => r.status === 'Approved').map((r) => r.doctorId);
+  }
+
   // ==================== Private Helpers ====================
 
   /**

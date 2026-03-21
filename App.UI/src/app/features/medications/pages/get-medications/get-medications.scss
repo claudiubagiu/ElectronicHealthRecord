@@ -1,0 +1,182 @@
+.my-medications-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 16px;
+  background: #fafafa;
+}
+
+.my-medications-card {
+  width: 100%;
+  max-width: 720px;
+  background: white;
+  border-radius: 16px;
+  padding: 40px 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+// ── Header ──
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 32px;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 12px 0 4px;
+    color: #212121;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, 0.5);
+    margin: 0;
+  }
+}
+
+.icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(76, 175, 80, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    color: #2e7d32;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+// ── States ──
+
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 0.95rem;
+
+  &.empty .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+// ── List ──
+
+.medications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.medication-item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  }
+}
+
+// ── Item header ──
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.item-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #212121;
+}
+
+.item-date {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+// ── Detail rows ──
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.detail-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #212121;
+}
+
+// ── Footer ──
+
+.item-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.3);
+
+  .footer-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// ── Responsive ──
+
+@media (max-width: 600px) {
+  .my-medications-card {
+    padding: 24px 16px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

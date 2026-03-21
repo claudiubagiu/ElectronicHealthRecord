@@ -130,6 +130,14 @@ export class PatientAccess implements OnInit, OnDestroy {
     });
   }
 
+  viewMedications(req: AccessRequestDto): void {
+    this.router.navigate(['/patient', req.patientId, 'medications'], {
+      queryParams: {
+        patientName: req.patientName,
+      },
+    });
+  }
+
   formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('en-GB', {
       day: '2-digit',

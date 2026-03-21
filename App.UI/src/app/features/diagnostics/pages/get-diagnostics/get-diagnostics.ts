@@ -3,12 +3,10 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { Web3Service } from '../../../../core/services/web3.service';
-import { IpfsService } from '../../../../core/services/ipfs.service';
-import { LitProtocolService } from '../../../../core/services/lit-protocol.service';
-import { CryptoService } from '../../../../core/services/crypto.service';
+import { DiagnosticDecryptionService } from '../../services/diagnostic-decryption.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { Diagnosis } from '../../../../core/models/blockchain.model';
 
 @Component({
@@ -16,20 +14,13 @@ import { Diagnosis } from '../../../../core/models/blockchain.model';
   templateUrl: './get-diagnostics.html',
   styleUrls: ['./get-diagnostics.scss'],
   standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-  ],
+  imports: [CommonModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
 })
 export class GetDiagnostics implements OnInit {
   private blockchainService = inject(BlockchainService);
   private web3Service = inject(Web3Service);
-  private ipfsService = inject(IpfsService);
-  private litService = inject(LitProtocolService);
-  private snackBar = inject(MatSnackBar);
+  private decryptionService = inject(DiagnosticDecryptionService);
+  private notify = inject(NotificationService);
 
   diagnoses: Diagnosis[] = [];
   isLoading = false;
@@ -40,17 +31,12 @@ export class GetDiagnostics implements OnInit {
   }
 
   async loadDiagnoses(): Promise<void> {
-    await this.web3Service['initPromise'];
+    await this.web3Service.waitForInit();
 
     const address = this.web3Service.getAddressOrNull();
 
     if (!address) {
-      this.snackBar.open('Wallet not connected.', 'Close', {
-        duration: 3000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        panelClass: 'snackbar-error',
-      });
+      this.notify.showError('Wallet not connected.');
       return;
     }
 
@@ -59,12 +45,7 @@ export class GetDiagnostics implements OnInit {
       this.diagnoses = await this.blockchainService.getPatientDiagnoses(address);
     } catch (error: any) {
       console.error('[GetDiagnostics] error:', error);
-      this.snackBar.open('Failed to load diagnoses.', 'Close', {
-        duration: 3000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        panelClass: 'snackbar-error',
-      });
+      this.notify.showError('Failed to load diagnoses.');
     } finally {
       this.isLoading = false;
     }
@@ -73,60 +54,9 @@ export class GetDiagnostics implements OnInit {
   async openFile(diagnosis: Diagnosis): Promise<void> {
     this.downloadingId = diagnosis.id;
     try {
-      const data = await this.ipfsService.downloadEncryptedData(diagnosis.ipfsCid);
-
-      await this.litService.connect();
-
-      const accs = this.litService.createAccsBuilder(diagnosis.patientAddr);
-
-      const walletClient = await this.web3Service.getViemWalletClient();
-
-      const decryptResult = await this.litService.decrypt(
-        {
-          ciphertext: data.litMetadata!.ciphertext,
-          dataToEncryptHash: data.litMetadata!.dataToEncryptHash,
-        },
-        accs,
-        walletClient
-      );
-
-      const raw = decryptResult.decryptedData as Uint8Array;
-      const aesKeyBase64 = new TextDecoder().decode(raw);
-      const aesKeyRaw = Uint8Array.from(atob(aesKeyBase64), (c) => c.charCodeAt(0))
-        .buffer as ArrayBuffer;
-
-      const aesKey = await CryptoService.importAESKey(aesKeyRaw);
-
-      const decryptedBuffer = await CryptoService.decryptFileWithAES(
-        data.encryptedFile.buffer as ArrayBuffer,
-        aesKey,
-        new Uint8Array(data.iv)
-      );
-
-      const ext = data.fileName.split('.').pop()?.toLowerCase();
-      const mimeType =
-        ext === 'pdf'
-          ? 'application/pdf'
-          : ext === 'png'
-          ? 'image/png'
-          : ext === 'jpg' || ext === 'jpeg'
-          ? 'image/jpeg'
-          : ext === 'dcm'
-          ? 'application/dicom'
-          : 'application/octet-stream';
-
-      const blob = new Blob([decryptedBuffer], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      await this.decryptionService.decryptAndOpen(diagnosis);
     } catch (error) {
-      this.snackBar.open('Failed to decrypt file.', 'Close', {
-        duration: 4000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        panelClass: 'snackbar-error',
-      });
+      this.notify.showError('Failed to decrypt file.');
     } finally {
       this.downloadingId = null;
     }

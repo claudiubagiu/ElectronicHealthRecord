@@ -1,6 +1,5 @@
 <div class="login-page">
   <div class="login-content">
-
     <!-- Icon -->
     <div class="icon-wrapper">
       <mat-icon>account_balance_wallet</mat-icon>
@@ -11,20 +10,18 @@
     <p class="subtitle">Connect your MetaMask wallet to sign in</p>
 
     <!-- Button -->
-    <button
-      mat-flat-button
-      class="login-button"
-      (click)="onLogin()"
-      [disabled]="isLoading"
-    >
-      <ng-container *ngIf="!isLoading; else loading">
+    <button mat-flat-button class="login-button" (click)="onLogin()" [disabled]="isLoading">
+      @if (!isLoading) {
+      <ng-container>
         <mat-icon>account_balance_wallet</mat-icon>
         Connect with MetaMask
       </ng-container>
-      <ng-template #loading>
+      } @else {
+      <ng-container>
         <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
         Connecting...
-      </ng-template>
+      </ng-container>
+      }
     </button>
 
     <!-- Register link -->
@@ -32,6 +29,5 @@
       Don't have an account?
       <a routerLink="/register">Create one now</a>
     </p>
-
   </div>
 </div>

@@ -22,58 +22,77 @@
           <mat-form-field appearance="outline" class="full">
             <mat-label>Search patient by name</mat-label>
             <input matInput [formControl]="searchControl" placeholder="e.g. John Doe" autocomplete="off" />
-            <mat-icon matSuffix *ngIf="!isSearching">search</mat-icon>
-            <mat-spinner matSuffix diameter="20" *ngIf="isSearching"></mat-spinner>
+            @if (!isSearching) {
+              <mat-icon matSuffix>search</mat-icon>
+            } @else {
+              <mat-spinner matSuffix diameter="20"></mat-spinner>
+            }
           </mat-form-field>
 
-          <div class="results-list" *ngIf="searchPerformed">
-            <div *ngIf="searchResults.length === 0 && !isSearching" class="empty-state small">
-              <mat-icon>person_off</mat-icon>
-              <p>No patients found</p>
-            </div>
-
-            <div class="patient-row" *ngFor="let patient of searchResults">
-              <div class="patient-info">
-                <div class="patient-avatar"><mat-icon>person</mat-icon></div>
-                <div class="patient-details">
-                  <span class="patient-name">{{ patient.firstName }} {{ patient.lastName }}</span>
-                  <span class="patient-cnp">CNP: {{ patient.cnp }}</span>
+          @if (searchPerformed) {
+            <div class="results-list">
+              @if (searchResults.length === 0 && !isSearching) {
+                <div class="empty-state small">
+                  <mat-icon>person_off</mat-icon>
+                  <p>No patients found</p>
                 </div>
-              </div>
+              }
 
-              <div class="patient-action">
-                <button mat-stroked-button class="request-btn"
-                  *ngIf="getPatientStatus(patient.id) === null"
-                  [disabled]="requestingId === patient.id"
-                  (click)="onRequestAccess(patient)">
-                  <mat-spinner diameter="16" *ngIf="requestingId === patient.id"></mat-spinner>
-                  <mat-icon *ngIf="requestingId !== patient.id">send</mat-icon>
-                  {{ requestingId === patient.id ? 'Sending...' : 'Request Access' }}
-                </button>
+              @for (patient of searchResults; track patient.id) {
+                <div class="patient-row">
+                  <div class="patient-info">
+                    <div class="patient-avatar"><mat-icon>person</mat-icon></div>
+                    <div class="patient-details">
+                      <span class="patient-name">{{ patient.firstName }} {{ patient.lastName }}</span>
+                      <span class="patient-cnp">CNP: {{ patient.cnp }}</span>
+                    </div>
+                  </div>
 
-                <span class="status-badge pending" *ngIf="getPatientStatus(patient.id) === 'Pending'">
-                  <mat-icon>schedule</mat-icon> Pending
-                </span>
-
-                <span class="status-badge approved" *ngIf="getPatientStatus(patient.id) === 'Approved'">
-                  <mat-icon>check_circle</mat-icon> Approved
-                </span>
-
-                <button mat-stroked-button class="request-btn"
-                  *ngIf="getPatientStatus(patient.id) === 'Rejected'"
-                  [disabled]="requestingId === patient.id"
-                  (click)="onRequestAccess(patient)"
-                  matTooltip="Your previous request was rejected. You can try again.">
-                  <mat-icon>refresh</mat-icon> Retry
-                </button>
-              </div>
+                  <div class="patient-action">
+                    @if (getPatientStatus(patient.id) === null) {
+                      <button mat-stroked-button class="request-btn"
+                        [disabled]="requestingId === patient.id"
+                        (click)="onRequestAccess(patient)">
+                        @if (requestingId === patient.id) {
+                          <mat-spinner diameter="16"></mat-spinner>
+                        } @else {
+                          <mat-icon>send</mat-icon>
+                        }
+                        {{ requestingId === patient.id ? 'Sending...' : 'Request Access' }}
+                      </button>
+                    } @else if (getPatientStatus(patient.id) === 'Pending') {
+                      <span class="status-chip pending">
+                        <mat-icon>schedule</mat-icon> Pending
+                      </span>
+                    } @else if (getPatientStatus(patient.id) === 'Approved') {
+                      <span class="status-chip approved">
+                        <mat-icon>check_circle</mat-icon> Approved
+                      </span>
+                    } @else if (getPatientStatus(patient.id) === 'Rejected') {
+                      <div class="rejected-action">
+                        <span class="status-chip rejected">
+                          <mat-icon>cancel</mat-icon> Rejected
+                        </span>
+                        <button mat-stroked-button class="retry-btn"
+                          [disabled]="requestingId === patient.id"
+                          (click)="onRequestAccess(patient)"
+                          matTooltip="You can try again.">
+                          <mat-icon>refresh</mat-icon> Retry
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
             </div>
-          </div>
+          }
 
-          <div class="empty-state" *ngIf="!searchPerformed">
-            <mat-icon>manage_search</mat-icon>
-            <p>Type at least 2 characters to search for a patient</p>
-          </div>
+          @if (!searchPerformed) {
+            <div class="empty-state">
+              <mat-icon>manage_search</mat-icon>
+              <p>Type at least 2 characters to search for a patient</p>
+            </div>
+          }
         </div>
       </mat-tab>
 
@@ -82,49 +101,64 @@
         <ng-template mat-tab-label>
           <mat-icon class="tab-icon">list_alt</mat-icon>
           My Requests
-          <span class="tab-badge" *ngIf="myRequests.length > 0">{{ myRequests.length }}</span>
+          @if (myRequests.length > 0) {
+            <span class="tab-badge">{{ myRequests.length }}</span>
+          }
         </ng-template>
 
         <div class="tab-content">
-          <div class="loading-state" *ngIf="isLoadingRequests">
-            <mat-spinner diameter="36"></mat-spinner>
-          </div>
-
-          <div class="empty-state" *ngIf="!isLoadingRequests && myRequests.length === 0">
-            <mat-icon>inbox</mat-icon>
-            <p>You haven't sent any access requests yet</p>
-          </div>
-
-          <div class="requests-list" *ngIf="!isLoadingRequests && myRequests.length > 0">
-            <div class="request-row" *ngFor="let req of myRequests">
-              <div class="request-patient">
-                <div class="patient-avatar"><mat-icon>person</mat-icon></div>
-                <div class="patient-details">
-                  <span class="patient-name">{{ req.patientName }}</span>
-                  <span class="request-date">{{ formatDate(req.createdAt) }}</span>
-                </div>
-              </div>
-
-              <div class="row-right">
-                <span class="status-badge"
-                  [class.pending]="req.status === 'Pending'"
-                  [class.approved]="req.status === 'Approved'"
-                  [class.rejected]="req.status === 'Rejected'">
-                  <mat-icon *ngIf="req.status === 'Pending'">schedule</mat-icon>
-                  <mat-icon *ngIf="req.status === 'Approved'">check_circle</mat-icon>
-                  <mat-icon *ngIf="req.status === 'Rejected'">cancel</mat-icon>
-                  {{ req.status }}
-                </span>
-
-                <button mat-flat-button class="view-btn"
-                  *ngIf="req.status === 'Approved'"
-                  (click)="viewDiagnostics(req)">
-                  <mat-icon>folder_open</mat-icon>
-                  View Diagnostics
-                </button>
-              </div>
+          @if (isLoadingRequests) {
+            <div class="loading-state">
+              <mat-spinner diameter="36"></mat-spinner>
             </div>
-          </div>
+          }
+
+          @if (!isLoadingRequests && myRequests.length === 0) {
+            <div class="empty-state">
+              <mat-icon>inbox</mat-icon>
+              <p>You haven't sent any access requests yet</p>
+            </div>
+          }
+
+          @if (!isLoadingRequests && myRequests.length > 0) {
+            <div class="requests-list">
+              @for (req of myRequests; track req.id) {
+                <div class="request-row">
+                  <div class="request-patient">
+                    <div class="patient-avatar"><mat-icon>person</mat-icon></div>
+                    <div class="patient-details">
+                      <span class="patient-name">{{ req.patientName }}</span>
+                      <span class="request-date">{{ formatDate(req.createdAt) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="row-right">
+                    <span class="status-badge"
+                      [class.pending]="req.status === 'Pending'"
+                      [class.approved]="req.status === 'Approved'"
+                      [class.rejected]="req.status === 'Rejected'">
+                      @if (req.status === 'Pending') {
+                        <mat-icon>schedule</mat-icon>
+                      } @else if (req.status === 'Approved') {
+                        <mat-icon>check_circle</mat-icon>
+                      } @else if (req.status === 'Rejected') {
+                        <mat-icon>cancel</mat-icon>
+                      }
+                      {{ req.status }}
+                    </span>
+
+                    @if (req.status === 'Approved') {
+                      <button mat-flat-button class="view-btn"
+                        (click)="viewDiagnostics(req)">
+                        <mat-icon>folder_open</mat-icon>
+                        View Diagnostics
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </div>
       </mat-tab>
 

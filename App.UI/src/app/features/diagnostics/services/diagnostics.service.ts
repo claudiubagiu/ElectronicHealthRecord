@@ -2,13 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { PatientDto, DiagnosticDto } from '../models/diagnostic.model';
+import { environment } from '../../../../environments/environment';
+
 
 @Injectable({
   providedIn: 'root',
 })
 export class DiagnosticsService {
-  private readonly DIAGNOSTICS_API = 'http://diagnostics.api.docker.localhost/api/Diagnostics';
-  private readonly USERS_API = 'http://users.api.docker.localhost/api/Users';
+  private readonly DIAGNOSTICS_API = environment.apiUrls.diagnostics;
+  private readonly USERS_API = environment.apiUrls.users;
 
   private http = inject(HttpClient);
 

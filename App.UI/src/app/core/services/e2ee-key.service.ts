@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { CryptoService } from './crypto.service';
 import { Web3Service } from './web3.service';
 import { AppError } from '../errors/app.error';
+import { environment } from '../../../environments/environment';
+
 
 /**
  * Deterministic derivation message — must be identical every time
@@ -22,7 +24,7 @@ export interface PublicKeyResponse {
 
 @Injectable({ providedIn: 'root' })
 export class E2eeKeyService {
-  private readonly API_URL = 'http://users.api.docker.localhost/api/Users';
+  private readonly API_URL = environment.apiUrls.users;
   private http = inject(HttpClient);
   private web3Service = inject(Web3Service);
 

@@ -9,8 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../../core/services/auth.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { AppError } from '../../../../core/errors/app.error';
 
 @Component({
@@ -27,13 +27,12 @@ import { AppError } from '../../../../core/errors/app.error';
     MatIconModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule,
   ],
 })
 export class Register implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
-  private snackBar = inject(MatSnackBar);
+  private notify = inject(NotificationService);
   private fb = inject(FormBuilder);
 
   registerForm!: FormGroup;
@@ -127,31 +126,14 @@ export class Register implements OnInit {
 
       await this.authService.register(payload);
 
-      this.snackBar.open('Account created successfully!', 'OK', {
-        duration: 1000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-      });
-
+      this.notify.showSuccess('Account created successfully!', 1000);
       this.router.navigate(['/']);
     } catch (error: unknown) {
       console.error('Register failed:', error);
 
-      if (error instanceof AppError) {
-        this.snackBar.open(error.message, 'Close', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error',
-        });
-      } else {
-        this.snackBar.open('Registration failed. Please try again.', 'Close', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error',
-        });
-      }
+      const message =
+        error instanceof AppError ? error.message : 'Registration failed. Please try again.';
+      this.notify.showError(message);
     } finally {
       this.isLoading = false;
     }

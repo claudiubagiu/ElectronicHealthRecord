@@ -13,12 +13,14 @@ import {
 } from '../models/auth.model';
 import { E2eeKeyService } from './e2ee-key.service';
 import { AppError } from '../errors/app.error';
+import { environment } from '../../../environments/environment';
+
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService implements OnDestroy {
-  private readonly API_URL = 'http://auth.api.docker.localhost/api/Auth';
+  private readonly API_URL = environment.apiUrls.auth;
   private readonly TOKEN_KEY = 'auth_token';
   private walletSubscription?: Subscription;
 

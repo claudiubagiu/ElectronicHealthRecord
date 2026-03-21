@@ -32,35 +32,24 @@
       <mat-divider></mat-divider>
 
       <!-- Sidenav: Authenticated -->
-      <ng-container *ngIf="isAuthenticated$ | async; else sidenavGuest">
-        <div class="sidenav-user-info" *ngIf="user$ | async as user">
-          <mat-icon class="sidenav-avatar-icon">account_circle</mat-icon>
-          <span class="sidenav-username">{{ getShortAddress() }}</span>
-        </div>
+      @if (isAuthenticated$ | async) {
+        @if (user$ | async; as user) {
+          <div class="sidenav-user-info">
+            <mat-icon class="sidenav-avatar-icon">account_circle</mat-icon>
+            <span class="sidenav-username">{{ getShortAddress() }}</span>
+          </div>
+        }
 
-        <!-- Role-based links -->
-        <ng-container *ngIf="roles$ | async as roles">
-          <a mat-list-item routerLink="/add-diagnostic" routerLinkActive="active-link"
-             (click)="sidenav.close()" *ngIf="roles.includes('Doctor')">
-            <mat-icon matListItemIcon>medical_services</mat-icon>
-            <span matListItemTitle>Add Diagnostic</span>
-          </a>
-          <a mat-list-item routerLink="/diagnostics" routerLinkActive="active-link"
-             (click)="sidenav.close()" *ngIf="roles.includes('Patient')">
-            <mat-icon matListItemIcon>assignment</mat-icon>
-            <span matListItemTitle>My Diagnostics</span>
-          </a>
-          <a mat-list-item routerLink="/patient-access" routerLinkActive="active-link"
-            (click)="sidenav.close()" *ngIf="roles.includes('Doctor')">
-            <mat-icon matListItemIcon>manage_accounts</mat-icon>
-            <span matListItemTitle>Patient Access</span>
-          </a>
-          <a mat-list-item routerLink="/access-management" routerLinkActive="active-link"
-            (click)="sidenav.close()" *ngIf="roles.includes('Patient')">
-            <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
-            <span matListItemTitle>Access Management</span>
-          </a>
-        </ng-container>
+        <!-- Role-based links (data-driven) -->
+        @if (roles$ | async; as roles) {
+          @for (item of getVisibleItems(roles); track item.route) {
+            <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link"
+               (click)="sidenav.close()">
+              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+              <span matListItemTitle>{{ item.label }}</span>
+            </a>
+          }
+        }
 
         <a mat-list-item routerLink="/profile" routerLinkActive="active-link"
            (click)="sidenav.close()">
@@ -71,10 +60,8 @@
           <mat-icon matListItemIcon>logout</mat-icon>
           <span matListItemTitle>Sign out</span>
         </a>
-      </ng-container>
-
-      <!-- Sidenav: Unauthenticated -->
-      <ng-template #sidenavGuest>
+      } @else {
+        <!-- Sidenav: Unauthenticated -->
         <a mat-list-item routerLink="/login" routerLinkActive="active-link"
            (click)="sidenav.close()">
           <mat-icon matListItemIcon>login</mat-icon>
@@ -85,7 +72,7 @@
           <mat-icon matListItemIcon>person_add</mat-icon>
           <span matListItemTitle>Register</span>
         </a>
-      </ng-template>
+      }
     </mat-nav-list>
   </mat-sidenav>
 
@@ -118,7 +105,7 @@
       </nav>
 
       <!-- ===== Desktop: Authenticated => Profile with menu ===== -->
-      <ng-container *ngIf="isAuthenticated$ | async; else desktopGuest">
+      @if (isAuthenticated$ | async) {
         <button
           mat-icon-button
           [matMenuTriggerFor]="profileMenu"
@@ -129,10 +116,12 @@
         </button>
 
         <mat-menu #profileMenu="matMenu" xPosition="before">
-          <div class="profile-menu-header" *ngIf="user$ | async as user">
-            <mat-icon class="profile-menu-icon">account_circle</mat-icon>
-            <span class="profile-menu-address">{{ getShortAddress() }}</span>
-          </div>
+          @if (user$ | async; as user) {
+            <div class="profile-menu-header">
+              <mat-icon class="profile-menu-icon">account_circle</mat-icon>
+              <span class="profile-menu-address">{{ getShortAddress() }}</span>
+            </div>
+          }
           <mat-divider></mat-divider>
           <button mat-menu-item routerLink="/profile">
             <mat-icon>person</mat-icon>
@@ -143,29 +132,15 @@
             <span>Settings</span>
           </button>
 
-          <!-- Role-based items -->
-          <ng-container *ngIf="roles$ | async as roles">
-            <button mat-menu-item routerLink="/add-diagnostic"
-                    *ngIf="roles.includes('Doctor')">
-              <mat-icon>medical_services</mat-icon>
-              <span>Add Diagnostic</span>
-            </button>
-            <button mat-menu-item routerLink="/diagnostics"
-                    *ngIf="roles.includes('Patient')">
-              <mat-icon>assignment</mat-icon>
-              <span>My Diagnostics</span>
-            </button>
-            <button mat-menu-item routerLink="/patient-access"
-                    *ngIf="roles.includes('Doctor')">
-              <mat-icon>manage_accounts</mat-icon>
-              <span>Patient Access</span>
-            </button>
-            <button mat-menu-item routerLink="/access-management"
-                    *ngIf="roles.includes('Patient')">
-              <mat-icon>admin_panel_settings</mat-icon>
-              <span>Access Management</span>
-            </button>
-          </ng-container>
+          <!-- Role-based menu items (data-driven) -->
+          @if (roles$ | async; as roles) {
+            @for (item of getVisibleItems(roles); track item.route) {
+              <button mat-menu-item [routerLink]="item.route">
+                <mat-icon>{{ item.icon }}</mat-icon>
+                <span>{{ item.label }}</span>
+              </button>
+            }
+          }
 
           <mat-divider></mat-divider>
           <button mat-menu-item (click)="logout()">
@@ -173,10 +148,8 @@
             <span>Sign out</span>
           </button>
         </mat-menu>
-      </ng-container>
-
-      <!-- ===== Desktop: Unauthenticated => Login + Register ===== -->
-      <ng-template #desktopGuest>
+      } @else {
+        <!-- ===== Desktop: Unauthenticated => Login + Register ===== -->
         <div class="auth-buttons">
           <a mat-stroked-button routerLink="/login" class="login-btn">
             <mat-icon>login</mat-icon>
@@ -187,7 +160,7 @@
             Register
           </a>
         </div>
-      </ng-template>
+      }
     </mat-toolbar>
 
     <!-- Page content -->

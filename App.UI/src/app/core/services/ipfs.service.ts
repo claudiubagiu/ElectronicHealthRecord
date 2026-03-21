@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AppError } from '../errors/app.error';
 import { EncryptedData, EncryptedPayload, IpfsUploadResponse } from '../models/ipfs.model';
+import { environment } from '../../../environments/environment';
 
 
 /* ============================
@@ -13,7 +14,7 @@ import { EncryptedData, EncryptedPayload, IpfsUploadResponse } from '../models/i
   providedIn: 'root',
 })
 export class IpfsService {
-  private readonly IPFS_API_URL = 'http://ipfs.api.docker.localhost/api/Ipfs';
+  private readonly IPFS_API_URL = environment.apiUrls.ipfs;
 
   private http = inject(HttpClient);
 

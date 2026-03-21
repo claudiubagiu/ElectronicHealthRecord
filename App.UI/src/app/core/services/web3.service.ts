@@ -333,6 +333,13 @@ export class Web3Service implements OnDestroy {
     }
   }
 
+  /**
+   * Returns a promise that resolves when Web3 initialization is complete.
+   */
+  waitForInit(): Promise<void> {
+    return this.initPromise;
+  }
+
   // ==================== Getters ====================
 
   /**

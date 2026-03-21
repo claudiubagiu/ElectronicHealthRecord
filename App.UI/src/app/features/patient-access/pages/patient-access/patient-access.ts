@@ -10,11 +10,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DiagnosticsService } from '../../../diagnostics/services/diagnostics.service';
 import { AccessRequestService } from '../../services/access-request.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { AccessRequestDto } from '../../models/access-request.model';
 import { PatientDto } from '../../../diagnostics/models/diagnostic.model';
 
@@ -32,7 +32,6 @@ import { PatientDto } from '../../../diagnostics/models/diagnostic.model';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule,
     MatChipsModule,
     MatTooltipModule,
   ],
@@ -40,7 +39,7 @@ import { PatientDto } from '../../../diagnostics/models/diagnostic.model';
 export class PatientAccess implements OnInit, OnDestroy {
   private diagnosticsService = inject(DiagnosticsService);
   private accessRequestService = inject(AccessRequestService);
-  private snackBar = inject(MatSnackBar);
+  private notify = inject(NotificationService);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
 
@@ -103,12 +102,7 @@ export class PatientAccess implements OnInit, OnDestroy {
         this.requestStatusMap.set(r.patientId, r.status);
       });
     } catch {
-      this.snackBar.open('Failed to load requests.', 'Close', {
-        duration: 3000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        panelClass: 'snackbar-error',
-      });
+      this.notify.showError('Failed to load requests.');
     } finally {
       this.isLoadingRequests = false;
     }
@@ -124,23 +118,9 @@ export class PatientAccess implements OnInit, OnDestroy {
       const result = await this.accessRequestService.requestAccess({ patientId: patient.id });
       this.requestStatusMap.set(patient.id, 'Pending');
       this.myRequests = [result, ...this.myRequests];
-      this.snackBar.open(
-        `Access requested for ${patient.firstName} ${patient.lastName}.`,
-        'Close',
-        {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-success',
-        }
-      );
+      this.notify.showSuccess(`Access requested for ${patient.firstName} ${patient.lastName}.`);
     } catch {
-      this.snackBar.open('Failed to send access request.', 'Close', {
-        duration: 3000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        panelClass: 'snackbar-error',
-      });
+      this.notify.showError('Failed to send access request.');
     } finally {
       this.requestingId = null;
     }

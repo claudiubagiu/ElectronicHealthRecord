@@ -16,7 +16,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
@@ -24,15 +23,12 @@ import {
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DiagnosticsService } from '../../services/diagnostics.service';
-import { BlockchainService } from '../../../../core/services/blockchain.service';
-import { IpfsService, EncryptedPayload } from '../../../../core/services/ipfs.service';
-import { LitProtocolService } from '../../../../core/services/lit-protocol.service';
-import { CryptoService } from '../../../../core/services/crypto.service';
+import { DiagnosticSubmissionService } from '../../services/diagnostic-submission.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { DiagnosticPdfService, CustomField } from '../../services/diagnostic-pdf.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { CustomField } from '../../services/diagnostic-pdf.service';
 import { PatientDto } from '../../models/diagnostic.model';
 import { AppError } from '../../../../core/errors/app.error';
-import { getAddress } from 'ethers';
 
 export type { CustomField };
 
@@ -50,7 +46,6 @@ export type { CustomField };
     MatIconModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule,
     MatAutocompleteModule,
     MatExpansionModule,
     MatTooltipModule,
@@ -58,12 +53,9 @@ export type { CustomField };
 })
 export class AddDiagnostic implements OnInit, OnDestroy {
   private diagnosticsService = inject(DiagnosticsService);
-  private blockchainService = inject(BlockchainService);
-  private ipfsService = inject(IpfsService);
-  private litService = inject(LitProtocolService);
+  private submissionService = inject(DiagnosticSubmissionService);
   private authService = inject(AuthService);
-  private pdfService = inject(DiagnosticPdfService);
-  private snackBar = inject(MatSnackBar);
+  private notify = inject(NotificationService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
@@ -291,86 +283,45 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       const doctorName = user ? `${user.firstName} ${user.lastName}` : 'Doctor';
       const v = this.form.value;
 
-      // 1. Generate PDF
-      const pdfBlob = await this.pdfService.generateDiagnosticPdf({
-        title: v.title,
-        consultationDate: v.consultationDate,
-        patient: `${this.selectedPatient!.firstName} ${this.selectedPatient!.lastName}`,
-        patientCNP: this.selectedPatient!.cnp,
-        doctor: doctorName,
-        chiefComplaint: v.chiefComplaint,
-        personalHistory: v.personalHistory,
-        familyHistory: v.familyHistory || undefined,
-        allergies: v.allergies || undefined,
-        bloodPressure: v.bloodPressure,
-        pulse: v.pulse,
-        temperature: v.temperature || undefined,
-        weightHeight: v.weightHeight || undefined,
-        clinicalNotes: v.clinicalNotes || undefined,
-        primaryDiagnosis: v.primaryDiagnosis,
-        icdCode: v.icdCode || undefined,
-        secondaryDiagnosis: v.secondaryDiagnosis || undefined,
-        recommendedInvestigations: v.recommendedInvestigations || undefined,
-        treatment: v.treatment,
-        generalRecommendations: v.generalRecommendations || undefined,
-        followUpDate: v.followUpDate || undefined,
-        finalNotes: v.finalNotes || undefined,
-        customGeneralInfo: this.customGeneralInfo,
-        customAnamnesis: this.customAnamnesis,
-        customClinicalExam: this.customClinicalExam,
-        customDiagnosis: this.customDiagnosis,
-      });
-
-      const fileBuffer = await pdfBlob.arrayBuffer();
-
-      // 2. AES encryption
-      const aesKey = await CryptoService.generateAESKey();
-      const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, aesKey);
-      const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
-      const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyRaw)));
-
-      // 3. Lit Protocol
-      const patientAddress = getAddress(this.selectedPatient!.walletAddress);
-      await this.litService.connect();
-      const accs = this.litService.createAccsBuilder(patientAddress);
-      const litResult = await this.litService.encrypt(aesKeyBase64, accs);
-
-      // 4. Upload to IPFS
-      const fileName = `diagnostic_${v.title.replace(/\s+/g, '_').toLowerCase()}.pdf`;
-      const payload: EncryptedPayload = {
-        encryptedFile: Array.from(new Uint8Array(encrypted)),
-        encryptedAesKey: [],
-        litMetadata: {
-          ciphertext: litResult.ciphertext,
-          dataToEncryptHash: litResult.dataToEncryptHash,
+      await this.submissionService.submit({
+        pdfData: {
+          title: v.title,
+          consultationDate: v.consultationDate,
+          patient: `${this.selectedPatient!.firstName} ${this.selectedPatient!.lastName}`,
+          patientCNP: this.selectedPatient!.cnp,
+          doctor: doctorName,
+          chiefComplaint: v.chiefComplaint,
+          personalHistory: v.personalHistory,
+          familyHistory: v.familyHistory || undefined,
+          allergies: v.allergies || undefined,
+          bloodPressure: v.bloodPressure,
+          pulse: v.pulse,
+          temperature: v.temperature || undefined,
+          weightHeight: v.weightHeight || undefined,
+          clinicalNotes: v.clinicalNotes || undefined,
+          primaryDiagnosis: v.primaryDiagnosis,
+          icdCode: v.icdCode || undefined,
+          secondaryDiagnosis: v.secondaryDiagnosis || undefined,
+          recommendedInvestigations: v.recommendedInvestigations || undefined,
+          treatment: v.treatment,
+          generalRecommendations: v.generalRecommendations || undefined,
+          followUpDate: v.followUpDate || undefined,
+          finalNotes: v.finalNotes || undefined,
+          customGeneralInfo: this.customGeneralInfo,
+          customAnamnesis: this.customAnamnesis,
+          customClinicalExam: this.customClinicalExam,
+          customDiagnosis: this.customDiagnosis,
         },
-        iv: Array.from(iv),
-        fileName,
-        timestamp: Date.now(),
-      };
-
-      const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
-
-      // 5. Store CID on blockchain
-      await this.blockchainService.addDiagnosis(v.title, ipfsCid, patientAddress, doctorName);
-
-      this.snackBar.open('Diagnosis added successfully!', 'OK', {
-        duration: 3000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
+        patientWalletAddress: this.selectedPatient!.walletAddress,
+        doctorName,
       });
 
+      this.notify.showSuccess('Diagnosis added successfully!');
       this.router.navigate(['/']);
     } catch (error: unknown) {
       const message =
         error instanceof AppError ? error.message : 'Failed to add diagnosis. Please try again.';
-
-      this.snackBar.open(message, 'Close', {
-        duration: 4000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        panelClass: 'snackbar-error',
-      });
+      this.notify.showError(message);
     } finally {
       this.isLoading = false;
     }

@@ -11,6 +11,39 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { Web3Service } from '../../../core/services/web3.service';
 
+/**
+ * Represents a navigation item that is gated behind one or more roles.
+ * If `roles` is empty, the item is visible to all authenticated users.
+ */
+export interface NavItem {
+  label: string;
+  route: string;
+  icon: string;
+  roles: string[];
+}
+
+/**
+ * Role-based navigation items.
+ * To add a new role or page, simply append an entry here —
+ * the navbar template iterates over this array dynamically.
+ */
+const ROLE_NAV_ITEMS: NavItem[] = [
+  {
+    label: 'Add Diagnostic',
+    route: '/add-diagnostic',
+    icon: 'medical_services',
+    roles: ['Doctor'],
+  },
+  { label: 'My Diagnostics', route: '/diagnostics', icon: 'assignment', roles: ['Patient'] },
+  { label: 'Patient Access', route: '/patient-access', icon: 'manage_accounts', roles: ['Doctor'] },
+  {
+    label: 'Access Management',
+    route: '/access-management',
+    icon: 'admin_panel_settings',
+    roles: ['Patient'],
+  },
+];
+
 @Component({
   selector: 'app-navbar',
   standalone: true,
@@ -40,12 +73,25 @@ export class Navbar {
   user$ = this.authService.user$;
   roles$ = this.authService.roles$;
 
+  /** Role-based nav items exposed to the template. */
+  readonly roleNavItems = ROLE_NAV_ITEMS;
+
   toggleSidenav(): void {
     this.isSidenavOpen = !this.isSidenavOpen;
   }
 
   getShortAddress(): string {
     return this.web3Service.getShortAddress();
+  }
+
+  /**
+   * Returns only the nav items that the user has access to
+   * based on their current roles.
+   */
+  getVisibleItems(roles: string[]): NavItem[] {
+    return this.roleNavItems.filter(
+      (item) => item.roles.length === 0 || item.roles.some((r) => roles.includes(r))
+    );
   }
 
   logout(): void {

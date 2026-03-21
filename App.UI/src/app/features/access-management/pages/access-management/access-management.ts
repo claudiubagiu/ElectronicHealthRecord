@@ -4,10 +4,10 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AccessManagementService } from '../../services/access-management.service';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { AccessRequestDto } from '../../../patient-access/models/access-request.model';
 
 @Component({
@@ -15,20 +15,13 @@ import { AccessRequestDto } from '../../../patient-access/models/access-request.
   templateUrl: './access-management.html',
   styleUrls: ['./access-management.scss'],
   standalone: true,
-  imports: [
-    CommonModule,
-    MatTabsModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-  ],
+  imports: [CommonModule, MatTabsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
 })
 export class AccessManagement implements OnInit {
   private service = inject(AccessManagementService);
   private blockchainService = inject(BlockchainService);
   private authService = inject(AuthService);
-  private snackBar = inject(MatSnackBar);
+  private notify = inject(NotificationService);
 
   allRequests: AccessRequestDto[] = [];
   isLoading = false;
@@ -58,7 +51,7 @@ export class AccessManagement implements OnInit {
     try {
       this.allRequests = await this.service.getMyRequests(user.userId);
     } catch {
-      this.showError('Failed to load requests.');
+      this.notify.showError('Failed to load requests.');
     } finally {
       this.isLoading = false;
     }
@@ -67,16 +60,16 @@ export class AccessManagement implements OnInit {
   async onApprove(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
-      // 1. Blockchain first — pacientul semnează grantAccess
+      // 1. Blockchain first — patient signs grantAccess
       await this.blockchainService.grantAccess(request.doctorWalletAddress);
 
-      // 2. După confirmare on-chain, update în backend
+      // 2. After on-chain confirmation, update in backend
       const updated = await this.service.approve(request.id);
       this.updateLocal(updated);
 
-      this.showSuccess(`Access granted to ${request.doctorName}.`);
+      this.notify.showSuccess(`Access granted to ${request.doctorName}.`);
     } catch {
-      this.showError('Failed to approve. Please try again.');
+      this.notify.showError('Failed to approve. Please try again.');
     } finally {
       this.actioningId = null;
     }
@@ -87,9 +80,9 @@ export class AccessManagement implements OnInit {
     try {
       const updated = await this.service.reject(request.id);
       this.updateLocal(updated);
-      this.showSuccess(`Request from ${request.doctorName} rejected.`);
+      this.notify.showSuccess(`Request from ${request.doctorName} rejected.`);
     } catch {
-      this.showError('Failed to reject. Please try again.');
+      this.notify.showError('Failed to reject. Please try again.');
     } finally {
       this.actioningId = null;
     }
@@ -99,11 +92,11 @@ export class AccessManagement implements OnInit {
     this.actioningId = request.id;
     try {
       await this.blockchainService.revokeAccess(request.doctorWalletAddress);
-      const updated = await this.service.revoke(request.id); 
+      const updated = await this.service.revoke(request.id);
       this.updateLocal(updated);
-      this.showSuccess(`Access revoked for ${request.doctorName}.`);
+      this.notify.showSuccess(`Access revoked for ${request.doctorName}.`);
     } catch {
-      this.showError('Failed to revoke. Please try again.');
+      this.notify.showError('Failed to revoke. Please try again.');
     } finally {
       this.actioningId = null;
     }
@@ -118,23 +111,6 @@ export class AccessManagement implements OnInit {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
-    });
-  }
-
-  private showSuccess(msg: string): void {
-    this.snackBar.open(msg, 'OK', {
-      duration: 3000,
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-    });
-  }
-
-  private showError(msg: string): void {
-    this.snackBar.open(msg, 'Close', {
-      duration: 3000,
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      panelClass: 'snackbar-error',
     });
   }
 }

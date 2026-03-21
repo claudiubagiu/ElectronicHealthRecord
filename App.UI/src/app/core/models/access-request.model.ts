@@ -1,4 +1,4 @@
-export type AccessRequestStatus = 'Pending' | 'Approved' | 'Rejected';
+export type AccessRequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Revoked';
 
 export interface AccessRequestDto {
   id: string;

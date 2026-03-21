@@ -6,7 +6,10 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 import { AccessRequestService } from '../../services/access-request.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { AccessRequestDto } from '../../../../core/models/access-request.model';
+import {
+  AccessRequestDto,
+  AccessRequestStatus,
+} from '../../../../core/models/access-request.model';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { UsersService } from '../../../../core/services/users.service';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
@@ -34,7 +37,17 @@ export class PatientAccess implements OnInit, OnDestroy {
   myRequests: AccessRequestDto[] = [];
   isLoadingRequests = false;
 
-  requestStatusMap = new Map<string, 'Pending' | 'Approved' | 'Rejected'>();
+  requestStatusMap = new Map<string, AccessRequestStatus>();
+
+  get activeRequests(): AccessRequestDto[] {
+    return this.myRequests.filter((r) => r.status === 'Approved');
+  }
+
+  get historyRequests(): AccessRequestDto[] {
+    return [...this.myRequests]
+      .filter((r) => r.status !== 'Pending')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
 
   ngOnInit(): void {
     this.setupSearch();
@@ -90,7 +103,7 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
-  getPatientStatus(patientId: string): 'Pending' | 'Approved' | 'Rejected' | null {
+  getPatientStatus(patientId: string): AccessRequestStatus | null {
     return this.requestStatusMap.get(patientId) ?? null;
   }
 

@@ -74,14 +74,17 @@ h1 {
 }
 
 .tab-badge {
-  background: #f57c00;
-  color: white;
   border-radius: 10px;
   font-size: 0.7rem;
   font-weight: 700;
   padding: 1px 7px;
   margin-left: 4px;
   line-height: 16px;
+  color: white;
+
+  &.success {
+    background: #2e7d32;
+  }
 }
 
 .tab-content {
@@ -140,6 +143,13 @@ h1 {
     width: 20px;
     height: 20px;
   }
+
+  &.active {
+    background: rgba(46, 125, 50, 0.1);
+    mat-icon {
+      color: #2e7d32;
+    }
+  }
 }
 
 .patient-details {
@@ -190,7 +200,63 @@ h1 {
   }
 }
 
-// Status badges
+// Status chips (search results)
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &.pending {
+    background: rgba(255, 152, 0, 0.1);
+    color: #e65100;
+  }
+
+  &.approved {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+  }
+
+  &.rejected {
+    background: rgba(244, 67, 54, 0.1);
+    color: #c62828;
+  }
+}
+
+.rejected-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.retry-btn {
+  border-radius: 8px;
+  font-size: 0.8rem;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// Status badges (tabs)
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -220,6 +286,11 @@ h1 {
   &.rejected {
     background: rgba(244, 67, 54, 0.1);
     color: #c62828;
+  }
+
+  &.revoked {
+    background: rgba(158, 158, 158, 0.15);
+    color: #616161;
   }
 }
 

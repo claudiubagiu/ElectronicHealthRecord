@@ -15,8 +15,10 @@ import { EncryptedPayload } from '../../../core/models/ipfs.model';
 export interface DiagnosticSubmissionInput {
   /** All the fields needed to generate the diagnostic PDF. */
   pdfData: DiagnosticPdfData;
+
   /** The patient's Ethereum wallet address (checksummed or not). */
   patientWalletAddress: string;
+
   /** The doctor's full name to be recorded on-chain. */
   doctorName: string;
 }
@@ -27,6 +29,7 @@ export interface DiagnosticSubmissionInput {
 export interface DiagnosticSubmissionResult {
   /** The on-chain diagnosis ID emitted by the smart contract event. */
   diagnosisId: bigint;
+
   /** The IPFS CID where the encrypted payload is stored. */
   ipfsCid: string;
 }
@@ -37,7 +40,7 @@ export interface DiagnosticSubmissionResult {
  * 1. Generate a PDF from the diagnostic data.
  * 2. Encrypt the PDF with a random AES-256-GCM key.
  * 3. Encrypt the AES key via Lit Protocol (access-controlled).
- * 4. Upload the encrypted payload to IPFS.
+ * 4. Upload the encrypted payload to IPFS (Base64-encoded).
  * 5. Record the IPFS CID on the blockchain smart contract.
  *
  * This service owns NO UI state — it simply accepts data and returns a result
@@ -61,39 +64,41 @@ export class DiagnosticSubmissionService {
   async submit(input: DiagnosticSubmissionInput): Promise<DiagnosticSubmissionResult> {
     const { pdfData, patientWalletAddress, doctorName } = input;
 
-    // 1. Generate PDF
+    // 1. Generate PDF from the diagnostic form data
     const pdfBlob = await this.pdfService.generateDiagnosticPdf(pdfData);
     const fileBuffer = await pdfBlob.arrayBuffer();
 
-    // 2. AES encryption
+    // 2. Encrypt the PDF with a random AES-256-GCM key
     const aesKey = await CryptoService.generateAESKey();
     const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, aesKey);
+
+    // 3. Export the AES key as a Base64 string for Lit encryption
     const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
     const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyRaw)));
 
-    // 3. Lit Protocol — encrypt the AES key with access control
+    // 4. Encrypt the AES key via Lit Protocol with patient-bound access control
     const patientAddress = getAddress(patientWalletAddress);
     await this.litService.connect();
     const accs = this.litService.createAccsBuilder(patientAddress);
     const litResult = await this.litService.encrypt(aesKeyBase64, accs);
 
-    // 4. Upload encrypted payload to IPFS
+    // 5. Build the IPFS payload with Base64-encoded binary fields
     const fileName = `diagnostic_${pdfData.title.replace(/\s+/g, '_').toLowerCase()}.pdf`;
     const payload: EncryptedPayload = {
-      encryptedFile: Array.from(new Uint8Array(encrypted)),
-      encryptedAesKey: [],
+      encryptedFile: this.arrayBufferToBase64(encrypted),
+      iv: this.arrayBufferToBase64(iv.buffer as ArrayBuffer),
       litMetadata: {
         ciphertext: litResult.ciphertext,
         dataToEncryptHash: litResult.dataToEncryptHash,
       },
-      iv: Array.from(iv),
       fileName,
       timestamp: Date.now(),
     };
 
+    // 6. Upload encrypted payload to IPFS via the backend proxy
     const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
 
-    // 5. Store CID on the blockchain
+    // 7. Store the IPFS CID on the blockchain smart contract
     const diagnosisId = await this.blockchainService.addDiagnosis(
       pdfData.title,
       ipfsCid,
@@ -102,5 +107,18 @@ export class DiagnosticSubmissionService {
     );
 
     return { diagnosisId, ipfsCid };
+  }
+
+  /**
+   * Converts an ArrayBuffer to a Base64-encoded string.
+   *
+   * @param buffer - The raw binary data to encode.
+   * @returns The Base64 string representation of the buffer.
+   */
+  private arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach((b) => (binary += String.fromCharCode(b)));
+    return btoa(binary);
   }
 }

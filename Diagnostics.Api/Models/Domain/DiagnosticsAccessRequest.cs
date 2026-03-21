@@ -1,6 +1,6 @@
 ﻿namespace Diagnostics.Api.Models.Domain
 {
-    public enum AccessRequestStatus { Pending, Approved, Rejected }
+    public enum AccessRequestStatus { Pending, Approved, Rejected, Revoked }
 
     public class DiagnosticsAccessRequest
     {

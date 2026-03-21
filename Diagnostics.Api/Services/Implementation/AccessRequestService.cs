@@ -130,7 +130,7 @@ namespace Diagnostics.Api.Services.Implementation
                 return Result.Fail<AccessRequestDto>(
                     new Error("Only approved requests can be revoked.").WithMetadata("StatusCode", 409));
 
-            request.Status = AccessRequestStatus.Rejected;
+            request.Status = AccessRequestStatus.Revoked;
             var updated = await _accessRequestRepository.UpdateAsync(request);
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
             return Result.Ok(MapToDto(result!));

@@ -8,12 +8,25 @@ using System.Text.Json;
 
 namespace Ipfs.Api.Services.Implementation
 {
+    /// <summary>
+    /// Service that proxies encrypted diagnostic payloads to and from
+    /// Pinata's IPFS pinning API.
+    ///
+    /// Upload serialises the DTO as JSON and pins it as a single file.
+    /// Download fetches the JSON from the IPFS gateway and deserialises it.
+    /// </summary>
     public class IpfsService : IIpfsService
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiUrl;
         private readonly string _gatewayUrl;
 
+        /// <summary>
+        /// Initialises the service with an HttpClient and reads Pinata
+        /// configuration (API key, secret, URLs) from appsettings.
+        /// </summary>
+        /// <param name="httpClient">Injected HttpClient instance.</param>
+        /// <param name="config">Application configuration containing the Pinata section.</param>
         public IpfsService(HttpClient httpClient, IConfiguration config)
         {
             _httpClient = httpClient;
@@ -24,6 +37,11 @@ namespace Ipfs.Api.Services.Implementation
             _httpClient.DefaultRequestHeaders.Add("pinata_secret_api_key", config["Pinata:SecretKey"]);
         }
 
+        /// <summary>
+        /// Serialises the encrypted payload as JSON and pins it to IPFS via Pinata.
+        /// </summary>
+        /// <param name="request">The encrypted payload DTO with Base64-encoded binary fields.</param>
+        /// <returns>A <see cref="Result{T}"/> containing the IPFS CID on success, or an error.</returns>
         public async Task<Result<string>> UploadEncryptedDataAsync(UploadEncryptedDataRequestDto request)
         {
             try
@@ -51,6 +69,11 @@ namespace Ipfs.Api.Services.Implementation
             }
         }
 
+        /// <summary>
+        /// Downloads an encrypted payload from IPFS by its CID and deserialises the JSON.
+        /// </summary>
+        /// <param name="cid">The IPFS content identifier of the pinned payload.</param>
+        /// <returns>A <see cref="Result{T}"/> containing the deserialised response DTO, or an error.</returns>
         public async Task<Result<EncryptedDataResponseDto>> DownloadEncryptedDataAsync(string cid)
         {
             try

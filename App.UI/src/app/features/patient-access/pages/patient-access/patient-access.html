@@ -6,7 +6,7 @@
         <mat-icon>manage_accounts</mat-icon>
       </div>
       <h1>Patient Access</h1>
-      <p class="subtitle">Request access to a patient's diagnostics or track your pending requests</p>
+      <p class="subtitle">Request access to a patient's diagnostics or track your active access</p>
     </div>
 
     <mat-tab-group animationDuration="200ms" class="access-tabs">
@@ -49,7 +49,7 @@
                   </div>
 
                   <div class="patient-action">
-                    @if (getPatientStatus(patient.id) === null) {
+                    @if (getPatientStatus(patient.id) === null || getPatientStatus(patient.id) === 'Revoked') {
                       <button mat-stroked-button class="request-btn"
                         [disabled]="requestingId === patient.id"
                         (click)="onRequestAccess(patient)">
@@ -96,13 +96,13 @@
         </div>
       </mat-tab>
 
-      <!-- ===== TAB 2: My Requests ===== -->
+      <!-- ===== TAB 2: Active Access ===== -->
       <mat-tab>
         <ng-template mat-tab-label>
-          <mat-icon class="tab-icon">list_alt</mat-icon>
-          My Requests
-          @if (myRequests.length > 0) {
-            <span class="tab-badge">{{ myRequests.length }}</span>
+          <mat-icon class="tab-icon">verified_user</mat-icon>
+          Active Access
+          @if (activeRequests.length > 0) {
+            <span class="tab-badge success">{{ activeRequests.length }}</span>
           }
         </ng-template>
 
@@ -113,16 +113,67 @@
             </div>
           }
 
-          @if (!isLoadingRequests && myRequests.length === 0) {
+          @if (!isLoadingRequests && activeRequests.length === 0) {
             <div class="empty-state">
-              <mat-icon>inbox</mat-icon>
-              <p>You haven't sent any access requests yet</p>
+              <mat-icon>lock</mat-icon>
+              <p>You don't have active access to any patient</p>
             </div>
           }
 
-          @if (!isLoadingRequests && myRequests.length > 0) {
+          @if (!isLoadingRequests && activeRequests.length > 0) {
             <div class="requests-list">
-              @for (req of myRequests; track req.id) {
+              @for (req of activeRequests; track req.id) {
+                <div class="request-row">
+                  <div class="request-patient">
+                    <div class="patient-avatar active"><mat-icon>person</mat-icon></div>
+                    <div class="patient-details">
+                      <span class="patient-name">{{ req.patientName }}</span>
+                      <span class="request-date">Access granted on {{ formatDate(req.createdAt) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="row-right">
+                    <span class="status-badge approved">
+                      <mat-icon>check_circle</mat-icon>
+                      Approved
+                    </span>
+                    <button mat-flat-button class="view-btn"
+                      (click)="viewDiagnostics(req)">
+                      <mat-icon>folder_open</mat-icon>
+                      View Diagnostics
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- ===== TAB 3: History ===== -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">history</mat-icon>
+          History
+        </ng-template>
+
+        <div class="tab-content">
+          @if (isLoadingRequests) {
+            <div class="loading-state">
+              <mat-spinner diameter="36"></mat-spinner>
+            </div>
+          }
+
+          @if (!isLoadingRequests && historyRequests.length === 0) {
+            <div class="empty-state">
+              <mat-icon>history_toggle_off</mat-icon>
+              <p>No history yet</p>
+            </div>
+          }
+
+          @if (!isLoadingRequests && historyRequests.length > 0) {
+            <div class="requests-list">
+              @for (req of historyRequests; track req.id) {
                 <div class="request-row">
                   <div class="request-patient">
                     <div class="patient-avatar"><mat-icon>person</mat-icon></div>
@@ -134,26 +185,18 @@
 
                   <div class="row-right">
                     <span class="status-badge"
-                      [class.pending]="req.status === 'Pending'"
                       [class.approved]="req.status === 'Approved'"
-                      [class.rejected]="req.status === 'Rejected'">
-                      @if (req.status === 'Pending') {
-                        <mat-icon>schedule</mat-icon>
-                      } @else if (req.status === 'Approved') {
+                      [class.rejected]="req.status === 'Rejected'"
+                      [class.revoked]="req.status === 'Revoked'">
+                      @if (req.status === 'Approved') {
                         <mat-icon>check_circle</mat-icon>
                       } @else if (req.status === 'Rejected') {
                         <mat-icon>cancel</mat-icon>
+                      } @else if (req.status === 'Revoked') {
+                        <mat-icon>remove_circle</mat-icon>
                       }
                       {{ req.status }}
                     </span>
-
-                    @if (req.status === 'Approved') {
-                      <button mat-flat-button class="view-btn"
-                        (click)="viewDiagnostics(req)">
-                        <mat-icon>folder_open</mat-icon>
-                        View Diagnostics
-                      </button>
-                    }
                   </div>
                 </div>
               }

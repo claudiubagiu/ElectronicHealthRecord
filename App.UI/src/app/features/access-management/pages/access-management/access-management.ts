@@ -33,7 +33,9 @@ export class AccessManagement implements OnInit {
   }
 
   get history(): AccessRequestDto[] {
-    return this.allRequests.filter((r) => r.status === 'Approved' || r.status === 'Rejected');
+    return this.allRequests.filter(
+      (r) => r.status === 'Approved' || r.status === 'Rejected' || r.status === 'Revoked'
+    );
   }
 
   ngOnInit(): void {

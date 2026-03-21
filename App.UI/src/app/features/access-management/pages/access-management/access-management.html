@@ -151,12 +151,16 @@
                     class="status-badge"
                     [class.approved]="req.status === 'Approved'"
                     [class.rejected]="req.status === 'Rejected'"
+                    [class.revoked]="req.status === 'Revoked'"
                   >
                     @if (req.status === 'Approved') {
                       <mat-icon>check_circle</mat-icon>
                     }
                     @if (req.status === 'Rejected') {
                       <mat-icon>cancel</mat-icon>
+                    }
+                    @if (req.status === 'Revoked') {
+                      <mat-icon>remove_circle</mat-icon>
                     }
                     {{ req.status }}
                   </span>

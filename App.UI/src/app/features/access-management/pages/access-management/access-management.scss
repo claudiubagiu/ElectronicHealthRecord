@@ -202,6 +202,7 @@ h1 {
 
   &.approved { background: rgba(76, 175, 80, 0.1); color: #2e7d32; }
   &.rejected { background: rgba(244, 67, 54, 0.1); color: #c62828; }
+  &.revoked { background: rgba(158, 158, 158, 0.15); color: #616161; }
 }
 
 .loading-state {

@@ -25,29 +25,6 @@ namespace Users.Api.Controllers
         }
 
         /// <summary>
-        /// Get the encrypted private key for the authenticated user (used at login to recover RSA private key).
-        /// </summary>
-        [HttpGet("keys/private")]
-        [Authorize]
-        public async Task<IActionResult> GetEncryptedPrivateKey()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
-            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value
-                         ?? User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
-
-            if (userIdClaim == null || roleClaim == null)
-                return Unauthorized();
-
-            var encryptedKey = await usersService.GetEncryptedPrivateKeyAsync(
-                Guid.Parse(userIdClaim), roleClaim);
-
-            if (encryptedKey == null)
-                return NotFound("No encrypted private key found for this user.");
-
-            return Ok(new EncryptedPrivateKeyDto { EncryptedPrivateKey = encryptedKey });
-        }
-
-        /// <summary>
         /// Get the public key for a specific user (used when encrypting medication envelopes).
         /// </summary>
         [HttpGet("keys/public/{userId}")]

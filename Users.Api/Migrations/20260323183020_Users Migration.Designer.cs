@@ -12,7 +12,7 @@ using Users.Api.Data;
 namespace Users.Api.Migrations
 {
     [DbContext(typeof(UsersDbContext))]
-    [Migration("20260320205654_Users Migration")]
+    [Migration("20260323183020_Users Migration")]
     partial class UsersMigration
     {
         /// <inheritdoc />
@@ -30,10 +30,6 @@ namespace Users.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("EncryptedPrivateKey")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -84,10 +80,6 @@ namespace Users.Api.Migrations
 
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("EncryptedPrivateKey")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()

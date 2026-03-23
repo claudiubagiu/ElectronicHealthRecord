@@ -11,6 +11,5 @@
         public required string LicenseNumber { get; set; }
         public required string HospitalAffiliation { get; set; }
         public required string PublicKey { get; set; }
-        public required string EncryptedPrivateKey { get; set; }
     }
 }

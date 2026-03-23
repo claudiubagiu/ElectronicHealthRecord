@@ -27,22 +27,6 @@ namespace Users.Api.Services.Implementation
             return _mapper.Map<IReadOnlyList<PatientDto>>(patients);
         }
 
-        public async Task<string?> GetEncryptedPrivateKeyAsync(Guid userId, string role)
-        {
-            if (role == "Patient")
-            {
-                var patient = await _patientsRepository.GetByIdAsync(userId);
-                return patient?.EncryptedPrivateKey;
-            }
-            else if (role == "Doctor")
-            {
-                var doctor = await _doctorsRepository.GetByIdAsync(userId);
-                return doctor?.EncryptedPrivateKey;
-            }
-
-            return null;
-        }
-
         public async Task<PublicKeyDto?> GetPublicKeyAsync(Guid userId)
         {
             var patient = await _patientsRepository.GetByIdAsync(userId);

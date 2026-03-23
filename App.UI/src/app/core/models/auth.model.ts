@@ -18,7 +18,6 @@ export interface RegisterRequest {
   walletAddress: string;
   signature: string;
   publicKey: string;
-  encryptedPrivateKey: string;
   // Patient fields
   dateOfBirth?: string;
   cnp?: string;

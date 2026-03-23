@@ -19,12 +19,13 @@ export class MedicationCryptoService {
 
   /**
    * Full encryption + submission pipeline:
-   * 1. Serialize medication as JSON
-   * 2. Generate random AES key
-   * 3. Encrypt JSON with AES
-   * 4. Fetch public keys for patient + all approved doctors
-   * 5. Create RSA envelopes for each authorized user
-   * 6. POST to backend
+   * 1. Serialize medication as JSON.
+   * 2. Generate random AES-256 key.
+   * 3. Encrypt JSON with AES-GCM.
+   * 4. Export AES key as raw bytes.
+   * 5. Fetch ECC public keys for patient + all approved doctors.
+   * 6. Create ECIES envelopes for each authorized user (encrypt AES key with their public key).
+   * 7. POST encrypted payload + envelopes to Medications.Api.
    */
   async submit(input: MedicationSubmissionInput): Promise<void> {
     const { patientId, medication } = input;
@@ -55,17 +56,16 @@ export class MedicationCryptoService {
     // 5. Get all user IDs who need an envelope
     const authorizedUserIds = await this.getAuthorizedUserIds(patientId);
 
-    // 6. Fetch public keys in bulk
+    // 6. Fetch ECC public keys in bulk
     const publicKeys = await this.e2eeService.getPublicKeysBulk(authorizedUserIds);
 
-    // 7. Create envelopes
+    // 7. Create ECIES envelopes (one per authorized user)
     const envelopes: EnvelopeDto[] = [];
     for (const pk of publicKeys) {
-      const rsaPublicKey = await CryptoService.importPublicKey(pk.publicKey);
-      const encryptedAesKey = await CryptoService.encryptAESKeyWithRSA(aesKeyRaw, rsaPublicKey);
+      const encryptedAesKey = CryptoService.encryptAESKeyWithECIES(aesKeyRaw, pk.publicKey);
       envelopes.push({
         userId: pk.userId,
-        encryptedAesKey: this.arrayBufferToBase64(encryptedAesKey),
+        encryptedAesKey: this.arrayBufferToBase64(encryptedAesKey.buffer as ArrayBuffer),
       });
     }
 
@@ -81,15 +81,15 @@ export class MedicationCryptoService {
   // ==================== Decryption ====================
 
   /**
-   * Decrypts a medication's encrypted data using the user's RSA private key.
+   * Decrypts a medication's encrypted data using the user's ECC private key.
    *
    * Flow:
-   * 1. Decode the envelope's encryptedAesKey from base64
-   * 2. Decrypt it with the RSA private key → raw AES key
-   * 3. Import the AES key
-   * 4. Decode encryptedData + IV from base64
-   * 5. Decrypt with AES-GCM → JSON string
-   * 6. Parse JSON → MedicationFormData
+   * 1. Decode the envelope's encryptedAesKey from base64.
+   * 2. Decrypt it with ECIES using the wallet-derived private key → raw AES key.
+   * 3. Import the AES key.
+   * 4. Decode encryptedData + IV from base64.
+   * 5. Decrypt with AES-GCM → JSON string.
+   * 6. Parse JSON → MedicationFormData.
    */
   async decrypt(medication: MedicationDto): Promise<MedicationFormData> {
     const privateKey = this.requirePrivateKey();
@@ -103,14 +103,18 @@ export class MedicationCryptoService {
       });
     }
 
-    // 1. Decrypt AES key with RSA
+    // 1. Decrypt AES key with ECIES
     const encryptedAesKeyBuffer = this.base64ToArrayBuffer(medication.encryptedAesKey);
-    const aesKeyRaw = await CryptoService.decryptAESKeyWithRSA(encryptedAesKeyBuffer, privateKey);
+    const aesKeyRaw = CryptoService.decryptAESKeyWithECIES(encryptedAesKeyBuffer, privateKey);
 
     // 2. Import AES key
-    const aesKey = await crypto.subtle.importKey('raw', aesKeyRaw, { name: 'AES-GCM' }, false, [
-      'decrypt',
-    ]);
+    const aesKey = await crypto.subtle.importKey(
+      'raw',
+      aesKeyRaw.buffer as ArrayBuffer,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
 
     // 3. Decrypt the medication data
     const encryptedDataBuffer = this.base64ToArrayBuffer(medication.encryptedData);
@@ -129,6 +133,11 @@ export class MedicationCryptoService {
   /**
    * Called by the patient after approving a doctor's access request.
    * Re-wraps the AES key of every existing medication so the new doctor can decrypt them.
+   *
+   * Flow per medication:
+   * 1. Decrypt the patient's own ECIES envelope to recover the raw AES key.
+   * 2. Re-encrypt the AES key with the doctor's ECC public key via ECIES.
+   * 3. Submit all new envelopes to the backend in bulk.
    */
   async grantEnvelopesToDoctor(doctorId: string, patientId: string): Promise<void> {
     const privateKey = this.requirePrivateKey();
@@ -137,9 +146,8 @@ export class MedicationCryptoService {
     const medications = await this.medicationService.getByPatientId(patientId);
     if (medications.length === 0) return;
 
-    // 2. Fetch doctor's public key
-    const doctorPkResponse = await this.e2eeService.getPublicKey(doctorId);
-    const doctorRsaKey = await CryptoService.importPublicKey(doctorPkResponse.publicKey);
+    // 2. Fetch doctor's ECC public key
+    const doctorPkResponse = await this.e2eeService.getPublicKey_remote(doctorId);
 
     // 3. Re-wrap AES key for each medication
     const envelopes: { medicationId: string; userId: string; encryptedAesKey: string }[] = [];
@@ -147,15 +155,20 @@ export class MedicationCryptoService {
     for (const med of medications) {
       if (!med.encryptedAesKey) continue;
 
+      // Decrypt the AES key using patient's private key
       const encryptedAesKeyBuffer = this.base64ToArrayBuffer(med.encryptedAesKey);
-      const aesKeyRaw = await CryptoService.decryptAESKeyWithRSA(encryptedAesKeyBuffer, privateKey);
+      const aesKeyRaw = CryptoService.decryptAESKeyWithECIES(encryptedAesKeyBuffer, privateKey);
 
-      const encryptedForDoctor = await CryptoService.encryptAESKeyWithRSA(aesKeyRaw, doctorRsaKey);
+      // Re-encrypt with doctor's ECC public key
+      const encryptedForDoctor = CryptoService.encryptAESKeyWithECIES(
+        aesKeyRaw.buffer as ArrayBuffer,
+        doctorPkResponse.publicKey
+      );
 
       envelopes.push({
         medicationId: med.id,
         userId: doctorId,
-        encryptedAesKey: this.arrayBufferToBase64(encryptedForDoctor),
+        encryptedAesKey: this.arrayBufferToBase64(encryptedForDoctor.buffer as ArrayBuffer),
       });
     }
 
@@ -168,9 +181,9 @@ export class MedicationCryptoService {
   // ==================== Private Helpers ====================
 
   /**
-   * Returns the RSA private key or throws if unavailable.
+   * Returns the ECC private key (hex string) or throws if unavailable.
    */
-  private requirePrivateKey(): CryptoKey {
+  private requirePrivateKey(): string {
     const privateKey = this.e2eeService.getPrivateKey();
     if (!privateKey) {
       throw new AppError({
@@ -200,6 +213,9 @@ export class MedicationCryptoService {
     return Array.from(ids);
   }
 
+  /**
+   * Converts a base64 string to an ArrayBuffer.
+   */
   private base64ToArrayBuffer(base64: string): ArrayBuffer {
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
@@ -209,6 +225,9 @@ export class MedicationCryptoService {
     return bytes.buffer as ArrayBuffer;
   }
 
+  /**
+   * Converts an ArrayBuffer to a base64 string.
+   */
   private arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
     let binary = '';

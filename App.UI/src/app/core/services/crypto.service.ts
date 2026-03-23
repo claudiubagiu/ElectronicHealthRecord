@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { encrypt, decrypt } from 'eciesjs';
 import { AppError } from '../errors/app.error';
 
 @Injectable({
@@ -196,167 +197,69 @@ export class CryptoService {
     }
   }
 
-  // ==================== RSA Key Management ====================
+  // ==================== ECC Envelope Operations (secp256k1 via eciesjs) ====================
 
   /**
-   * Generates an RSA-OAEP key pair (2048-bit) for asymmetric encryption.
+   * Encrypts a raw AES key using ECIES with a recipient's secp256k1 public key.
+   *
+   * Uses the eciesjs library which internally handles:
+   * - Ephemeral key pair generation
+   * - ECDH shared secret computation
+   * - HKDF key derivation
+   * - AES-256-GCM encryption
+   *
+   * @param aesKeyRaw - The raw AES key bytes to encrypt (typically 32 bytes).
+   * @param recipientPublicKeyHex - The recipient's secp256k1 public key (hex string, with or without 0x prefix).
+   * @returns A Uint8Array containing the ECIES ciphertext (ephemeral pubkey + encrypted data).
    */
-  static async generateRSAKeyPair(): Promise<CryptoKeyPair> {
+  static encryptAESKeyWithECIES(aesKeyRaw: ArrayBuffer, recipientPublicKeyHex: string): Uint8Array {
     try {
-      return await window.crypto.subtle.generateKey(
-        {
-          name: 'RSA-OAEP',
-          modulusLength: 2048,
-          publicExponent: new Uint8Array([1, 0, 1]),
-          hash: 'SHA-256',
-        },
-        true,
-        ['encrypt', 'decrypt']
-      );
+      const cleanHex = recipientPublicKeyHex.startsWith('0x')
+        ? recipientPublicKeyHex.slice(2)
+        : recipientPublicKeyHex;
+      return encrypt(cleanHex, new Uint8Array(aesKeyRaw));
     } catch (error) {
-      console.error('Failed to generate RSA key pair:', error);
+      if (error instanceof AppError) throw error;
+      console.error('Failed to encrypt AES key with ECIES:', error);
       throw new AppError({
-        message:
-          'Failed to generate RSA key pair. Your browser may not support the required cryptographic operations.',
+        message: "Failed to encrypt the AES key with the recipient's ECC public key.",
         status: 500,
-        title: 'RSA Key Generation Failed',
-        type: 'RSA_KEY_GENERATION_FAILED',
+        title: 'ECIES Encryption Failed',
+        type: 'ECIES_ENCRYPTION_FAILED',
       });
     }
   }
 
   /**
-   * Exports an RSA public key as a JSON Web Key (JWK) string.
+   * Decrypts an ECIES-encrypted AES key using the wallet's secp256k1 private key.
+   *
+   * Uses the eciesjs library which internally handles:
+   * - Parsing the ephemeral public key from the ciphertext
+   * - ECDH shared secret computation
+   * - HKDF key derivation
+   * - AES-256-GCM decryption
+   *
+   * @param encryptedEnvelope - The ECIES ciphertext (as produced by encryptAESKeyWithECIES).
+   * @param walletPrivateKeyHex - The user's secp256k1 private key (hex string, with or without 0x prefix).
+   * @returns The decrypted raw AES key bytes as a Uint8Array.
    */
-  static async exportPublicKey(publicKey: CryptoKey): Promise<string> {
+  static decryptAESKeyWithECIES(
+    encryptedEnvelope: ArrayBuffer,
+    walletPrivateKeyHex: string
+  ): Uint8Array {
     try {
-      const exported = await window.crypto.subtle.exportKey('jwk', publicKey);
-      return JSON.stringify(exported);
+      const cleanHex = walletPrivateKeyHex.startsWith('0x')
+        ? walletPrivateKeyHex.slice(2)
+        : walletPrivateKeyHex;
+      return decrypt(cleanHex, new Uint8Array(encryptedEnvelope));
     } catch (error) {
-      console.error('Failed to export public key:', error);
+      if (error instanceof AppError) throw error;
+      console.error('Failed to decrypt AES key with ECIES:', error);
       throw new AppError({
-        message: 'Failed to export RSA public key.',
+        message: 'Failed to decrypt the AES key. Your wallet key may not match the encryption key.',
         status: 500,
-        title: 'Public Key Export Failed',
-        type: 'PUBLIC_KEY_EXPORT_FAILED',
-      });
-    }
-  }
-
-  /**
-   * Imports an RSA public key from a JWK string.
-   */
-  static async importPublicKey(keyString: string): Promise<CryptoKey> {
-    try {
-      const jwk = JSON.parse(keyString);
-      return await window.crypto.subtle.importKey(
-        'jwk',
-        jwk,
-        {
-          name: 'RSA-OAEP',
-          hash: 'SHA-256',
-        },
-        true,
-        ['encrypt']
-      );
-    } catch (error) {
-      console.error('Failed to import public key:', error);
-      throw new AppError({
-        message: 'Failed to import RSA public key. The key data may be corrupted or invalid.',
-        status: 500,
-        title: 'Public Key Import Failed',
-        type: 'PUBLIC_KEY_IMPORT_FAILED',
-      });
-    }
-  }
-
-  /**
-   * Imports an RSA private key from a JWK string.
-   */
-  static async importPrivateKey(keyString: string): Promise<CryptoKey> {
-    try {
-      const jwk = JSON.parse(keyString);
-      return await window.crypto.subtle.importKey(
-        'jwk',
-        jwk,
-        {
-          name: 'RSA-OAEP',
-          hash: 'SHA-256',
-        },
-        true,
-        ['decrypt']
-      );
-    } catch (error) {
-      console.error('Failed to import private key:', error);
-      throw new AppError({
-        message: 'Failed to import RSA private key. The key data may be corrupted or invalid.',
-        status: 500,
-        title: 'Private Key Import Failed',
-        type: 'PRIVATE_KEY_IMPORT_FAILED',
-      });
-    }
-  }
-
-  /**
-   * Exports an RSA private key as a JSON Web Key (JWK) string.
-   */
-  static async exportPrivateKey(privateKey: CryptoKey): Promise<string> {
-    try {
-      const exported = await window.crypto.subtle.exportKey('jwk', privateKey);
-      return JSON.stringify(exported);
-    } catch (error) {
-      console.error('Failed to export private key:', error);
-      throw new AppError({
-        message: 'Failed to export RSA private key.',
-        status: 500,
-        title: 'Private Key Export Failed',
-        type: 'PRIVATE_KEY_EXPORT_FAILED',
-      });
-    }
-  }
-
-  // ==================== RSA Envelope Operations ====================
-
-  /**
-   * Encrypts a raw AES key using an RSA public key (RSA-OAEP).
-   */
-  static async encryptAESKeyWithRSA(
-    aesKeyRaw: ArrayBuffer,
-    rsaPublicKey: CryptoKey
-  ): Promise<ArrayBuffer> {
-    try {
-      return await window.crypto.subtle.encrypt({ name: 'RSA-OAEP' }, rsaPublicKey, aesKeyRaw);
-    } catch (error) {
-      console.error('Failed to encrypt AES key with RSA:', error);
-      throw new AppError({
-        message: "Failed to encrypt the AES key with the recipient's public key.",
-        status: 500,
-        title: 'RSA Encryption Failed',
-        type: 'RSA_KEY_ENCRYPTION_FAILED',
-      });
-    }
-  }
-
-  /**
-   * Decrypts an AES key using an RSA private key (RSA-OAEP).
-   */
-  static async decryptAESKeyWithRSA(
-    encryptedAesKey: ArrayBuffer,
-    rsaPrivateKey: CryptoKey
-  ): Promise<ArrayBuffer> {
-    try {
-      return await window.crypto.subtle.decrypt(
-        { name: 'RSA-OAEP' },
-        rsaPrivateKey,
-        encryptedAesKey
-      );
-    } catch (error) {
-      console.error('Failed to decrypt AES key with RSA:', error);
-      throw new AppError({
-        message: 'Failed to decrypt the AES key. The private key may not match the encryption key.',
-        status: 500,
-        title: 'RSA Decryption Failed',
-        type: 'RSA_KEY_DECRYPTION_FAILED',
+        title: 'ECIES Decryption Failed',
+        type: 'ECIES_DECRYPTION_FAILED',
       });
     }
   }

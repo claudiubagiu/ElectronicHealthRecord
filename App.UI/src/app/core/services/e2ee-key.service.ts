@@ -1,25 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { CryptoService } from './crypto.service';
 import { Web3Service } from './web3.service';
 import { AppError } from '../errors/app.error';
+import { PublicKeyResponse } from '../models/e2ee-key.model';
 import { environment } from '../../../environments/environment';
+import { SigningKey } from 'ethers';
+import { CryptoService } from './crypto.service';
 
 /**
  * Deterministic derivation message — must be identical every time
- * so the same wallet always produces the same wrapping key.
+ * so the same wallet always produces the same derived private key.
  */
 const DERIVATION_MESSAGE = 'EHR-E2EE-key-derivation-v1';
-
-export interface EncryptedPrivateKeyResponse {
-  encryptedPrivateKey: string;
-}
-
-export interface PublicKeyResponse {
-  userId: string;
-  publicKey: string;
-}
 
 @Injectable({ providedIn: 'root' })
 export class E2eeKeyService {
@@ -28,41 +21,59 @@ export class E2eeKeyService {
   private web3Service = inject(Web3Service);
 
   /**
-   * RSA private key kept in memory for the duration of the session.
-   * Never persisted to localStorage or sent to the server in plain text.
+   * The wallet's secp256k1 private key derived from a deterministic MetaMask
+   * signature. Kept in memory for the session duration.
+   * Never persisted to localStorage or sent to the server.
    */
-  private rsaPrivateKey: CryptoKey | null = null;
+  private eccPrivateKey: string | null = null;
+
+  /**
+   * The wallet's uncompressed secp256k1 public key (hex, 0x04...).
+   * Derived alongside the private key from the same signature.
+   */
+  private eccPublicKey: string | null = null;
 
   // ==================== Key Derivation ====================
 
   /**
-   * Derives a 256-bit AES-GCM wrapping key from a MetaMask signature.
+   * Derives a deterministic secp256k1 private key from a MetaMask signature.
    *
    * Flow:
    * 1. Ask MetaMask to sign the deterministic derivation message.
-   * 2. SHA-256 the signature bytes to produce 256-bit key material.
-   * 3. Import the hash as an AES-GCM CryptoKey for encrypt/decrypt.
+   * 2. SHA-256 the signature bytes to produce 32 bytes of key material.
+   * 3. Use those 32 bytes as a secp256k1 private key.
+   * 4. Derive the corresponding uncompressed public key.
    *
    * Because the same wallet + message always produce the same signature,
-   * this yields a deterministic wrapping key tied to the user's wallet.
+   * this yields a deterministic ECC key pair tied to the user's wallet.
+   * The private key never leaves memory and is never sent to any server.
+   *
+   * @returns An object with the hex-encoded privateKey and publicKey.
    */
-  async deriveWrappingKeyFromWallet(): Promise<CryptoKey> {
+  async deriveEccKeyPairFromWallet(): Promise<{ privateKey: string; publicKey: string }> {
     try {
       const signature = await this.web3Service.signMessage(DERIVATION_MESSAGE);
 
+      // Hash the signature to get 32 bytes suitable as a secp256k1 private key
       const sigBytes = CryptoService.hexToBytes(signature);
       const hashBuffer = await crypto.subtle.digest('SHA-256', sigBytes.buffer as ArrayBuffer);
 
-      return await crypto.subtle.importKey('raw', hashBuffer, { name: 'AES-GCM' }, false, [
-        'encrypt',
-        'decrypt',
-      ]);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      // Use the 32-byte hash as the private key
+      const privateKeyHex =
+        '0x' +
+        Array.from(new Uint8Array(hashBuffer))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
 
-      console.error('Failed to derive wrapping key from wallet:', error);
+      // Derive the corresponding public key
+      const signingKey = new SigningKey(privateKeyHex);
+      const publicKeyHex = signingKey.publicKey; // uncompressed, 0x04...
+
+      return { privateKey: privateKeyHex, publicKey: publicKeyHex };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+
+      console.error('Failed to derive ECC key pair from wallet:', error);
       throw new AppError({
         message: 'Failed to derive encryption key from your wallet. Please try again.',
         status: 500,
@@ -77,30 +88,25 @@ export class E2eeKeyService {
   /**
    * Called BEFORE sending the register request.
    *
-   * Generates a fresh RSA-OAEP 2048-bit key pair, exports both keys as JWK,
-   * encrypts the private key with a wallet-derived AES wrapping key, and
-   * keeps the raw private key in memory for immediate use.
+   * Derives a deterministic secp256k1 key pair from the wallet signature,
+   * stores the private key in memory, and returns the public key to be
+   * sent to the backend for storage.
+   *
+   * No encrypted private key is generated or sent — the private key lives
+   * only in memory and is re-derived from the wallet on each login.
+   *
+   * @returns The hex-encoded uncompressed ECC public key for registration.
    */
-  async generateKeysForRegistration(): Promise<{
-    publicKey: string;
-    encryptedPrivateKey: string;
-  }> {
+  async getPublicKeyForRegistration(): Promise<string> {
     try {
-      const keyPair = await CryptoService.generateRSAKeyPair();
-      const publicKeyJwk = await CryptoService.exportPublicKey(keyPair.publicKey);
-      const privateKeyJwk = await CryptoService.exportPrivateKey(keyPair.privateKey);
-      const wrappingKey = await this.deriveWrappingKeyFromWallet();
-      const encryptedPrivateKey = await CryptoService.encryptString(privateKeyJwk, wrappingKey);
-
-      this.rsaPrivateKey = keyPair.privateKey;
-
-      return { publicKey: publicKeyJwk, encryptedPrivateKey };
+      const { privateKey, publicKey } = await this.deriveEccKeyPairFromWallet();
+      this.eccPrivateKey = privateKey;
+      this.eccPublicKey = publicKey;
+      return publicKey;
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
-      console.error('Failed to generate E2EE keys for registration:', error);
+      console.error('Failed to generate ECC public key for registration:', error);
       throw new AppError({
         message: 'Failed to generate encryption keys for registration. Please try again.',
         status: 500,
@@ -113,38 +119,21 @@ export class E2eeKeyService {
   // ==================== Login Flow ====================
 
   /**
-   * Called after every login to recover the RSA private key.
+   * Called after every login to recover the ECC private key.
    *
-   * 1. Download the encrypted private key blob from the server.
-   * 2. Derive the same wrapping key from the wallet signature.
-   * 3. Decrypt the blob, import the RSA private key, and store it in memory.
-   *
-   * If no encrypted key is found on the server (e.g., legacy account),
-   * the method returns silently without throwing.
+   * Derives the same deterministic secp256k1 key pair from the wallet
+   * signature. No server round-trip needed — the key is derived purely
+   * from the MetaMask signature of the deterministic message.
    */
   async recoverPrivateKey(): Promise<void> {
     try {
-      const response = await firstValueFrom(
-        this.http.get<EncryptedPrivateKeyResponse>(`${this.API_URL}/keys/private`)
-      );
-
-      if (!response?.encryptedPrivateKey) {
-        console.warn('[E2EE] No encrypted private key found on server.');
-        return;
-      }
-
-      const wrappingKey = await this.deriveWrappingKeyFromWallet();
-      const privateKeyJwk = await CryptoService.decryptString(
-        response.encryptedPrivateKey,
-        wrappingKey
-      );
-      this.rsaPrivateKey = await CryptoService.importPrivateKey(privateKeyJwk);
+      const { privateKey, publicKey } = await this.deriveEccKeyPairFromWallet();
+      this.eccPrivateKey = privateKey;
+      this.eccPublicKey = publicKey;
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
-      console.error('Failed to recover E2EE private key:', error);
+      console.error('Failed to recover ECC private key:', error);
       throw new AppError({
         message:
           'Failed to recover your encryption private key. You may not be able to decrypt existing data.',
@@ -158,40 +147,46 @@ export class E2eeKeyService {
   // ==================== Key Access ====================
 
   /**
-   * Returns the in-memory RSA private key, or null if not yet recovered/generated.
+   * Returns the in-memory ECC private key (hex), or null if not yet derived.
    */
-  getPrivateKey(): CryptoKey | null {
-    return this.rsaPrivateKey;
+  getPrivateKey(): string | null {
+    return this.eccPrivateKey;
   }
 
   /**
-   * Returns true if the RSA private key is currently available in memory.
+   * Returns the in-memory ECC public key (hex), or null if not yet derived.
+   */
+  getPublicKey(): string | null {
+    return this.eccPublicKey;
+  }
+
+  /**
+   * Returns true if the ECC private key is currently available in memory.
    */
   hasPrivateKey(): boolean {
-    return this.rsaPrivateKey !== null;
+    return this.eccPrivateKey !== null;
   }
 
   /**
-   * Clears the RSA private key from memory (e.g., on logout).
+   * Clears the ECC key pair from memory (e.g., on logout).
    */
   clearPrivateKey(): void {
-    this.rsaPrivateKey = null;
+    this.eccPrivateKey = null;
+    this.eccPublicKey = null;
   }
 
   // ==================== Public Key Retrieval ====================
 
   /**
-   * Fetches the RSA public key for a given user from the server.
+   * Fetches the ECC public key for a given user from the server.
    */
-  async getPublicKey(userId: string): Promise<PublicKeyResponse> {
+  async getPublicKey_remote(userId: string): Promise<PublicKeyResponse> {
     try {
       return await firstValueFrom(
         this.http.get<PublicKeyResponse>(`${this.API_URL}/keys/public/${userId}`)
       );
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
       console.error(`Failed to fetch public key for user ${userId}:`, error);
       throw new AppError({
@@ -204,7 +199,7 @@ export class E2eeKeyService {
   }
 
   /**
-   * Fetches RSA public keys for multiple users in a single request.
+   * Fetches ECC public keys for multiple users in a single request.
    */
   async getPublicKeysBulk(userIds: string[]): Promise<PublicKeyResponse[]> {
     try {
@@ -212,9 +207,7 @@ export class E2eeKeyService {
         this.http.post<PublicKeyResponse[]>(`${this.API_URL}/keys/public/bulk`, userIds)
       );
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
       console.error('Failed to fetch public keys in bulk:', error);
       throw new AppError({

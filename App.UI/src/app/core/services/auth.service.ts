@@ -15,7 +15,6 @@ import { E2eeKeyService } from './e2ee-key.service';
 import { AppError } from '../errors/app.error';
 import { environment } from '../../../environments/environment';
 
-
 @Injectable({
   providedIn: 'root',
 })
@@ -67,9 +66,9 @@ export class AuthService implements OnDestroy {
    * 3. Sign nonce with MetaMask.
    * 4. Send signature to backend for verification.
    * 5. Store JWT token.
-   * 6. Recover E2EE RSA private key from server (decrypt with wallet-derived AES key).
+   * 6. Derive ECC private key from wallet (deterministic, no server round-trip).
    *
-   * The E2EE key recovery is non-blocking: if it fails, the user is still
+   * The ECC key derivation is non-blocking: if it fails, the user is still
    * logged in but will not be able to decrypt existing encrypted data until
    * the key is recovered successfully.
    *
@@ -77,22 +76,13 @@ export class AuthService implements OnDestroy {
    * @throws {AppError} If wallet connection, nonce retrieval, signing, or backend verification fails.
    */
   async login(): Promise<LoginResponse> {
-    // Step 1: Ensure wallet is connected
     const walletAddress =
       this.web3Service.getAddressOrNull() ?? (await this.web3Service.connectWallet());
 
-    // Step 2: Get nonce from backend
     const nonce = await this.getNonce(walletAddress);
-
-    // Step 3: Sign the nonce with MetaMask
     const signature = await this.web3Service.signMessage(nonce);
 
-    // Step 4: Send to backend for verification
-    const loginRequest: LoginRequest = {
-      walletAddress,
-      signature,
-      nonce,
-    };
+    const loginRequest: LoginRequest = { walletAddress, signature, nonce };
 
     const response = await firstValueFrom(
       this.http.post<LoginResponse>(`${this.API_URL}/login`, loginRequest).pipe(
@@ -102,14 +92,14 @@ export class AuthService implements OnDestroy {
       )
     );
 
-    // Step 5: Recover E2EE RSA private key after login (non-blocking)
+    // Derive ECC private key from wallet (non-blocking)
     try {
       await this.e2eeService.recoverPrivateKey();
     } catch (error) {
       if (error instanceof AppError) {
-        console.error(`[Auth] E2EE key recovery failed [${error.type}]:`, error.message);
+        console.error(`[Auth] ECC key derivation failed [${error.type}]:`, error.message);
       } else {
-        console.error('[Auth] Unexpected error during E2EE key recovery:', error);
+        console.error('[Auth] Unexpected error during ECC key derivation:', error);
       }
     }
 
@@ -121,8 +111,8 @@ export class AuthService implements OnDestroy {
    * 1. Connect wallet (if not connected).
    * 2. Get nonce from backend.
    * 3. Sign nonce with MetaMask.
-   * 4. Generate RSA key pair, encrypt private key with wallet-derived AES key.
-   * 5. Send registration payload (including E2EE keys) to backend for verification.
+   * 4. Derive ECC public key from wallet (deterministic).
+   * 5. Send registration payload (including ECC public key) to backend.
    * 6. Store JWT token.
    *
    * @param registerRequest - The registration form data (personal info, role, etc.).
@@ -130,26 +120,20 @@ export class AuthService implements OnDestroy {
    * @throws {AppError} If any step in the registration flow fails.
    */
   async register(registerRequest: RegisterRequest): Promise<LoginResponse> {
-    // Step 1: Ensure wallet is connected
     const walletAddress =
       this.web3Service.getAddressOrNull() ?? (await this.web3Service.connectWallet());
 
-    // Step 2: Get nonce from backend
     const nonce = await this.getNonce(walletAddress);
-
-    // Step 3: Sign the nonce with MetaMask
     const signature = await this.web3Service.signMessage(nonce);
 
-    // Step 4: Generate E2EE RSA keys and encrypt private key with wallet
-    const { publicKey, encryptedPrivateKey } = await this.e2eeService.generateKeysForRegistration();
+    // Derive ECC public key from wallet
+    const publicKey = await this.e2eeService.getPublicKeyForRegistration();
 
-    // Step 5: Send payload to backend (keys included)
     const payload = {
       ...registerRequest,
       walletAddress,
       signature,
       publicKey,
-      encryptedPrivateKey,
     };
 
     const response = await firstValueFrom(
@@ -166,7 +150,7 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * Logout: clear token, clear E2EE private key from memory, and disconnect wallet.
+   * Logout: clear token, clear ECC private key from memory, and disconnect wallet.
    */
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
@@ -268,7 +252,6 @@ export class AuthService implements OnDestroy {
         user: decoded,
       });
     } else if (token) {
-      // Token expired, clean up
       localStorage.removeItem(this.TOKEN_KEY);
     }
   }
@@ -294,7 +277,6 @@ export class AuthService implements OnDestroy {
   private isTokenExpired(token: string): boolean {
     const decoded = this.decodeToken(token);
     if (!decoded || !decoded.exp) return true;
-
     const expirationDate = new Date(decoded.exp * 1000);
     return expirationDate <= new Date();
   }

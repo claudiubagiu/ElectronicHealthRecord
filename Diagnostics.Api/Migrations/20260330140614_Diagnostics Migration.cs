@@ -53,6 +53,31 @@ namespace Diagnostics.Api.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "AccessRequestHistories",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AccessRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Action = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccessRequestHistories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AccessRequestHistories_AccessRequests_AccessRequestId",
+                        column: x => x.AccessRequestId,
+                        principalTable: "AccessRequests",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccessRequestHistories_AccessRequestId",
+                table: "AccessRequestHistories",
+                column: "AccessRequestId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_AccessRequests_DoctorId",
                 table: "AccessRequests",
@@ -67,6 +92,9 @@ namespace Diagnostics.Api.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AccessRequestHistories");
+
             migrationBuilder.DropTable(
                 name: "AccessRequests");
 

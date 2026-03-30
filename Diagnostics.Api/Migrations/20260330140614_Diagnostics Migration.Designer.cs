@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diagnostics.Api.Migrations
 {
     [DbContext(typeof(DiagnosticsDbContext))]
-    [Migration("20260319193709_Diagnostics Migration")]
+    [Migration("20260330140614_Diagnostics Migration")]
     partial class DiagnosticsMigration
     {
         /// <inheritdoc />
@@ -24,6 +24,29 @@ namespace Diagnostics.Api.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.AccessRequestHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccessRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessRequestId");
+
+                    b.ToTable("AccessRequestHistories");
+                });
 
             modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", b =>
                 {
@@ -77,6 +100,17 @@ namespace Diagnostics.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.AccessRequestHistory", b =>
+                {
+                    b.HasOne("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", "AccessRequest")
+                        .WithMany()
+                        .HasForeignKey("AccessRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccessRequest");
                 });
 
             modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", b =>

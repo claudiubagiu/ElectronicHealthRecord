@@ -10,13 +10,16 @@ namespace Diagnostics.Api.Services.Implementation
     public class AccessRequestService : IAccessRequestService
     {
         private readonly IAccessRequestRepository _accessRequestRepository;
+        private readonly IAccessRequestHistoryRepository _historyRepository;
         private readonly IUsersRepository _usersRepository;
 
         public AccessRequestService(
             IAccessRequestRepository accessRequestRepository,
+            IAccessRequestHistoryRepository historyRepository,
             IUsersRepository usersRepository)
         {
             _accessRequestRepository = accessRequestRepository;
+            _historyRepository = historyRepository;
             _usersRepository = usersRepository;
         }
 
@@ -46,6 +49,16 @@ namespace Diagnostics.Api.Services.Implementation
             };
 
             accessRequest = await _accessRequestRepository.CreateAsync(accessRequest);
+
+            // Create history entry for "Requested"
+            await _historyRepository.CreateAsync(new AccessRequestHistory
+            {
+                Id = Guid.NewGuid(),
+                AccessRequestId = accessRequest.Id,
+                Action = "Requested",
+                Timestamp = DateTime.UtcNow
+            });
+
             var created = await _accessRequestRepository.GetByIdAsync(accessRequest.Id);
             return Result.Ok(MapToDto(created!));
         }
@@ -88,6 +101,16 @@ namespace Diagnostics.Api.Services.Implementation
 
             request.Status = AccessRequestStatus.Approved;
             var updated = await _accessRequestRepository.UpdateAsync(request);
+
+            // Create history entry for "Approved"
+            await _historyRepository.CreateAsync(new AccessRequestHistory
+            {
+                Id = Guid.NewGuid(),
+                AccessRequestId = updated.Id,
+                Action = "Approved",
+                Timestamp = DateTime.UtcNow
+            });
+
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
             return Result.Ok(MapToDto(result!));
         }
@@ -110,6 +133,16 @@ namespace Diagnostics.Api.Services.Implementation
 
             request.Status = AccessRequestStatus.Rejected;
             var updated = await _accessRequestRepository.UpdateAsync(request);
+
+            // Create history entry for "Rejected"
+            await _historyRepository.CreateAsync(new AccessRequestHistory
+            {
+                Id = Guid.NewGuid(),
+                AccessRequestId = updated.Id,
+                Action = "Rejected",
+                Timestamp = DateTime.UtcNow
+            });
+
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
             return Result.Ok(MapToDto(result!));
         }
@@ -132,8 +165,38 @@ namespace Diagnostics.Api.Services.Implementation
 
             request.Status = AccessRequestStatus.Revoked;
             var updated = await _accessRequestRepository.UpdateAsync(request);
+
+            // Create history entry for "Revoked"
+            await _historyRepository.CreateAsync(new AccessRequestHistory
+            {
+                Id = Guid.NewGuid(),
+                AccessRequestId = updated.Id,
+                Action = "Revoked",
+                Timestamp = DateTime.UtcNow
+            });
+
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
             return Result.Ok(MapToDto(result!));
+        }
+
+        public async Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByPatientIdAsync(Guid patientId)
+        {
+            if (!await _usersRepository.ExistsAsync(patientId))
+                return Result.Fail<IReadOnlyList<AccessRequestHistoryDto>>(
+                    new Error("Patient not found.").WithMetadata("StatusCode", 404));
+
+            var histories = await _historyRepository.GetByPatientIdAsync(patientId);
+            return Result.Ok<IReadOnlyList<AccessRequestHistoryDto>>(histories.Select(MapHistoryToDto).ToList());
+        }
+
+        public async Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByDoctorIdAsync(Guid doctorId)
+        {
+            if (!await _usersRepository.ExistsAsync(doctorId))
+                return Result.Fail<IReadOnlyList<AccessRequestHistoryDto>>(
+                    new Error("Doctor not found.").WithMetadata("StatusCode", 404));
+
+            var histories = await _historyRepository.GetByDoctorIdAsync(doctorId);
+            return Result.Ok<IReadOnlyList<AccessRequestHistoryDto>>(histories.Select(MapHistoryToDto).ToList());
         }
 
         private static AccessRequestDto MapToDto(DiagnosticsAccessRequest r) => new()
@@ -147,6 +210,22 @@ namespace Diagnostics.Api.Services.Implementation
             PatientWalletAddress = r.Patient?.WalletAddress ?? string.Empty,
             Status = r.Status.ToString(),
             CreatedAt = r.CreatedAt
+        };
+
+        private static AccessRequestHistoryDto MapHistoryToDto(AccessRequestHistory h) => new()
+        {
+            Id = h.Id,
+            AccessRequestId = h.AccessRequestId,
+            Action = h.Action,
+            DoctorId = h.AccessRequest?.DoctorId ?? Guid.Empty,
+            DoctorName = h.AccessRequest?.Doctor != null
+                ? $"{h.AccessRequest.Doctor.FirstName} {h.AccessRequest.Doctor.LastName}"
+                : string.Empty,
+            PatientId = h.AccessRequest?.PatientId ?? Guid.Empty,
+            PatientName = h.AccessRequest?.Patient != null
+                ? $"{h.AccessRequest.Patient.FirstName} {h.AccessRequest.Patient.LastName}"
+                : string.Empty,
+            Timestamp = h.Timestamp
         };
     }
 }

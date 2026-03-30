@@ -79,6 +79,25 @@ namespace Diagnostics.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
+        [HttpGet("history/patient/{patientId}")]
+        public async Task<IActionResult> GetHistoryByPatientId(Guid patientId)
+        {
+            var result = await _accessRequestService.GetHistoryByPatientIdAsync(patientId);
+            if (result.IsSuccess) return Ok(result.Value);
+            return BuildError(result.Errors.First());
+        }
+
+        [HttpGet("history/doctor")]
+        public async Task<IActionResult> GetHistoryByDoctor()
+        {
+            var doctorIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+            if (doctorIdClaim == null) return Unauthorized();
+
+            var result = await _accessRequestService.GetHistoryByDoctorIdAsync(Guid.Parse(doctorIdClaim));
+            if (result.IsSuccess) return Ok(result.Value);
+            return BuildError(result.Errors.First());
+        }
+
         private ObjectResult BuildError(FluentResults.IError error)
         {
             var statusCode = error.Metadata.ContainsKey("StatusCode")

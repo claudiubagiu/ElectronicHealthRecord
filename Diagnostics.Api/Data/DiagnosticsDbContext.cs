@@ -11,6 +11,7 @@ namespace Diagnostics.Api.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<DiagnosticsAccessRequest> AccessRequests { get; set; }
+        public DbSet<AccessRequestHistory> AccessRequestHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,6 +28,12 @@ namespace Diagnostics.Api.Data
                 .WithMany()
                 .HasForeignKey(r => r.PatientId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AccessRequestHistory>()
+                .HasOne(h => h.AccessRequest)
+                .WithMany()
+                .HasForeignKey(h => h.AccessRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -11,5 +11,7 @@ namespace Diagnostics.Api.Services.Interface
         Task<Result<AccessRequestDto>> ApproveAsync(Guid requestId, Guid patientId);
         Task<Result<AccessRequestDto>> RejectAsync(Guid requestId, Guid patientId);
         Task<Result<AccessRequestDto>> RevokeAsync(Guid requestId, Guid patientId);
+        Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByPatientIdAsync(Guid patientId);
+        Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByDoctorIdAsync(Guid doctorId);
     }
 }

@@ -5,6 +5,7 @@ import {
   AccessRequestDto,
   CreateAccessRequestDto,
 } from '../../../core/models/access-request.model';
+import { AccessRequestHistoryDto } from '../../../core/models/access-request-history.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -18,5 +19,9 @@ export class AccessRequestService {
 
   getMyRequests(): Promise<AccessRequestDto[]> {
     return firstValueFrom(this.http.get<AccessRequestDto[]>(`${this.API}/doctor`));
+  }
+
+  getMyHistory(): Promise<AccessRequestHistoryDto[]> {
+    return firstValueFrom(this.http.get<AccessRequestHistoryDto[]>(`${this.API}/history/doctor`));
   }
 }

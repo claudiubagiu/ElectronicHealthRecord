@@ -130,43 +130,41 @@
           </ng-template>
 
           <div class="tab-content">
-            @if (history.length === 0) {
+            @if (isLoadingHistory) {
+              <div class="loading-state">
+                <mat-spinner diameter="36"></mat-spinner>
+              </div>
+            }
+
+            @if (!isLoadingHistory && historyEntries.length === 0) {
               <div class="empty-state">
                 <mat-icon>history_toggle_off</mat-icon>
                 <p>No history yet</p>
               </div>
             }
 
-            <div class="rows-list">
-              @for (req of history; track req.id) {
-                <div class="request-row">
-                  <div class="doctor-info">
-                    <div class="doctor-avatar"><mat-icon>medical_services</mat-icon></div>
-                    <div class="doctor-details">
-                      <span class="doctor-name">{{ req.doctorName }}</span>
-                      <span class="request-date">{{ formatDate(req.createdAt) }}</span>
+            @if (!isLoadingHistory && historyEntries.length > 0) {
+              <div class="rows-list">
+                @for (entry of historyEntries; track entry.id) {
+                  <div class="request-row">
+                    <div class="doctor-info">
+                      <div class="doctor-avatar"><mat-icon>medical_services</mat-icon></div>
+                      <div class="doctor-details">
+                        <span class="doctor-name">{{ entry.doctorName }}</span>
+                        <span class="request-date">{{ formatDateTime(entry.timestamp) }}</span>
+                      </div>
                     </div>
+                    <span
+                      class="status-badge"
+                      [ngClass]="getActionClass(entry.action)"
+                    >
+                      <mat-icon>{{ getActionIcon(entry.action) }}</mat-icon>
+                      {{ entry.action }}
+                    </span>
                   </div>
-                  <span
-                    class="status-badge"
-                    [class.approved]="req.status === 'Approved'"
-                    [class.rejected]="req.status === 'Rejected'"
-                    [class.revoked]="req.status === 'Revoked'"
-                  >
-                    @if (req.status === 'Approved') {
-                      <mat-icon>check_circle</mat-icon>
-                    }
-                    @if (req.status === 'Rejected') {
-                      <mat-icon>cancel</mat-icon>
-                    }
-                    @if (req.status === 'Revoked') {
-                      <mat-icon>remove_circle</mat-icon>
-                    }
-                    {{ req.status }}
-                  </span>
-                </div>
-              }
-            </div>
+                }
+              </div>
+            }
           </div>
         </mat-tab>
 

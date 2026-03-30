@@ -165,44 +165,35 @@
         </ng-template>
 
         <div class="tab-content">
-          @if (isLoadingRequests) {
+          @if (isLoadingHistory) {
             <div class="loading-state">
               <mat-spinner diameter="36"></mat-spinner>
             </div>
           }
 
-          @if (!isLoadingRequests && historyRequests.length === 0) {
+          @if (!isLoadingHistory && historyEntries.length === 0) {
             <div class="empty-state">
               <mat-icon>history_toggle_off</mat-icon>
               <p>No history yet</p>
             </div>
           }
 
-          @if (!isLoadingRequests && historyRequests.length > 0) {
+          @if (!isLoadingHistory && historyEntries.length > 0) {
             <div class="requests-list">
-              @for (req of historyRequests; track req.id) {
+              @for (entry of historyEntries; track entry.id) {
                 <div class="request-row">
                   <div class="request-patient">
                     <div class="patient-avatar"><mat-icon>person</mat-icon></div>
                     <div class="patient-details">
-                      <span class="patient-name">{{ req.patientName }}</span>
-                      <span class="request-date">{{ formatDate(req.createdAt) }}</span>
+                      <span class="patient-name">{{ entry.patientName }}</span>
+                      <span class="request-date">{{ formatDateTime(entry.timestamp) }}</span>
                     </div>
                   </div>
 
                   <div class="row-right">
-                    <span class="status-badge"
-                      [class.approved]="req.status === 'Approved'"
-                      [class.rejected]="req.status === 'Rejected'"
-                      [class.revoked]="req.status === 'Revoked'">
-                      @if (req.status === 'Approved') {
-                        <mat-icon>check_circle</mat-icon>
-                      } @else if (req.status === 'Rejected') {
-                        <mat-icon>cancel</mat-icon>
-                      } @else if (req.status === 'Revoked') {
-                        <mat-icon>remove_circle</mat-icon>
-                      }
-                      {{ req.status }}
+                    <span class="status-badge" [ngClass]="getActionClass(entry.action)">
+                      <mat-icon>{{ getActionIcon(entry.action) }}</mat-icon>
+                      {{ entry.action }}
                     </span>
                   </div>
                 </div>

@@ -26,6 +26,7 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
+builder.Services.AddScoped<IAccessRequestHistoryRepository, AccessRequestHistoryRepository>();
 builder.Services.AddScoped<IAccessRequestService, AccessRequestService>();
 
 builder.Services.AddCors(options =>

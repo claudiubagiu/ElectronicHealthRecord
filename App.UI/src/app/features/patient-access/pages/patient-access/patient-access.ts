@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of, takeUntil } from 'rxjs';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -10,6 +11,7 @@ import {
   AccessRequestDto,
   AccessRequestStatus,
 } from '../../../../core/models/access-request.model';
+import { AccessRequestHistoryDto } from '../../../../core/models/access-request-history.model';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { UsersService } from '../../../../core/services/users.service';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
@@ -19,7 +21,7 @@ import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
   templateUrl: './patient-access.html',
   styleUrls: ['./patient-access.scss'],
   standalone: true,
-  imports: [...MAT_FORM_IMPORTS, MatTabsModule, MatChipsModule],
+  imports: [CommonModule, ...MAT_FORM_IMPORTS, MatTabsModule, MatChipsModule],
 })
 export class PatientAccess implements OnInit, OnDestroy {
   private usersService = inject(UsersService);
@@ -37,21 +39,19 @@ export class PatientAccess implements OnInit, OnDestroy {
   myRequests: AccessRequestDto[] = [];
   isLoadingRequests = false;
 
+  historyEntries: AccessRequestHistoryDto[] = [];
+  isLoadingHistory = false;
+
   requestStatusMap = new Map<string, AccessRequestStatus>();
 
   get activeRequests(): AccessRequestDto[] {
     return this.myRequests.filter((r) => r.status === 'Approved');
   }
 
-  get historyRequests(): AccessRequestDto[] {
-    return [...this.myRequests]
-      .filter((r) => r.status !== 'Pending')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
   ngOnInit(): void {
     this.setupSearch();
     this.loadMyRequests();
+    this.loadHistory();
   }
 
   ngOnDestroy(): void {
@@ -103,6 +103,17 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
+  async loadHistory(): Promise<void> {
+    this.isLoadingHistory = true;
+    try {
+      this.historyEntries = await this.accessRequestService.getMyHistory();
+    } catch {
+      this.notify.showError('Failed to load history.');
+    } finally {
+      this.isLoadingHistory = false;
+    }
+  }
+
   getPatientStatus(patientId: string): AccessRequestStatus | null {
     return this.requestStatusMap.get(patientId) ?? null;
   }
@@ -114,6 +125,8 @@ export class PatientAccess implements OnInit, OnDestroy {
       this.requestStatusMap.set(patient.id, 'Pending');
       this.myRequests = [result, ...this.myRequests];
       this.notify.showSuccess(`Access requested for ${patient.firstName} ${patient.lastName}.`);
+      // Reload history to include the new "Requested" entry
+      this.loadHistory();
     } catch {
       this.notify.showError('Failed to send access request.');
     } finally {
@@ -135,6 +148,46 @@ export class PatientAccess implements OnInit, OnDestroy {
       queryParams: {
         patientName: req.patientName,
       },
+    });
+  }
+
+  getActionIcon(action: string): string {
+    switch (action) {
+      case 'Requested':
+        return 'send';
+      case 'Approved':
+        return 'check_circle';
+      case 'Rejected':
+        return 'cancel';
+      case 'Revoked':
+        return 'remove_circle';
+      default:
+        return 'history';
+    }
+  }
+
+  getActionClass(action: string): string {
+    switch (action) {
+      case 'Approved':
+        return 'approved';
+      case 'Rejected':
+        return 'rejected';
+      case 'Revoked':
+        return 'revoked';
+      case 'Requested':
+        return 'pending';
+      default:
+        return '';
+    }
+  }
+
+  formatDateTime(dateStr: string): string {
+    return new Date(dateStr).toLocaleString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AccessRequestDto } from '../../../core/models/access-request.model';
+import { AccessRequestHistoryDto } from '../../../core/models/access-request-history.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +26,12 @@ export class AccessManagementService {
 
   revoke(requestId: string): Promise<AccessRequestDto> {
     return firstValueFrom(this.http.patch<AccessRequestDto>(`${this.API}/${requestId}/revoke`, {}));
+  }
+
+  getMyHistory(patientId: string): Promise<AccessRequestHistoryDto[]> {
+    return firstValueFrom(
+      this.http.get<AccessRequestHistoryDto[]>(`${this.API}/history/patient/${patientId}`)
+    );
   }
 
   /**

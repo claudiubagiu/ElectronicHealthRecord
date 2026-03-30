@@ -33,7 +33,8 @@ namespace Auth.Api.Migrations
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Nonce = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Challenge = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EccPublicKey = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),

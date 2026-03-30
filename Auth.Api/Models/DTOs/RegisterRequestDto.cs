@@ -2,6 +2,11 @@
 
 namespace Auth.Api.Models.DTOs
 {
+    /// <summary>
+    /// Payload sent by the frontend during registration.
+    /// Includes personal information, an ECC public key for future challenge-response
+    /// authentication, and the signed challenge to prove key ownership.
+    /// </summary>
     public class RegisterRequestDto
     {
         [EmailAddress]
@@ -12,10 +17,14 @@ namespace Auth.Api.Models.DTOs
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
         public required string WalletAddress { get; set; }
-        public required string Signature { get; set; }
-        public required string PublicKey { get; set; }
+        public required string EccSignature { get; set; }
+        public required string EccPublicKey { get; set; }
+
+        // Patient fields
         public string? CNP { get; set; }
         public DateTime? DateOfBirth { get; set; }
+
+        // Doctor fields
         public string? Specialization { get; set; }
         public string? LicenseNumber { get; set; }
         public string? HospitalAffiliation { get; set; }

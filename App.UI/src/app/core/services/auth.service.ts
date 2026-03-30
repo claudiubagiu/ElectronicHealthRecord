@@ -1,14 +1,14 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, firstValueFrom } from 'rxjs';
 import { filter, map, pairwise, tap } from 'rxjs/operators';
 import { Web3Service } from './web3.service';
 import {
   AuthState,
+  ChallengeResponse,
   DecodedToken,
   LoginRequest,
   LoginResponse,
-  NonceResponse,
   RegisterRequest,
 } from '../models/auth.model';
 import { E2eeKeyService } from './e2ee-key.service';
@@ -60,29 +60,36 @@ export class AuthService implements OnDestroy {
   // ==================== Authentication Flow ====================
 
   /**
-   * Full login flow:
+   * Full login flow with a single MetaMask popup:
    * 1. Connect wallet (if not connected).
-   * 2. Get nonce from backend.
-   * 3. Sign nonce with MetaMask.
-   * 4. Send signature to backend for verification.
-   * 5. Store JWT token.
-   * 6. Derive ECC private key from wallet (deterministic, no server round-trip).
+   * 2. Derive ECC key pair from a single MetaMask signature (the only popup).
+   * 3. Request a challenge from the backend.
+   * 4. Sign the challenge with the derived ECC key (no MetaMask popup).
+   * 5. Send the ECC signature + challenge to the backend for verification.
+   * 6. Store the returned JWT token.
    *
-   * The ECC key derivation is non-blocking: if it fails, the user is still
-   * logged in but will not be able to decrypt existing encrypted data until
-   * the key is recovered successfully.
+   * The ECC key pair remains in memory for E2EE operations (encrypting/decrypting
+   * medical data). If derivation fails, the user cannot proceed with login since
+   * the ECC key is now integral to the authentication flow.
    *
    * @returns The login response containing the JWT token.
-   * @throws {AppError} If wallet connection, nonce retrieval, signing, or backend verification fails.
+   * @throws {AppError} If wallet connection, key derivation, challenge retrieval,
+   *         signing, or backend verification fails.
    */
   async login(): Promise<LoginResponse> {
     const walletAddress =
       this.web3Service.getAddressOrNull() ?? (await this.web3Service.connectWallet());
 
-    const nonce = await this.getNonce(walletAddress);
-    const signature = await this.web3Service.signMessage(nonce);
+    // Derive ECC key pair — this is the single MetaMask popup
+    await this.e2eeService.recoverPrivateKey();
 
-    const loginRequest: LoginRequest = { walletAddress, signature, nonce };
+    // Request a challenge from the backend
+    const challenge = await this.getChallenge(walletAddress);
+
+    // Sign the challenge with the derived ECC private key (no popup)
+    const eccSignature = this.e2eeService.signChallenge(challenge);
+
+    const loginRequest: LoginRequest = { walletAddress, eccSignature, challenge };
 
     const response = await firstValueFrom(
       this.http.post<LoginResponse>(`${this.API_URL}/login`, loginRequest).pipe(
@@ -92,28 +99,20 @@ export class AuthService implements OnDestroy {
       )
     );
 
-    // Derive ECC private key from wallet (non-blocking)
-    try {
-      await this.e2eeService.recoverPrivateKey();
-    } catch (error) {
-      if (error instanceof AppError) {
-        console.error(`[Auth] ECC key derivation failed [${error.type}]:`, error.message);
-      } else {
-        console.error('[Auth] Unexpected error during ECC key derivation:', error);
-      }
-    }
-
     return response;
   }
 
   /**
-   * Full register flow:
+   * Full register flow with a single MetaMask popup:
    * 1. Connect wallet (if not connected).
-   * 2. Get nonce from backend.
-   * 3. Sign nonce with MetaMask.
-   * 4. Derive ECC public key from wallet (deterministic).
-   * 5. Send registration payload (including ECC public key) to backend.
-   * 6. Store JWT token.
+   * 2. Derive ECC key pair from a single MetaMask signature (the only popup).
+   * 3. Request a challenge from the backend.
+   * 4. Sign the challenge with the derived ECC key (no MetaMask popup).
+   * 5. Send registration data + ECC public key + signed challenge to backend.
+   * 6. Store the returned JWT token.
+   *
+   * The ECC public key is stored by the backend for future challenge-response
+   * authentication and for E2EE envelope creation by other users.
    *
    * @param registerRequest - The registration form data (personal info, role, etc.).
    * @returns The login response containing the JWT token.
@@ -123,17 +122,20 @@ export class AuthService implements OnDestroy {
     const walletAddress =
       this.web3Service.getAddressOrNull() ?? (await this.web3Service.connectWallet());
 
-    const nonce = await this.getNonce(walletAddress);
-    const signature = await this.web3Service.signMessage(nonce);
+    // Derive ECC key pair — this is the single MetaMask popup
+    const eccPublicKey = await this.e2eeService.getPublicKeyForRegistration();
 
-    // Derive ECC public key from wallet
-    const publicKey = await this.e2eeService.getPublicKeyForRegistration();
+    // Request a challenge from the backend
+    const challenge = await this.getChallenge(walletAddress);
 
-    const payload = {
+    // Sign the challenge with the derived ECC key (no popup)
+    const eccSignature = this.e2eeService.signChallenge(challenge);
+
+    const payload: RegisterRequest = {
       ...registerRequest,
       walletAddress,
-      signature,
-      publicKey,
+      eccSignature,
+      eccPublicKey,
     };
 
     const response = await firstValueFrom(
@@ -163,21 +165,22 @@ export class AuthService implements OnDestroy {
     this.web3Service.disconnectWallet();
   }
 
-  // ==================== Nonce ====================
+  // ==================== Challenge ====================
 
   /**
-   * Get nonce for a wallet address from the backend.
-   * The nonce is a one-time challenge used to verify wallet ownership.
+   * Requests a one-time challenge from the backend for the given wallet address.
+   * The challenge is a cryptographically secure random hex string that must be
+   * signed with the user's ECC private key to prove identity.
    *
-   * @param walletAddress - The Ethereum wallet address to get a nonce for.
-   * @returns The nonce string to be signed by the wallet.
+   * @param walletAddress - The Ethereum wallet address requesting authentication.
+   * @returns The challenge string to be signed with the ECC key.
    * @throws {AppError} If the HTTP request fails (propagated from errorInterceptor).
    */
-  private async getNonce(walletAddress: string): Promise<string> {
+  private async getChallenge(walletAddress: string): Promise<string> {
     const response = await firstValueFrom(
-      this.http.get<NonceResponse>(`${this.API_URL}/nonce/${walletAddress}`)
+      this.http.get<ChallengeResponse>(`${this.API_URL}/challenge/${walletAddress}`)
     );
-    return response.nonce;
+    return response.challenge;
   }
 
   // ==================== Token Management ====================

@@ -5,7 +5,7 @@ import { Web3Service } from './web3.service';
 import { AppError } from '../errors/app.error';
 import { PublicKeyResponse } from '../models/e2ee-key.model';
 import { environment } from '../../../environments/environment';
-import { SigningKey } from 'ethers';
+import { SigningKey, hashMessage } from 'ethers';
 import { CryptoService } from './crypto.service';
 
 /**
@@ -36,13 +36,12 @@ export class E2eeKeyService {
   // ==================== Key Derivation ====================
 
   /**
-   * Derives a deterministic secp256k1 private key from a MetaMask signature.
+   * Derives a deterministic secp256k1 key pair from a single MetaMask signature.
    *
-   * Flow:
-   * 1. Ask MetaMask to sign the deterministic derivation message.
-   * 2. SHA-256 the signature bytes to produce 32 bytes of key material.
-   * 3. Use those 32 bytes as a secp256k1 private key.
-   * 4. Derive the corresponding uncompressed public key.
+   * This is the only MetaMask popup in the entire authentication flow.
+   * The user signs a fixed derivation message, producing a deterministic
+   * signature that is then hashed (SHA-256) to produce 32 bytes of key
+   * material used as a secp256k1 private key.
    *
    * Because the same wallet + message always produce the same signature,
    * this yields a deterministic ECC key pair tied to the user's wallet.
@@ -79,6 +78,46 @@ export class E2eeKeyService {
         status: 500,
         title: 'Key Derivation Failed',
         type: 'E2EE_KEY_DERIVATION_FAILED',
+      });
+    }
+  }
+
+  // ==================== Challenge Signing ====================
+
+  /**
+   * Signs a challenge string using the derived ECC private key, entirely in
+   * JavaScript (no MetaMask popup). The challenge is hashed with keccak256
+   * before signing, producing a compact secp256k1 signature.
+   *
+   * This is used for the challenge-response authentication flow where the
+   * backend verifies the signature against the stored ECC public key.
+   *
+   * @param challenge - The challenge string received from the backend.
+   * @returns The hex-encoded secp256k1 signature of the challenge.
+   * @throws {AppError} If the ECC private key is not available in memory.
+   */
+  signChallenge(challenge: string): string {
+    if (!this.eccPrivateKey) {
+      throw new AppError({
+        message: 'ECC private key is not available. Please connect your wallet first.',
+        status: 401,
+        title: 'Key Not Available',
+        type: 'E2EE_KEY_NOT_AVAILABLE',
+      });
+    }
+
+    try {
+      const signingKey = new SigningKey(this.eccPrivateKey);
+      const digest = hashMessage(challenge);
+      const sig = signingKey.sign(digest);
+      return sig.serialized;
+    } catch (error) {
+      console.error('Failed to sign challenge with ECC key:', error);
+      throw new AppError({
+        message: 'Failed to sign the authentication challenge.',
+        status: 500,
+        title: 'Challenge Signing Failed',
+        type: 'CHALLENGE_SIGNING_FAILED',
       });
     }
   }

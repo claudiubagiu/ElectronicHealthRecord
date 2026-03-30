@@ -1,7 +1,11 @@
+export interface ChallengeResponse {
+  challenge: string;
+}
+
 export interface LoginRequest {
   walletAddress: string;
-  signature: string;
-  nonce: string;
+  eccSignature: string;
+  challenge: string;
 }
 
 export interface LoginResponse {
@@ -16,8 +20,8 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   walletAddress: string;
-  signature: string;
-  publicKey: string;
+  eccSignature: string;
+  eccPublicKey: string;
   // Patient fields
   dateOfBirth?: string;
   cnp?: string;
@@ -25,10 +29,6 @@ export interface RegisterRequest {
   specialization?: string;
   licenseNumber?: string;
   hospitalAffiliation?: string;
-}
-
-export interface NonceResponse {
-  nonce: string;
 }
 
 export interface DecodedToken {

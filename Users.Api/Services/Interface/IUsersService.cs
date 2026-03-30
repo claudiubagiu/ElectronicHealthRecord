@@ -7,5 +7,6 @@ namespace Users.Api.Services.Interface
         Task<IReadOnlyList<PatientDto>> GetPatiensByFullName(string search);
         Task<PublicKeyDto?> GetPublicKeyAsync(Guid userId);
         Task<List<PublicKeyDto>> GetPublicKeysByUserIdsAsync(List<Guid> userIds);
+        Task<PatientDto?> GetPatientByIdentityIdAsync(string identityId);
     }
 }

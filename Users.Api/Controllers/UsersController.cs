@@ -17,6 +17,23 @@ namespace Users.Api.Controllers
             this.usersService = usersService;
         }
 
+        /// <summary>
+        /// Returns the full patient profile for the currently authenticated user.
+        /// Reads the "identityId" claim from the JWT to look up the patient record.
+        /// </summary>
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var identityId = User.Claims.FirstOrDefault(c => c.Type == "identityId")?.Value;
+            if (identityId == null) return Unauthorized();
+
+            var patient = await usersService.GetPatientByIdentityIdAsync(identityId);
+            if (patient == null) return NotFound("Patient profile not found.");
+
+            return Ok(patient);
+        }
+
         [HttpGet("search")]
         public async Task<IActionResult> SearchPatients([FromQuery] string search)
         {

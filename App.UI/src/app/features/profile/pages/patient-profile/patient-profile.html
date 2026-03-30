@@ -1,0 +1,234 @@
+<div class="patient-profile-page">
+
+  <!-- ===== PROFILE CARD ===== -->
+  <div class="profile-section">
+    @if (isLoadingProfile) {
+      <div class="state-container">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+
+    @if (!isLoadingProfile && patient) {
+      <div class="profile-card">
+        <div class="profile-header">
+          <div class="avatar-circle">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div class="profile-header-info">
+            <h1>{{ patient.firstName }} {{ patient.lastName }}</h1>
+            <span class="role-badge">
+              <mat-icon>personal_injury</mat-icon>
+              Patient
+            </span>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="profile-details">
+          <div class="detail-row">
+            <mat-icon>fingerprint</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">CNP</span>
+              <span class="detail-value">{{ maskCnp(patient.cnp) }}</span>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <mat-icon>calendar_today</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">Date of birth</span>
+              <span class="detail-value">{{ patient.dateOfBirth | date: 'dd MMM yyyy' }}</span>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <mat-icon>account_balance_wallet</mat-icon>
+            <div class="detail-content">
+              <span class="detail-label">Wallet address</span>
+              <span class="detail-value wallet" (click)="copyWallet()" matTooltip="Click to copy">
+                {{ patient.walletAddress }}
+                <mat-icon class="copy-icon">content_copy</mat-icon>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ===== DOCTORS WITH ACCESS ===== -->
+  <div class="carousel-section">
+    <div class="section-header">
+      <div class="section-title">
+        <mat-icon class="section-icon">verified_user</mat-icon>
+        <h2>Doctors with access</h2>
+      </div>
+      <div class="carousel-arrows">
+        <button mat-icon-button (click)="scrollCarousel('doctors-carousel', 'left')">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button mat-icon-button (click)="scrollCarousel('doctors-carousel', 'right')">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    @if (isLoadingAccess) {
+      <div class="state-container small">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    }
+
+    @if (!isLoadingAccess && approvedDoctors.length === 0) {
+      <div class="state-container empty small">
+        <mat-icon>lock</mat-icon>
+        <p>No doctors currently have access to your records.</p>
+      </div>
+    }
+
+    @if (!isLoadingAccess && approvedDoctors.length > 0) {
+      <div class="carousel-track" id="doctors-carousel">
+        @for (req of approvedDoctors; track req.id) {
+          <div class="carousel-card doctor-card">
+            <div class="card-top">
+              <div class="doctor-avatar">
+                <mat-icon>medical_services</mat-icon>
+              </div>
+              <div class="doctor-info">
+                <span class="doctor-name">{{ req.doctorName }}</span>
+                <span class="doctor-wallet">{{ shortenAddress(req.doctorWalletAddress) }}</span>
+              </div>
+            </div>
+            <div class="card-meta">
+              <mat-icon class="meta-icon">event</mat-icon>
+              <span>Access granted on {{ req.createdAt | date: 'dd MMM yyyy' }}</span>
+            </div>
+            <button
+              mat-stroked-button
+              class="revoke-btn"
+              [disabled]="revokingId === req.id"
+              (click)="onRevoke(req)"
+            >
+              @if (revokingId === req.id) {
+                <mat-spinner diameter="16"></mat-spinner>
+                Signing...
+              } @else {
+                <ng-container>
+                  <mat-icon>block</mat-icon>
+                  Revoke access
+                </ng-container>
+              }
+            </button>
+          </div>
+        }
+
+        <div class="carousel-card view-all-card" (click)="goToAccessManagement()">
+          <mat-icon class="view-all-icon">admin_panel_settings</mat-icon>
+          <span>View all access</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ===== MY DIAGNOSTICS ===== -->
+  <div class="carousel-section">
+    <div class="section-header">
+      <div class="section-title">
+        <mat-icon class="section-icon">folder_shared</mat-icon>
+        <h2>My Diagnostics</h2>
+      </div>
+      <div class="carousel-arrows">
+        <button mat-icon-button (click)="scrollCarousel('diagnostics-carousel', 'left')">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button mat-icon-button (click)="scrollCarousel('diagnostics-carousel', 'right')">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    @if (isLoadingDiagnoses) {
+      <div class="state-container small">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    }
+
+    @if (!isLoadingDiagnoses && diagnoses.length === 0) {
+      <div class="state-container empty small">
+        <mat-icon>inventory_2</mat-icon>
+        <p>No diagnoses found.</p>
+      </div>
+    }
+
+    @if (!isLoadingDiagnoses && diagnoses.length > 0) {
+      <div class="carousel-track" id="diagnostics-carousel">
+        @for (d of diagnoses; track d.id) {
+          <div class="carousel-card diagnosis-card">
+            <span class="diagnosis-tag">Diagnosis</span>
+            <span class="diagnosis-title">{{ d.title }}</span>
+            <div class="card-meta">
+              <mat-icon class="meta-icon">medical_services</mat-icon>
+              <span>{{ d.doctorName }}</span>
+            </div>
+            <div class="card-meta">
+              <mat-icon class="meta-icon">event</mat-icon>
+              <span>{{ formatTimestamp(d.timestamp) | date: 'dd MMM yyyy' }}</span>
+            </div>
+            <button
+              mat-stroked-button
+              class="view-report-btn"
+              [disabled]="downloadingId === d.id"
+              (click)="onOpenDiagnosis(d)"
+            >
+              @if (downloadingId === d.id) {
+                <mat-spinner diameter="16"></mat-spinner>
+                Decrypting...
+              } @else {
+                <ng-container>
+                  <mat-icon>lock_open</mat-icon>
+                  View report
+                </ng-container>
+              }
+            </button>
+          </div>
+        }
+
+        <div class="carousel-card view-all-card" (click)="goToDiagnostics()">
+          <mat-icon class="view-all-icon">folder_shared</mat-icon>
+          <span>View all diagnostics</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ===== QUICK ACTIONS ===== -->
+  <div class="quick-actions-section">
+    <div class="quick-action-card" (click)="goToMedications()">
+      <div class="action-icon medications">
+        <mat-icon>medication</mat-icon>
+      </div>
+      <span class="action-label">My Medications</span>
+      <mat-icon class="action-arrow">chevron_right</mat-icon>
+    </div>
+
+    <div class="quick-action-card" (click)="goToDiagnostics()">
+      <div class="action-icon diagnostics">
+        <mat-icon>assignment</mat-icon>
+      </div>
+      <span class="action-label">My Diagnostics</span>
+      <mat-icon class="action-arrow">chevron_right</mat-icon>
+    </div>
+
+    <div class="quick-action-card" (click)="goToAccessManagement()">
+      <div class="action-icon access">
+        <mat-icon>admin_panel_settings</mat-icon>
+      </div>
+      <span class="action-label">Access Management</span>
+      <mat-icon class="action-arrow">chevron_right</mat-icon>
+    </div>
+  </div>
+
+</div>

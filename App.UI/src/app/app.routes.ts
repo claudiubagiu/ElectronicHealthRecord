@@ -14,6 +14,14 @@ export const routes: Routes = [
     canActivate: [guestGuard],
   },
   {
+    path: 'profile',
+    loadComponent: () =>
+      import('./features/profile/pages/patient-profile/patient-profile').then(
+        (m) => m.PatientProfile
+      ),
+    canActivate: [roleGuard(['Patient'])],
+  },
+  {
     path: 'add-diagnostic',
     loadComponent: () =>
       import('./features/diagnostics/pages/add-diagnostic/add-diagnostic').then(

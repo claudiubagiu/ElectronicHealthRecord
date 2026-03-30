@@ -59,5 +59,12 @@ namespace Users.Api.Services.Implementation
 
             return result;
         }
+
+        public async Task<PatientDto?> GetPatientByIdentityIdAsync(string identityId)
+        {
+            var patient = await _patientsRepository.GetByIdentityIdAsync(identityId);
+            if (patient == null) return null;
+            return _mapper.Map<PatientDto>(patient);
+        }
     }
 }

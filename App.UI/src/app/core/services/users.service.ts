@@ -13,4 +13,8 @@ export class UsersService {
     const params = new HttpParams().set('search', search);
     return firstValueFrom(this.http.get<PatientDto[]>(`${this.API}/search`, { params }));
   }
+
+  getMyProfile(): Promise<PatientDto> {
+    return firstValueFrom(this.http.get<PatientDto>(`${this.API}/me`));
+  }
 }

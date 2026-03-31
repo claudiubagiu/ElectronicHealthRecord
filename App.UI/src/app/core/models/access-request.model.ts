@@ -1,4 +1,4 @@
-export type AccessRequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Revoked';
+export type AccessRequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Revoked' | 'Expired';
 
 export interface AccessRequestDto {
   id: string;
@@ -10,6 +10,8 @@ export interface AccessRequestDto {
   patientWalletAddress: string;
   status: AccessRequestStatus;
   createdAt: string;
+  approvedAt?: string;
+  expiresAt?: string;
 }
 
 export interface CreateAccessRequestDto {

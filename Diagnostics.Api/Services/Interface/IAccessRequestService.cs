@@ -13,5 +13,6 @@ namespace Diagnostics.Api.Services.Interface
         Task<Result<AccessRequestDto>> RevokeAsync(Guid requestId, Guid patientId);
         Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByPatientIdAsync(Guid patientId);
         Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByDoctorIdAsync(Guid doctorId);
+        Task<int> ExpireOverdueRequestsAsync();
     }
 }

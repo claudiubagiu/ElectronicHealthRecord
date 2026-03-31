@@ -10,6 +10,6 @@ namespace Diagnostics.Api.Repositories.Interface
         Task<IReadOnlyList<DiagnosticsAccessRequest>> GetByPatientIdAsync(Guid patientId);
         Task<IReadOnlyList<DiagnosticsAccessRequest>> GetByDoctorIdAsync(Guid doctorId);
         Task<DiagnosticsAccessRequest> UpdateAsync(DiagnosticsAccessRequest request);
-
+        Task<IReadOnlyList<DiagnosticsAccessRequest>> GetExpiredApprovedAsync();
     }
 }

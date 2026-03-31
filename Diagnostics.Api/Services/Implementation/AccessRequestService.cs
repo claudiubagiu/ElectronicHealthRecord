@@ -13,6 +13,11 @@ namespace Diagnostics.Api.Services.Implementation
         private readonly IAccessRequestHistoryRepository _historyRepository;
         private readonly IUsersRepository _usersRepository;
 
+        /// <summary>
+        /// Default access duration: 7 days.
+        /// </summary>
+        private static readonly TimeSpan AccessDuration = TimeSpan.FromDays(7);
+
         public AccessRequestService(
             IAccessRequestRepository accessRequestRepository,
             IAccessRequestHistoryRepository historyRepository,
@@ -50,7 +55,6 @@ namespace Diagnostics.Api.Services.Implementation
 
             accessRequest = await _accessRequestRepository.CreateAsync(accessRequest);
 
-            // Create history entry for "Requested"
             await _historyRepository.CreateAsync(new AccessRequestHistory
             {
                 Id = Guid.NewGuid(),
@@ -99,16 +103,18 @@ namespace Diagnostics.Api.Services.Implementation
                 return Result.Fail<AccessRequestDto>(
                     new Error("Request is no longer pending.").WithMetadata("StatusCode", 409));
 
+            var now = DateTime.UtcNow;
             request.Status = AccessRequestStatus.Approved;
+            request.ApprovedAt = now;
+            request.ExpiresAt = now.Add(AccessDuration);
             var updated = await _accessRequestRepository.UpdateAsync(request);
 
-            // Create history entry for "Approved"
             await _historyRepository.CreateAsync(new AccessRequestHistory
             {
                 Id = Guid.NewGuid(),
                 AccessRequestId = updated.Id,
                 Action = "Approved",
-                Timestamp = DateTime.UtcNow
+                Timestamp = now
             });
 
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
@@ -134,7 +140,6 @@ namespace Diagnostics.Api.Services.Implementation
             request.Status = AccessRequestStatus.Rejected;
             var updated = await _accessRequestRepository.UpdateAsync(request);
 
-            // Create history entry for "Rejected"
             await _historyRepository.CreateAsync(new AccessRequestHistory
             {
                 Id = Guid.NewGuid(),
@@ -166,7 +171,6 @@ namespace Diagnostics.Api.Services.Implementation
             request.Status = AccessRequestStatus.Revoked;
             var updated = await _accessRequestRepository.UpdateAsync(request);
 
-            // Create history entry for "Revoked"
             await _historyRepository.CreateAsync(new AccessRequestHistory
             {
                 Id = Guid.NewGuid(),
@@ -199,6 +203,32 @@ namespace Diagnostics.Api.Services.Implementation
             return Result.Ok<IReadOnlyList<AccessRequestHistoryDto>>(histories.Select(MapHistoryToDto).ToList());
         }
 
+        /// <summary>
+        /// Finds all Approved requests whose ExpiresAt has passed,
+        /// marks them as Expired, and creates history entries.
+        /// Returns the count of expired requests.
+        /// </summary>
+        public async Task<int> ExpireOverdueRequestsAsync()
+        {
+            var expired = await _accessRequestRepository.GetExpiredApprovedAsync();
+
+            foreach (var request in expired)
+            {
+                request.Status = AccessRequestStatus.Expired;
+                await _accessRequestRepository.UpdateAsync(request);
+
+                await _historyRepository.CreateAsync(new AccessRequestHistory
+                {
+                    Id = Guid.NewGuid(),
+                    AccessRequestId = request.Id,
+                    Action = "Expired",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
+            return expired.Count;
+        }
+
         private static AccessRequestDto MapToDto(DiagnosticsAccessRequest r) => new()
         {
             Id = r.Id,
@@ -209,7 +239,9 @@ namespace Diagnostics.Api.Services.Implementation
             PatientName = r.Patient != null ? $"{r.Patient.FirstName} {r.Patient.LastName}" : string.Empty,
             PatientWalletAddress = r.Patient?.WalletAddress ?? string.Empty,
             Status = r.Status.ToString(),
-            CreatedAt = r.CreatedAt
+            CreatedAt = r.CreatedAt,
+            ApprovedAt = r.ApprovedAt,
+            ExpiresAt = r.ExpiresAt
         };
 
         private static AccessRequestHistoryDto MapHistoryToDto(AccessRequestHistory h) => new()

@@ -11,5 +11,7 @@
         public string PatientName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public DateTime? ApprovedAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
     }
 }

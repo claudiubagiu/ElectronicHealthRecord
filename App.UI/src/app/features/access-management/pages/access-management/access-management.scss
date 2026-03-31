@@ -78,8 +78,12 @@ h1 {
   line-height: 16px;
   color: white;
 
-  &.warning { background: #f57c00; }
-  &.success { background: #2e7d32; }
+  &.warning {
+    background: #f57c00;
+  }
+  &.success {
+    background: #2e7d32;
+  }
 }
 
 .tab-content {
@@ -102,7 +106,9 @@ h1 {
   background: rgba(0, 0, 0, 0.015);
   transition: background 0.15s ease;
 
-  &:hover { background: rgba(0, 0, 0, 0.03); }
+  &:hover {
+    background: rgba(0, 0, 0, 0.03);
+  }
 }
 
 .doctor-info {
@@ -130,7 +136,9 @@ h1 {
 
   &.active {
     background: rgba(46, 125, 50, 0.1);
-    mat-icon { color: #2e7d32; }
+    mat-icon {
+      color: #2e7d32;
+    }
   }
 }
 
@@ -169,11 +177,18 @@ h1 {
     gap: 6px;
   }
 
-  mat-icon { font-size: 16px; width: 16px; height: 16px; }
-  mat-spinner ::ng-deep circle { stroke: white; }
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+  mat-spinner ::ng-deep circle {
+    stroke: white;
+  }
 }
 
-.reject-btn, .revoke-btn {
+.reject-btn,
+.revoke-btn {
   border-radius: 8px;
   font-size: 0.85rem;
   border-color: rgba(0, 0, 0, 0.2) !important;
@@ -185,8 +200,14 @@ h1 {
     gap: 6px;
   }
 
-  mat-icon { font-size: 16px; width: 16px; height: 16px; }
-  mat-spinner ::ng-deep circle { stroke: #c62828; }
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+  mat-spinner ::ng-deep circle {
+    stroke: #c62828;
+  }
 }
 
 .status-badge {
@@ -198,11 +219,28 @@ h1 {
   font-size: 0.8rem;
   font-weight: 600;
 
-  mat-icon { font-size: 15px; width: 15px; height: 15px; }
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
 
-  &.approved { background: rgba(76, 175, 80, 0.1); color: #2e7d32; }
-  &.rejected { background: rgba(244, 67, 54, 0.1); color: #c62828; }
-  &.revoked { background: rgba(158, 158, 158, 0.15); color: #616161; }
+  &.approved {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+  }
+  &.rejected {
+    background: rgba(244, 67, 54, 0.1);
+    color: #c62828;
+  }
+  &.revoked {
+    background: rgba(158, 158, 158, 0.15);
+    color: #616161;
+  }
+  &.expired {
+    background: rgba(255, 152, 0, 0.1);
+    color: #e65100;
+  }
 }
 
 .loading-state {
@@ -219,8 +257,15 @@ h1 {
   gap: 8px;
   color: rgba(0, 0, 0, 0.35);
 
-  mat-icon { font-size: 48px; width: 48px; height: 48px; }
-  p { margin: 0; font-size: 0.9rem; }
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -228,5 +273,20 @@ h1 {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+}
+
+.expiry-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #e65100;
+  font-weight: 500;
+
+  .expiry-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
   }
 }

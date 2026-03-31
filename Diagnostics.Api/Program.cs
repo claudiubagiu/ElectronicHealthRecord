@@ -1,3 +1,4 @@
+using Diagnostics.Api.BackgroundJobs;
 using Diagnostics.Api.Data;
 using Diagnostics.Api.Extensions;
 using Diagnostics.Api.Infrastructure.RabbitMQ.Implementation;
@@ -28,6 +29,15 @@ builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
 builder.Services.AddScoped<IAccessRequestHistoryRepository, AccessRequestHistoryRepository>();
 builder.Services.AddScoped<IAccessRequestService, AccessRequestService>();
+
+// HttpClient for the AccessExpirationWorker to call Medications API
+builder.Services.AddHttpClient("MedicationsApi", client =>
+{
+    client.BaseAddress = new Uri("http://medications.api:8080/");
+});
+
+// Background job: checks for expired access requests every 5 minutes
+builder.Services.AddHostedService<AccessExpirationWorker>();
 
 builder.Services.AddCors(options =>
 {
@@ -78,7 +88,7 @@ var app = builder.Build();
 
 app.UseCors("AllowFrontend");
 
-if(app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.ApplyMigrations();
 }

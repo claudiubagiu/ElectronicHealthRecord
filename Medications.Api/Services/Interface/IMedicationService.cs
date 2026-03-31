@@ -10,5 +10,6 @@ namespace Medications.Api.Services.Interface
             Guid patientId, Guid requestingUserId);
         Task<Result> AddEnvelopesBulkAsync(Guid requestingUserId, BulkEnvelopeDto dto);
         Task<Result> DeleteEnvelopesAsync(Guid requestingUserId, Guid doctorId, Guid patientId);
+        Task DeleteEnvelopesInternalAsync(Guid doctorId, Guid patientId);
     }
 }

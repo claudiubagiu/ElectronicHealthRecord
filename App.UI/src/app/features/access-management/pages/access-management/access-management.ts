@@ -26,6 +26,9 @@ export class AccessManagement implements OnInit {
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
 
+  /** Default access duration: 7 days in seconds. */
+  private readonly ACCESS_DURATION_SECONDS = 7 * 24 * 60 * 60; // 604800
+
   allRequests: AccessRequestDto[] = [];
   historyEntries: AccessRequestHistoryDto[] = [];
   isLoading = false;
@@ -76,8 +79,11 @@ export class AccessManagement implements OnInit {
   async onApprove(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
-      // 1. Blockchain first — patient signs grantAccess
-      await this.blockchainService.grantAccess(request.doctorWalletAddress);
+      // 1. Blockchain first — patient signs grantAccess with 7-day duration
+      await this.blockchainService.grantAccess(
+        request.doctorWalletAddress,
+        this.ACCESS_DURATION_SECONDS
+      );
 
       // 2. After on-chain confirmation, update in backend
       const updated = await this.service.approve(request.id);
@@ -93,8 +99,7 @@ export class AccessManagement implements OnInit {
         }
       }
 
-      this.notify.showSuccess(`Access granted to ${request.doctorName}.`);
-      // Reload history to include the new "Approved" entry
+      this.notify.showSuccess(`Access granted to ${request.doctorName} for 7 days.`);
       this.loadHistory();
     } catch {
       this.notify.showError('Failed to approve. Please try again.');
@@ -109,7 +114,6 @@ export class AccessManagement implements OnInit {
       const updated = await this.service.reject(request.id);
       this.updateLocal(updated);
       this.notify.showSuccess(`Request from ${request.doctorName} rejected.`);
-      // Reload history to include the new "Rejected" entry
       this.loadHistory();
     } catch {
       this.notify.showError('Failed to reject. Please try again.');
@@ -132,7 +136,6 @@ export class AccessManagement implements OnInit {
       await this.medicationService.deleteEnvelopes(request.doctorId, request.patientId);
 
       this.notify.showSuccess(`Access revoked for ${request.doctorName}.`);
-      // Reload history to include the new "Revoked" entry
       this.loadHistory();
     } catch {
       this.notify.showError('Failed to revoke. Please try again.');
@@ -145,6 +148,25 @@ export class AccessManagement implements OnInit {
     this.allRequests = this.allRequests.map((r) => (r.id === updated.id ? updated : r));
   }
 
+  /** Returns a human-readable string for the remaining time or 'Expired'. */
+  getRemainingTime(expiresAt?: string): string {
+    if (!expiresAt) return '';
+    const now = new Date().getTime();
+    const expiry = new Date(expiresAt).getTime();
+    const diff = expiry - now;
+
+    if (diff <= 0) return 'Expired';
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    if (days > 0) return `${days}d ${hours}h remaining`;
+    if (hours > 0) return `${hours}h remaining`;
+
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${minutes}m remaining`;
+  }
+
   getActionIcon(action: string): string {
     switch (action) {
       case 'Requested':
@@ -155,6 +177,8 @@ export class AccessManagement implements OnInit {
         return 'cancel';
       case 'Revoked':
         return 'remove_circle';
+      case 'Expired':
+        return 'timer_off';
       default:
         return 'history';
     }
@@ -170,6 +194,8 @@ export class AccessManagement implements OnInit {
         return 'revoked';
       case 'Requested':
         return 'pending';
+      case 'Expired':
+        return 'expired';
       default:
         return '';
     }

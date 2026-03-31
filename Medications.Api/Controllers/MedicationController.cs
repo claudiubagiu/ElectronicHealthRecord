@@ -62,6 +62,18 @@ namespace Medications.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
+        /// <summary>
+        /// Internal endpoint for service-to-service calls (e.g. access expiration worker).
+        /// Deletes medication envelopes without requiring a user JWT.
+        /// </summary>
+        [AllowAnonymous]
+        [HttpDelete("envelopes/internal/user/{doctorId}/patient/{patientId}")]
+        public async Task<IActionResult> DeleteEnvelopesInternal(Guid doctorId, Guid patientId)
+        {
+            await _medicationService.DeleteEnvelopesInternalAsync(doctorId, patientId);
+            return NoContent();
+        }
+
         private Guid? GetUserId()
         {
             var claim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
@@ -71,16 +83,9 @@ namespace Medications.Api.Controllers
         private ObjectResult BuildError(FluentResults.IError error)
         {
             var statusCode = error.Metadata.ContainsKey("StatusCode")
-                ? (int)error.Metadata["StatusCode"]
-                : StatusCodes.Status400BadRequest;
-
-            return StatusCode(statusCode, new ProblemDetails
-            {
-                Title = "Error",
-                Detail = error.Message,
-                Status = statusCode,
-                Instance = HttpContext.Request.Path
-            });
+                ? Convert.ToInt32(error.Metadata["StatusCode"])
+                : 500;
+            return StatusCode(statusCode, new { error = error.Message });
         }
     }
 }

@@ -87,16 +87,15 @@ export class BlockchainService {
   // ── Access Control ─────────────────────────────────────────────────────────
 
   /**
-   * Patient grants a doctor read-access to their records on-chain.
-   * Called after the doctor requests access off-chain and the patient clicks "Approve".
+   * Patient grants a doctor time-limited read-access to their records on-chain.
    *
    * @param doctorAddress - The Ethereum wallet address of the doctor to grant access to.
-   * @throws {AppError} If the user rejects the transaction, the transaction reverts, or a network error occurs.
+   * @param durationSeconds - How long the access is valid, in seconds (e.g. 604800 for 7 days).
    */
-  async grantAccess(doctorAddress: string): Promise<void> {
+  async grantAccess(doctorAddress: string, durationSeconds: number): Promise<void> {
     try {
       const signed = await this.getSigned();
-      const tx = await signed['grantAccess'](doctorAddress);
+      const tx = await signed['grantAccess'](doctorAddress, durationSeconds);
       await tx.wait();
     } catch (error: any) {
       if (error instanceof AppError) {

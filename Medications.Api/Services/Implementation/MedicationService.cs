@@ -113,5 +113,11 @@ namespace Medications.Api.Services.Implementation
             await _medicationRepository.DeleteEnvelopesByUserAndPatientAsync(doctorId, patientId);
             return Result.Ok();
         }
+
+        /// <inheritdoc />
+        public async Task DeleteEnvelopesInternalAsync(Guid doctorId, Guid patientId)
+        {
+            await _medicationRepository.DeleteEnvelopesByUserAndPatientAsync(doctorId, patientId);
+        }
     }
 }

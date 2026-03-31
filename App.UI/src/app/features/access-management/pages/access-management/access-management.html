@@ -66,7 +66,7 @@
                       } @else {
                         <mat-icon>check</mat-icon>
                       }
-                      {{ actioningId === req.id ? 'Signing...' : 'Approve' }}
+                      {{ actioningId === req.id ? 'Signing...' : 'Approve (7 days)' }}
                     </button>
                   </div>
                 </div>
@@ -100,7 +100,15 @@
                     <div class="doctor-avatar active"><mat-icon>medical_services</mat-icon></div>
                     <div class="doctor-details">
                       <span class="doctor-name">{{ req.doctorName }}</span>
-                      <span class="request-date">Access granted on {{ formatDate(req.createdAt) }}</span>
+                      <span class="request-date">
+                        Granted on {{ formatDate(req.approvedAt || req.createdAt) }}
+                      </span>
+                      @if (req.expiresAt) {
+                        <span class="expiry-info">
+                          <mat-icon class="expiry-icon">timer</mat-icon>
+                          {{ getRemainingTime(req.expiresAt) }}
+                        </span>
+                      }
                     </div>
                   </div>
                   <button

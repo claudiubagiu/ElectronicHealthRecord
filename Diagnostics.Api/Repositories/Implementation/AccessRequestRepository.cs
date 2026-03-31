@@ -66,5 +66,17 @@ namespace Diagnostics.Api.Repositories.Implementation
             await _dbContext.SaveChangesAsync();
             return request;
         }
+
+        public async Task<IReadOnlyList<DiagnosticsAccessRequest>> GetExpiredApprovedAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _dbContext.AccessRequests
+                .Include(r => r.Doctor)
+                .Include(r => r.Patient)
+                .Where(r => r.Status == AccessRequestStatus.Approved &&
+                            r.ExpiresAt != null &&
+                            r.ExpiresAt <= now)
+                .ToListAsync();
+        }
     }
 }

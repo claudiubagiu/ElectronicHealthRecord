@@ -230,6 +230,11 @@ h1 {
     background: rgba(244, 67, 54, 0.1);
     color: #c62828;
   }
+
+  &.expired {
+    background: rgba(255, 152, 0, 0.1);
+    color: #e65100;
+  }
 }
 
 .rejected-action {

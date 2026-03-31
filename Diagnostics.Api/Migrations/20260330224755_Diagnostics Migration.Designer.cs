@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diagnostics.Api.Migrations
 {
     [DbContext(typeof(DiagnosticsDbContext))]
-    [Migration("20260330140614_Diagnostics Migration")]
+    [Migration("20260330224755_Diagnostics Migration")]
     partial class DiagnosticsMigration
     {
         /// <inheritdoc />
@@ -54,11 +54,17 @@ namespace Diagnostics.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("DoctorId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uniqueidentifier");

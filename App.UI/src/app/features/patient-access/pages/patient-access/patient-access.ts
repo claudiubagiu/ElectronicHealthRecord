@@ -125,7 +125,6 @@ export class PatientAccess implements OnInit, OnDestroy {
       this.requestStatusMap.set(patient.id, 'Pending');
       this.myRequests = [result, ...this.myRequests];
       this.notify.showSuccess(`Access requested for ${patient.firstName} ${patient.lastName}.`);
-      // Reload history to include the new "Requested" entry
       this.loadHistory();
     } catch {
       this.notify.showError('Failed to send access request.');
@@ -151,6 +150,25 @@ export class PatientAccess implements OnInit, OnDestroy {
     });
   }
 
+  /** Returns a human-readable string for the remaining time. */
+  getRemainingTime(expiresAt?: string): string {
+    if (!expiresAt) return '';
+    const now = new Date().getTime();
+    const normalized = expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z';
+    const expiry = new Date(normalized).getTime();
+    const diff = expiry - now;
+
+    if (diff <= 0) return 'Expired';
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) return `${days}d ${hours}h ${minutes}m remaining`;
+    if (hours > 0) return `${hours}h ${minutes}m remaining`;
+    return `${minutes}m remaining`;
+  }
+
   getActionIcon(action: string): string {
     switch (action) {
       case 'Requested':
@@ -161,6 +179,8 @@ export class PatientAccess implements OnInit, OnDestroy {
         return 'cancel';
       case 'Revoked':
         return 'remove_circle';
+      case 'Expired':
+        return 'timer_off';
       default:
         return 'history';
     }
@@ -176,6 +196,8 @@ export class PatientAccess implements OnInit, OnDestroy {
         return 'revoked';
       case 'Requested':
         return 'pending';
+      case 'Expired':
+        return 'expired';
       default:
         return '';
     }

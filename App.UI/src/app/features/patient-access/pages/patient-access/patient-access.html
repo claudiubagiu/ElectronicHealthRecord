@@ -50,8 +50,8 @@
               </div>
 
               <div class="patient-action">
-                @if (getPatientStatus(patient.id) === null || getPatientStatus(patient.id) ===
-                'Revoked') {
+                @if ( getPatientStatus(patient.id) === null || getPatientStatus(patient.id) ===
+                'Revoked' || getPatientStatus(patient.id) === 'Expired' ) {
                 <button
                   mat-stroked-button
                   class="request-btn"
@@ -80,19 +80,6 @@
                     [disabled]="requestingId === patient.id"
                     (click)="onRequestAccess(patient)"
                     matTooltip="You can try again."
-                  >
-                    <mat-icon>refresh</mat-icon> Retry
-                  </button>
-                </div>
-                } @else if (getPatientStatus(patient.id) === 'Expired') {
-                <div class="rejected-action">
-                  <span class="status-chip expired"> <mat-icon>timer_off</mat-icon> Expired </span>
-                  <button
-                    mat-stroked-button
-                    class="retry-btn"
-                    [disabled]="requestingId === patient.id"
-                    (click)="onRequestAccess(patient)"
-                    matTooltip="Request access again."
                   >
                     <mat-icon>refresh</mat-icon> Retry
                   </button>
@@ -141,28 +128,24 @@
                   <span class="request-date"
                     >Access granted on {{ formatDate(req.createdAt) }}</span
                   >
+                  @if (req.expiresAt) {
+                  <span class="expiry-info">
+                    <mat-icon class="expiry-icon">timer</mat-icon>
+                    {{ getRemainingTime(req.expiresAt) }}
+                  </span>
+                  }
                 </div>
               </div>
 
-              <div class="row-right">
-                <span class="status-badge approved">
-                  <mat-icon>check_circle</mat-icon>
-                  Approved
-                </span>
-                <div class="row-buttons">
-                  <button mat-flat-button class="view-btn" (click)="viewDiagnostics(req)">
-                    <mat-icon>folder_open</mat-icon>
-                    Diagnostics
-                  </button>
-                  <button
-                    mat-flat-button
-                    class="view-btn medications"
-                    (click)="viewMedications(req)"
-                  >
-                    <mat-icon>medication</mat-icon>
-                    Medications
-                  </button>
-                </div>
+              <div class="row-buttons">
+                <button mat-flat-button class="view-btn" (click)="viewDiagnostics(req)">
+                  <mat-icon>folder_open</mat-icon>
+                  Diagnostics
+                </button>
+                <button mat-flat-button class="view-btn medications" (click)="viewMedications(req)">
+                  <mat-icon>medication</mat-icon>
+                  Medications
+                </button>
               </div>
             </div>
             }

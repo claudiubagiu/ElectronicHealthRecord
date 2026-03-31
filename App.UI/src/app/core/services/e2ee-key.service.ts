@@ -13,6 +13,8 @@ import { CryptoService } from './crypto.service';
  * so the same wallet always produces the same derived private key.
  */
 const DERIVATION_MESSAGE = 'EHR-E2EE-key-derivation-v1';
+const LS_PRIVATE_KEY = 'ecc_private_key';
+const LS_PUBLIC_KEY = 'ecc_public_key';
 
 @Injectable({ providedIn: 'root' })
 export class E2eeKeyService {
@@ -82,6 +84,66 @@ export class E2eeKeyService {
     }
   }
 
+  // ==================== Login Flow ====================
+
+  async recoverPrivateKey(): Promise<void> {
+    try {
+      const cachedPrivateKey = localStorage.getItem(LS_PRIVATE_KEY);
+      const cachedPublicKey = localStorage.getItem(LS_PUBLIC_KEY);
+
+      if (cachedPrivateKey && cachedPublicKey) {
+        this.eccPrivateKey = cachedPrivateKey;
+        this.eccPublicKey = cachedPublicKey;
+        return;
+      }
+
+      const { privateKey, publicKey } = await this.deriveEccKeyPairFromWallet();
+      this.eccPrivateKey = privateKey;
+      this.eccPublicKey = publicKey;
+
+      localStorage.setItem(LS_PRIVATE_KEY, privateKey);
+      localStorage.setItem(LS_PUBLIC_KEY, publicKey);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+
+      console.error('Failed to recover ECC private key:', error);
+      throw new AppError({
+        message:
+          'Failed to recover your encryption private key. You may not be able to decrypt existing data.',
+        status: 500,
+        title: 'Private Key Recovery Failed',
+        type: 'E2EE_PRIVATE_KEY_RECOVERY_FAILED',
+      });
+    }
+  }
+
+  // ==================== Key Access ====================
+
+  getPrivateKey(): string | null {
+    if (!this.eccPrivateKey) {
+      this.eccPrivateKey = localStorage.getItem(LS_PRIVATE_KEY);
+    }
+    return this.eccPrivateKey;
+  }
+
+  getPublicKey(): string | null {
+    if (!this.eccPublicKey) {
+      this.eccPublicKey = localStorage.getItem(LS_PUBLIC_KEY);
+    }
+    return this.eccPublicKey;
+  }
+
+  hasPrivateKey(): boolean {
+    return !!(this.eccPrivateKey ?? localStorage.getItem(LS_PRIVATE_KEY));
+  }
+
+  clearPrivateKey(): void {
+    this.eccPrivateKey = null;
+    this.eccPublicKey = null;
+    localStorage.removeItem(LS_PRIVATE_KEY);
+    localStorage.removeItem(LS_PUBLIC_KEY);
+  }
+
   // ==================== Challenge Signing ====================
 
   /**
@@ -97,7 +159,8 @@ export class E2eeKeyService {
    * @throws {AppError} If the ECC private key is not available in memory.
    */
   signChallenge(challenge: string): string {
-    if (!this.eccPrivateKey) {
+    const privateKey = this.getPrivateKey();
+    if (!privateKey) {
       throw new AppError({
         message: 'ECC private key is not available. Please connect your wallet first.',
         status: 401,
@@ -107,7 +170,7 @@ export class E2eeKeyService {
     }
 
     try {
-      const signingKey = new SigningKey(this.eccPrivateKey);
+      const signingKey = new SigningKey(privateKey);
       const digest = hashMessage(challenge);
       const sig = signingKey.sign(digest);
       return sig.serialized;
@@ -141,6 +204,10 @@ export class E2eeKeyService {
       const { privateKey, publicKey } = await this.deriveEccKeyPairFromWallet();
       this.eccPrivateKey = privateKey;
       this.eccPublicKey = publicKey;
+
+      localStorage.setItem(LS_PRIVATE_KEY, privateKey);
+      localStorage.setItem(LS_PUBLIC_KEY, publicKey);
+
       return publicKey;
     } catch (error) {
       if (error instanceof AppError) throw error;
@@ -153,65 +220,6 @@ export class E2eeKeyService {
         type: 'E2EE_KEY_GENERATION_FAILED',
       });
     }
-  }
-
-  // ==================== Login Flow ====================
-
-  /**
-   * Called after every login to recover the ECC private key.
-   *
-   * Derives the same deterministic secp256k1 key pair from the wallet
-   * signature. No server round-trip needed — the key is derived purely
-   * from the MetaMask signature of the deterministic message.
-   */
-  async recoverPrivateKey(): Promise<void> {
-    try {
-      const { privateKey, publicKey } = await this.deriveEccKeyPairFromWallet();
-      this.eccPrivateKey = privateKey;
-      this.eccPublicKey = publicKey;
-    } catch (error) {
-      if (error instanceof AppError) throw error;
-
-      console.error('Failed to recover ECC private key:', error);
-      throw new AppError({
-        message:
-          'Failed to recover your encryption private key. You may not be able to decrypt existing data.',
-        status: 500,
-        title: 'Private Key Recovery Failed',
-        type: 'E2EE_PRIVATE_KEY_RECOVERY_FAILED',
-      });
-    }
-  }
-
-  // ==================== Key Access ====================
-
-  /**
-   * Returns the in-memory ECC private key (hex), or null if not yet derived.
-   */
-  getPrivateKey(): string | null {
-    return this.eccPrivateKey;
-  }
-
-  /**
-   * Returns the in-memory ECC public key (hex), or null if not yet derived.
-   */
-  getPublicKey(): string | null {
-    return this.eccPublicKey;
-  }
-
-  /**
-   * Returns true if the ECC private key is currently available in memory.
-   */
-  hasPrivateKey(): boolean {
-    return this.eccPrivateKey !== null;
-  }
-
-  /**
-   * Clears the ECC key pair from memory (e.g., on logout).
-   */
-  clearPrivateKey(): void {
-    this.eccPrivateKey = null;
-    this.eccPublicKey = null;
   }
 
   // ==================== Public Key Retrieval ====================

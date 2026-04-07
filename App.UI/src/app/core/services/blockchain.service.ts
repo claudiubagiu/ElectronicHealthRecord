@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BrowserProvider, Contract, ContractTransactionReceipt } from 'ethers';
 import { Web3Service } from './web3.service';
-import PatientRecords from '../contracts/PatientRecords.json'
-import { Diagnosis } from '../models/blockchain.model';
+import PatientRecords from '../contracts/PatientRecords.json';
+import { Diagnosis, LabAnalysis } from '../models/blockchain.model';
 import { AppError } from '../errors/app.error';
 
 declare let window: any;
@@ -98,9 +98,7 @@ export class BlockchainService {
       const tx = await signed['grantAccess'](doctorAddress, durationSeconds);
       await tx.wait();
     } catch (error: any) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
       console.error('Failed to grant access:', error);
 
@@ -134,9 +132,7 @@ export class BlockchainService {
       const tx = await signed['revokeAccess'](doctorAddress);
       await tx.wait();
     } catch (error: any) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
       console.error('Failed to revoke access:', error);
 
@@ -216,7 +212,7 @@ export class BlockchainService {
             return parsed.args['diagnosisId'] as bigint;
           }
         } catch {
-          // Skip unrelated logs that don't match the contract ABI
+          // skip unrelated logs
         }
       }
 
@@ -228,9 +224,7 @@ export class BlockchainService {
         type: 'DIAGNOSIS_EVENT_NOT_FOUND',
       });
     } catch (error: any) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
       console.error('Failed to add diagnosis:', error);
 
@@ -268,9 +262,7 @@ export class BlockchainService {
       const raw = await signed['getDiagnosis'](diagnosisId);
       return this.mapDiagnosis(raw);
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
       console.error(`Failed to get diagnosis ${diagnosisId}:`, error);
       throw new AppError({
@@ -296,9 +288,7 @@ export class BlockchainService {
       const ids: bigint[] = await signed['getPatientDiagnosisIds'](patientAddress);
       return await Promise.all(ids.map((id) => this.getDiagnosis(id)));
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
       console.error('Failed to get patient diagnoses:', error);
       throw new AppError({
@@ -323,9 +313,7 @@ export class BlockchainService {
       const ids: bigint[] = await this.contract!['getDoctorDiagnosisIds']();
       return await Promise.all(ids.map((id) => this.getDiagnosis(id)));
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
 
       console.error('Failed to get doctor diagnoses:', error);
       throw new AppError({
@@ -358,7 +346,104 @@ export class BlockchainService {
     }
   }
 
-  // ── Mapper ─────────────────────────────────────────────────────────────────
+  // ── Lab Analyses ───────────────────────────────────────────────────────────
+
+  async addLabAnalysis(
+    title: string,
+    ipfsCid: string,
+    patientAddr: string,
+    labTechName: string
+  ): Promise<bigint> {
+    try {
+      const signed = await this.getSigned();
+      const tx = await signed['addLabAnalysis'](title, ipfsCid, patientAddr, labTechName);
+      const receipt: ContractTransactionReceipt = await tx.wait();
+
+      const iface = this.contract!.interface;
+      for (const log of receipt.logs) {
+        try {
+          const parsed = iface.parseLog(log);
+          if (parsed?.name === 'LabAnalysisAdded') {
+            return parsed.args['labAnalysisId'] as bigint;
+          }
+        } catch {
+          // skip unrelated logs
+        }
+      }
+
+      throw new AppError({
+        message: 'The analysis was submitted but the confirmation event was not found.',
+        status: 500,
+        title: 'Event Not Found',
+        type: 'LAB_ANALYSIS_EVENT_NOT_FOUND',
+      });
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        throw new AppError({
+          message: 'You rejected the transaction to add the lab analysis.',
+          status: 403,
+          title: 'Transaction Rejected',
+          type: 'TX_REJECTED',
+        });
+      }
+
+      throw new AppError({
+        message: 'Failed to store the lab analysis on the blockchain. Please try again.',
+        status: 500,
+        title: 'Add Lab Analysis Failed',
+        type: 'ADD_LAB_ANALYSIS_FAILED',
+      });
+    }
+  }
+
+  async getLabAnalysis(labAnalysisId: bigint): Promise<LabAnalysis> {
+    try {
+      const signed = await this.getSigned();
+      const raw = await signed['getLabAnalysis'](labAnalysisId);
+      return this.mapLabAnalysis(raw);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError({
+        message: 'Failed to retrieve the lab analysis from the blockchain.',
+        status: 500,
+        title: 'Get Lab Analysis Failed',
+        type: 'GET_LAB_ANALYSIS_FAILED',
+      });
+    }
+  }
+
+  async getPatientLabAnalyses(patientAddress: string): Promise<LabAnalysis[]> {
+    try {
+      const signed = await this.getSigned();
+      const ids: bigint[] = await signed['getPatientLabAnalysisIds'](patientAddress);
+      return await Promise.all(ids.map((id) => this.getLabAnalysis(id)));
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      // Re-throw original error so callers can inspect error.data.message
+      throw error;
+    }
+  }
+
+  async getLabTechAnalyses(): Promise<LabAnalysis[]> {
+    this.ensureProvider();
+    try {
+      const ids: bigint[] = await this.contract!['getLabTechAnalysisIds']();
+      return await Promise.all(ids.map((id) => this.getLabAnalysis(id)));
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError({
+        message: 'Failed to retrieve your lab analyses from the blockchain.',
+        status: 500,
+        title: 'Get Lab Tech Analyses Failed',
+        type: 'GET_LAB_TECH_ANALYSES_FAILED',
+      });
+    }
+  }
+
+  // ── Mappers ────────────────────────────────────────────────────────────────
 
   /**
    * Maps the raw contract return value to a typed Diagnosis object.
@@ -371,6 +456,19 @@ export class BlockchainService {
       timestamp: raw.timestamp as bigint,
       doctorAddr: raw.doctorAddr as string,
       doctorName: raw.doctorName as string,
+      patientAddr: raw.patientAddr as string,
+      exists: raw.exists as boolean,
+    };
+  }
+
+  private mapLabAnalysis(raw: any): LabAnalysis {
+    return {
+      id: raw.id as bigint,
+      title: raw.title as string,
+      ipfsCid: raw.ipfsCid as string,
+      timestamp: raw.timestamp as bigint,
+      labTechAddr: raw.labTechAddr as string,
+      labTechName: raw.labTechName as string,
       patientAddr: raw.patientAddr as string,
       exists: raw.exists as boolean,
     };

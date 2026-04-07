@@ -1,0 +1,137 @@
+<div class="add-lab-analysis-page">
+  <div class="add-lab-analysis-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>biotech</mat-icon>
+      </div>
+      <h1>Upload Lab Analysis</h1>
+      <p class="subtitle">Select a patient and upload the PDF report to the blockchain.</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Patient search -->
+      <div class="section">
+        <p class="section-label">Patient *</p>
+
+        <mat-form-field
+          appearance="outline"
+          class="full"
+          [class.patient-selected]="selectedPatient"
+        >
+          @if (!selectedPatient) {
+            <mat-label>Search patient by name</mat-label>
+          }
+          @if (selectedPatient) {
+            <div matPrefix class="patient-chip-prefix">
+              <mat-icon class="chip-icon">person</mat-icon>
+              <span class="chip-name">{{ selectedPatient.firstName }} {{ selectedPatient.lastName }}</span>
+              <span class="chip-cnp">CNP: {{ selectedPatient.cnp }}</span>
+            </div>
+          }
+
+          <input
+            matInput
+            formControlName="patientSearch"
+            [placeholder]="selectedPatient ? '' : 'e.g. John Smith'"
+            [matAutocomplete]="patientAuto"
+            [style.display]="selectedPatient ? 'none' : 'block'"
+          />
+
+          @if (selectedPatient) {
+            <button matSuffix mat-icon-button type="button" (click)="clearPatient($event)">
+              <mat-icon>close</mat-icon>
+            </button>
+          } @else if (isSearching) {
+            <mat-spinner matSuffix diameter="20"></mat-spinner>
+          } @else {
+            <mat-icon matSuffix>search</mat-icon>
+          }
+
+          <mat-autocomplete #patientAuto="matAutocomplete" [displayWith]="displayPatient" (optionSelected)="onPatientSelected($event)">
+            @if (searchPerformed && filteredPatients.length === 0 && !isSearching) {
+              <mat-option disabled>No patients found</mat-option>
+            }
+            @for (patient of filteredPatients; track patient.id) {
+              <mat-option [value]="patient">
+                <span>{{ patient.firstName }} {{ patient.lastName }}</span>
+                <small class="patient-cnp-option"> — CNP: {{ patient.cnp }}</small>
+              </mat-option>
+            }
+          </mat-autocomplete>
+
+          @if (form.get('patientSearch')?.hasError('invalidPatient')) {
+            <mat-error>Please select a patient from the list</mat-error>
+          }
+          @if (form.get('patientSearch')?.hasError('required')) {
+            <mat-error>Patient is required</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- PDF Upload -->
+      <div class="section">
+        <p class="section-label">Analysis PDF *</p>
+
+        @if (!selectedFile) {
+          <div class="upload-area" (click)="fileInput.click()">
+            <mat-icon class="upload-icon">upload_file</mat-icon>
+            <p class="upload-label">Click to select a PDF file</p>
+            <p class="upload-hint">Only .pdf files are accepted</p>
+            <input
+              #fileInput
+              type="file"
+              accept="application/pdf"
+              hidden
+              (change)="onFileSelected($event)"
+            />
+          </div>
+        } @else {
+          <div class="file-selected">
+            <mat-icon class="file-icon">picture_as_pdf</mat-icon>
+            <div class="file-info">
+              <span class="file-name">{{ selectedFile.name }}</span>
+              <span class="file-size">{{ (selectedFile.size / 1024).toFixed(1) }} KB</span>
+            </div>
+            <button mat-icon-button type="button" (click)="clearFile()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Submit -->
+      <div class="submit-section">
+        @if (!isFormReady && form.touched) {
+          <div class="form-status">
+            <mat-icon>info</mat-icon>
+            <span>Please select a patient and upload a PDF file</span>
+          </div>
+        }
+
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit-btn"
+          [disabled]="!isFormReady || isLoading"
+        >
+          @if (!isLoading) {
+            <ng-container>
+              <mat-icon>cloud_upload</mat-icon>
+              Encrypt & publish to blockchain
+            </ng-container>
+          } @else {
+            <ng-container>
+              <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
+              Processing...
+            </ng-container>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

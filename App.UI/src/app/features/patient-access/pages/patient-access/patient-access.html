@@ -136,11 +136,14 @@
                   }
                 </div>
               </div>
-
               <div class="row-buttons">
                 <button mat-flat-button class="view-btn" (click)="viewDiagnostics(req)">
                   <mat-icon>folder_open</mat-icon>
                   Diagnostics
+                </button>
+                <button mat-flat-button class="view-btn lab" (click)="viewLabAnalyses(req)">
+                  <mat-icon>biotech</mat-icon>
+                  Lab Analyses
                 </button>
                 <button mat-flat-button class="view-btn medications" (click)="viewMedications(req)">
                   <mat-icon>medication</mat-icon>

@@ -1,0 +1,238 @@
+.add-lab-analysis-page {
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px 64px;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.add-lab-analysis-card {
+  width: 100%;
+  max-width: 600px;
+  background: white;
+  border-radius: 20px;
+  padding: 40px 40px 48px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  text-align: center;
+  margin-bottom: 32px;
+
+  .icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #1565c0, #1976d2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 8px;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+  }
+}
+
+.section {
+  padding: 20px 0 8px;
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin: 0 0 12px;
+  }
+}
+
+.full {
+  width: 100%;
+}
+
+.patient-chip-prefix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+
+  .chip-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #1565c0;
+  }
+
+  .chip-name {
+    font-weight: 600;
+    color: #1a1a2e;
+    font-size: 0.9rem;
+  }
+
+  .chip-cnp {
+    font-size: 0.78rem;
+    color: #6b7280;
+  }
+}
+
+.patient-cnp-option {
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+// ── Upload area ────────────────────────────────────────────────────────────────
+
+.upload-area {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+
+  &:hover {
+    border-color: #1565c0;
+    background: rgba(21, 101, 192, 0.04);
+  }
+
+  .upload-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+
+  .upload-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 4px;
+  }
+
+  .upload-hint {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin: 0;
+  }
+}
+
+.file-selected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+
+  .file-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #dc2626;
+    flex-shrink: 0;
+  }
+
+  .file-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .file-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      word-break: break-all;
+    }
+
+    .file-size {
+      font-size: 0.78rem;
+      color: #6b7280;
+    }
+  }
+}
+
+// ── Submit ─────────────────────────────────────────────────────────────────────
+
+.submit-section {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(21, 101, 192, 0.08);
+  border: 1px solid rgba(21, 101, 192, 0.25);
+  font-size: 0.83rem;
+  color: #1565c0;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #1565c0;
+    flex-shrink: 0;
+  }
+}
+
+.submit-btn {
+  width: 100%;
+  height: 52px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  background-color: #1565c0 !important;
+  color: white !important;
+  letter-spacing: 0.3px;
+
+  &[disabled] {
+    opacity: 0.55;
+  }
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .button-spinner {
+    ::ng-deep circle {
+      stroke: white;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .add-lab-analysis-card {
+    padding: 24px 16px 32px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

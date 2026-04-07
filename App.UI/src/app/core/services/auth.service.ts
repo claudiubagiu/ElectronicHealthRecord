@@ -141,9 +141,9 @@ export class AuthService implements OnDestroy {
     const response = await firstValueFrom(
       this.http.post<LoginResponse>(`${this.API_URL}/register`, payload).pipe(
         tap((res) => {
-          if (res?.token) {
-            this.setToken(res.token);
-          }
+          // if (res?.token) {
+          //   this.setToken(res.token);
+          // }
         })
       )
     );

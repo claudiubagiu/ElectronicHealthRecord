@@ -1,0 +1,61 @@
+<div class="patient-lab-analyses-page">
+  <div class="patient-lab-analyses-card">
+
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>biotech</mat-icon>
+      </div>
+      <h1>{{ patientName }}</h1>
+      <p class="subtitle">Lab analyses stored on the blockchain</p>
+    </div>
+
+    @if (isLoading) {
+      <div class="state-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading analyses...</p>
+      </div>
+    }
+
+    @if (!isLoading && analyses.length === 0) {
+      <div class="state-container empty">
+        <mat-icon class="empty-icon">science</mat-icon>
+        <p>No lab analyses found for this patient.</p>
+      </div>
+    }
+
+    @if (!isLoading && analyses.length > 0) {
+      <div class="analyses-list">
+        @for (a of analyses; track a.id) {
+          <div class="analysis-item">
+            <div class="item-header">
+              <span class="item-title">{{ a.title }}</span>
+              <span class="item-date">{{ formatTimestamp(a.timestamp) | date: 'dd MMM yyyy, HH:mm' }}</span>
+            </div>
+            <div class="item-meta">
+              <mat-icon class="meta-icon">science</mat-icon>
+              <span>Uploaded by <strong>{{ a.labTechName }}</strong></span>
+            </div>
+            <div class="item-meta">
+              <mat-icon class="meta-icon">account_balance_wallet</mat-icon>
+              <span class="address">{{ shortenAddress(a.labTechAddr) }}</span>
+            </div>
+            <div class="item-meta">
+              <mat-icon class="meta-icon">link</mat-icon>
+              <span class="cid">{{ a.ipfsCid }}</span>
+            </div>
+            <div class="item-file" (click)="openFile(a)">
+              <mat-icon class="file-icon">lock</mat-icon>
+              <span class="file-name">Encrypted document</span>
+              @if (downloadingId === a.id) {
+                <mat-spinner diameter="16" class="file-spinner"></mat-spinner>
+              } @else {
+                <mat-icon class="open-icon">download</mat-icon>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

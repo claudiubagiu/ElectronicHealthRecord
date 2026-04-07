@@ -13,6 +13,7 @@ import {
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSelectModule } from '@angular/material/select';
 import { DiagnosticSubmissionService } from '../../services/diagnostic-submission.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -20,6 +21,8 @@ import { CustomField } from '../../services/diagnostic-pdf.service';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { AppError } from '../../../../core/errors/app.error';
 import { UsersService } from '../../../../core/services/users.service';
+import { BlockchainService } from '../../../../core/services/blockchain.service';
+import { LabAnalysis } from '../../../../core/models/blockchain.model';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
 
 export type { CustomField };
@@ -29,12 +32,13 @@ export type { CustomField };
   templateUrl: './add-diagnostic.html',
   styleUrls: ['./add-diagnostic.scss'],
   standalone: true,
-  imports: [...MAT_FORM_IMPORTS, MatAutocompleteModule, MatExpansionModule],
+  imports: [...MAT_FORM_IMPORTS, MatAutocompleteModule, MatExpansionModule, MatSelectModule],
 })
 export class AddDiagnostic implements OnInit, OnDestroy {
   private usersService = inject(UsersService);
   private submissionService = inject(DiagnosticSubmissionService);
   private authService = inject(AuthService);
+  private blockchainService = inject(BlockchainService);
   private notify = inject(NotificationService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -46,6 +50,13 @@ export class AddDiagnostic implements OnInit, OnDestroy {
   isLoading = false;
   isSearching = false;
   searchPerformed = false;
+
+  // Lab analyses
+  labAnalyses: LabAnalysis[] = [];
+  isLoadingAnalyses = false;
+  labAnalysesLoaded = false;
+  labAccessDenied = false;
+  selectedAnalysis: LabAnalysis | null = null;
 
   customGeneralInfo: CustomField[] = [];
   customAnamnesis: CustomField[] = [];
@@ -66,27 +77,18 @@ export class AddDiagnostic implements OnInit, OnDestroy {
     const today = new Date().toISOString().split('T')[0];
 
     this.form = this.fb.group({
-      // Patient search
       patientSearch: ['', [Validators.required, this.patientSelectedValidator.bind(this)]],
-
-      // General info
       title: ['', Validators.required],
       consultationDate: [today, Validators.required],
-
-      // Anamnesis
       chiefComplaint: ['', Validators.required],
       personalHistory: ['', Validators.required],
       familyHistory: [''],
       allergies: [''],
-
-      // Clinical examination
       bloodPressure: ['', Validators.required],
       pulse: ['', Validators.required],
       temperature: [''],
       weightHeight: [''],
       clinicalNotes: [''],
-
-      // Diagnosis & Treatment
       primaryDiagnosis: ['', Validators.required],
       icdCode: [''],
       secondaryDiagnosis: [''],
@@ -95,8 +97,6 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       generalRecommendations: [''],
       followUpDate: [''],
       finalNotes: [''],
-
-      // Temporary new custom field inputs (reset after adding)
       newLabel_generalInfo: [''],
       newValue_generalInfo: [''],
       newLabel_anamnesis: [''],
@@ -126,6 +126,10 @@ export class AddDiagnostic implements OnInit, OnDestroy {
         switchMap((value) => {
           if (typeof value === 'string') {
             this.selectedPatient = null;
+            this.labAnalyses = [];
+            this.labAnalysesLoaded = false;
+            this.labAccessDenied = false;
+            this.selectedAnalysis = null;
           }
           if (typeof value !== 'string' || value.trim().length < 2) {
             this.filteredPatients = [];
@@ -158,6 +162,7 @@ export class AddDiagnostic implements OnInit, OnDestroy {
   onPatientSelected(event: MatAutocompleteSelectedEvent): void {
     this.selectedPatient = event.option.value as PatientDto;
     this.form.get('patientSearch')!.updateValueAndValidity();
+    this.loadPatientLabAnalyses();
   }
 
   clearPatient(event: Event): void {
@@ -166,9 +171,55 @@ export class AddDiagnostic implements OnInit, OnDestroy {
     this.form.get('patientSearch')!.setValue('');
     this.filteredPatients = [];
     this.searchPerformed = false;
+    this.labAnalyses = [];
+    this.labAnalysesLoaded = false;
+    this.labAccessDenied = false;
+    this.selectedAnalysis = null;
   }
 
-  // ── Custom fields ─────────────────────────────────────────────────────────────
+  async loadPatientLabAnalyses(): Promise<void> {
+    if (!this.selectedPatient) return;
+    this.isLoadingAnalyses = true;
+    this.labAnalysesLoaded = false;
+    this.labAccessDenied = false;
+    this.selectedAnalysis = null;
+    try {
+      this.labAnalyses = await this.blockchainService.getPatientLabAnalyses(
+        this.selectedPatient.walletAddress
+      );
+    } catch (error: any) {
+      this.labAnalyses = [];
+      const msg: string = (
+        error?.data?.message ??
+        error?.error?.data?.message ??
+        error?.message ??
+        error?.reason ??
+        ''
+      ).toLowerCase();
+      this.labAccessDenied = msg.includes('not authorized');
+    } finally {
+      this.isLoadingAnalyses = false;
+      this.labAnalysesLoaded = true;
+    }
+  }
+
+  selectAnalysis(analysis: LabAnalysis): void {
+    this.selectedAnalysis = analysis;
+  }
+
+  clearAnalysis(): void {
+    this.selectedAnalysis = null;
+  }
+
+  formatTimestamp(timestamp: bigint): string {
+    return new Date(Number(timestamp) * 1000).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  // ── Custom fields ─────────────────────────────────────────────────
 
   addCustomField(category: 'generalInfo' | 'anamnesis' | 'clinicalExam' | 'diagnosis'): void {
     const labelKey = `newLabel_${category}` as const;
@@ -220,7 +271,7 @@ export class AddDiagnostic implements OnInit, OnDestroy {
     }
   }
 
-  // ── Validation helpers ────────────────────────────────────────────────────────
+  // ── Validation ────────────────────────────────────────────────────
 
   get isCategoryGeneralInfoValid(): boolean {
     return !!this.form.get('title')?.valid && !!this.form.get('consultationDate')?.valid;
@@ -248,7 +299,7 @@ export class AddDiagnostic implements OnInit, OnDestroy {
     );
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────────
+  // ── Submit ────────────────────────────────────────────────────────
 
   async onSubmit(): Promise<void> {
     if (!this.isFormReady) {
@@ -262,6 +313,18 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       const user = this.authService.getDecodedToken();
       const doctorName = user ? `${user.firstName} ${user.lastName}` : 'Doctor';
       const v = this.form.value;
+
+      const extraGeneralInfo: CustomField[] = this.selectedAnalysis
+        ? [
+            ...this.customGeneralInfo,
+            {
+              label: 'Based on Lab Analysis',
+              value: `${this.selectedAnalysis.title} (${this.formatTimestamp(
+                this.selectedAnalysis.timestamp
+              )})`,
+            },
+          ]
+        : this.customGeneralInfo;
 
       await this.submissionService.submit({
         pdfData: {
@@ -287,7 +350,7 @@ export class AddDiagnostic implements OnInit, OnDestroy {
           generalRecommendations: v.generalRecommendations || undefined,
           followUpDate: v.followUpDate || undefined,
           finalNotes: v.finalNotes || undefined,
-          customGeneralInfo: this.customGeneralInfo,
+          customGeneralInfo: extraGeneralInfo,
           customAnamnesis: this.customAnamnesis,
           customClinicalExam: this.customClinicalExam,
           customDiagnosis: this.customDiagnosis,

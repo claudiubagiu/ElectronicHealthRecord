@@ -150,6 +150,15 @@ export class PatientAccess implements OnInit, OnDestroy {
     });
   }
 
+  viewLabAnalyses(req: AccessRequestDto): void {
+    this.router.navigate(['/patient', req.patientId, 'lab-analyses'], {
+      queryParams: {
+        patientName: req.patientName,
+        patientWalletAddress: req.patientWalletAddress,
+      },
+    });
+  }
+
   /** Returns a human-readable string for the remaining time. */
   getRemainingTime(expiresAt?: string): string {
     if (!expiresAt) return '';

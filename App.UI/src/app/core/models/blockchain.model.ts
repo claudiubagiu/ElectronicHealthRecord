@@ -8,3 +8,14 @@ export interface Diagnosis {
   patientAddr: string;
   exists: boolean;
 }
+
+export interface LabAnalysis {
+  id: bigint;
+  title: string;
+  ipfsCid: string;
+  timestamp: bigint;
+  labTechAddr: string;
+  labTechName: string;
+  patientAddr: string;
+  exists: boolean;
+}

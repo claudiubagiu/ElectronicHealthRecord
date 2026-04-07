@@ -85,4 +85,28 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(['Doctor'])],
   },
+  {
+    path: 'add-lab-analysis',
+    loadComponent: () =>
+      import('./features/lab-analyses/pages/add-lab-analysis/add-lab-analysis').then(
+        (m) => m.AddLabAnalysis
+      ),
+    canActivate: [roleGuard(['LaboratoryTechnician'])],
+  },
+  {
+    path: 'lab-analyses',
+    loadComponent: () =>
+      import('./features/lab-analyses/pages/get-lab-analyses/get-lab-analyses').then(
+        (m) => m.GetLabAnalyses
+      ),
+    canActivate: [roleGuard(['Patient'])],
+  },
+  {
+    path: 'patient/:patientId/lab-analyses',
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-lab-analyses/patient-lab-analyses').then(
+        (m) => m.PatientLabAnalyses
+      ),
+    canActivate: [roleGuard(['Doctor'])],
+  },
 ];

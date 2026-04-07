@@ -23,6 +23,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<IDoctorsRepository, DoctorsRepository>();
 builder.Services.AddScoped<IPatientsRepository, PatientsRepository>();
+builder.Services.AddScoped<ILaboratoryTechniciansRepository, LaboratoryTechniciansRepository>();
 builder.Services.AddScoped<IUsersService, UsersService>();
 
 builder.Services.AddSingleton<IConnection>(sp =>

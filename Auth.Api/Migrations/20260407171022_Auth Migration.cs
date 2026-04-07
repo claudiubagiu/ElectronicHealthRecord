@@ -186,7 +186,8 @@ namespace Auth.Api.Migrations
                 values: new object[,]
                 {
                     { "430f06bf-f5cd-4d94-87f5-cb9575698d74", "430f06bf-f5cd-4d94-87f5-cb9575698d74", "Patient", "PATIENT" },
-                    { "d251e4e9-a928-48da-aa5d-720eaa10789c", "d251e4e9-a928-48da-aa5d-720eaa10789c", "Doctor", "DOCTOR" }
+                    { "d251e4e9-a928-48da-aa5d-720eaa10789c", "d251e4e9-a928-48da-aa5d-720eaa10789c", "Doctor", "DOCTOR" },
+                    { "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b", "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b", "LaboratoryTechnician", "LABORATORYTECHNICIAN" }
                 });
 
             migrationBuilder.CreateIndex(

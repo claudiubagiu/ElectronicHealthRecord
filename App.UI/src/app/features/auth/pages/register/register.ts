@@ -20,7 +20,7 @@ export class Register implements OnInit {
   private fb = inject(FormBuilder);
 
   registerForm!: FormGroup;
-  selectedRole: 'Patient' | 'Doctor' = 'Patient';
+  selectedRole: 'Patient' | 'Doctor' | 'LaboratoryTechnician' = 'Patient';
   isLoading = false;
 
   ngOnInit(): void {
@@ -38,50 +38,56 @@ export class Register implements OnInit {
       dateOfBirth: [''],
       cnp: [''],
       // Doctor fields
-      specialization: [''],
       licenseNumber: [''],
+      // Shared Doctor + LaboratoryTechnician fields
+      specialization: [''],
       hospitalAffiliation: [''],
     });
 
-    // Apply initial validators for the default role
-    this.updatePatientValidators();
-    this.updateDoctorValidators();
+    this.updateValidators();
   }
 
-  selectRole(role: 'Patient' | 'Doctor'): void {
+  selectRole(role: 'Patient' | 'Doctor' | 'LaboratoryTechnician'): void {
     this.selectedRole = role;
-    this.updatePatientValidators();
-    this.updateDoctorValidators();
+    this.updateValidators();
   }
 
-  updatePatientValidators(): void {
-    const patientFields = ['dateOfBirth', 'cnp'];
+  updateValidators(): void {
+    const allConditionalFields = [
+      'dateOfBirth',
+      'cnp',
+      'licenseNumber',
+      'specialization',
+      'hospitalAffiliation',
+    ];
 
-    patientFields.forEach((field) => {
+    // Clear all first
+    allConditionalFields.forEach((field) => {
       const control = this.registerForm.get(field);
-      if (this.selectedRole === 'Patient') {
-        control?.setValidators(Validators.required);
-      } else {
-        control?.clearValidators();
-        control?.reset('');
-      }
+      control?.clearValidators();
+      control?.reset('');
       control?.updateValueAndValidity();
     });
-  }
 
-  updateDoctorValidators(): void {
-    const doctorFields = ['specialization', 'licenseNumber', 'hospitalAffiliation'];
-
-    doctorFields.forEach((field) => {
-      const control = this.registerForm.get(field);
-      if (this.selectedRole === 'Doctor') {
+    if (this.selectedRole === 'Patient') {
+      ['dateOfBirth', 'cnp'].forEach((field) => {
+        const control = this.registerForm.get(field);
         control?.setValidators(Validators.required);
-      } else {
-        control?.clearValidators();
-        control?.reset('');
-      }
-      control?.updateValueAndValidity();
-    });
+        control?.updateValueAndValidity();
+      });
+    } else if (this.selectedRole === 'Doctor') {
+      ['specialization', 'licenseNumber', 'hospitalAffiliation'].forEach((field) => {
+        const control = this.registerForm.get(field);
+        control?.setValidators(Validators.required);
+        control?.updateValueAndValidity();
+      });
+    } else if (this.selectedRole === 'LaboratoryTechnician') {
+      ['specialization', 'hospitalAffiliation'].forEach((field) => {
+        const control = this.registerForm.get(field);
+        control?.setValidators(Validators.required);
+        control?.updateValueAndValidity();
+      });
+    }
   }
 
   async onSubmit(): Promise<void> {
@@ -101,11 +107,15 @@ export class Register implements OnInit {
           this.selectedRole === 'Patient' ? this.registerForm.value.dateOfBirth : undefined,
         cnp: this.selectedRole === 'Patient' ? this.registerForm.value.cnp : undefined,
         specialization:
-          this.selectedRole === 'Doctor' ? this.registerForm.value.specialization : undefined,
+          this.selectedRole === 'Doctor' || this.selectedRole === 'LaboratoryTechnician'
+            ? this.registerForm.value.specialization
+            : undefined,
         licenseNumber:
           this.selectedRole === 'Doctor' ? this.registerForm.value.licenseNumber : undefined,
         hospitalAffiliation:
-          this.selectedRole === 'Doctor' ? this.registerForm.value.hospitalAffiliation : undefined,
+          this.selectedRole === 'Doctor' || this.selectedRole === 'LaboratoryTechnician'
+            ? this.registerForm.value.hospitalAffiliation
+            : undefined,
       };
 
       await this.authService.register(payload);

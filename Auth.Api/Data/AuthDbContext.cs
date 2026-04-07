@@ -20,6 +20,7 @@ namespace Auth.Api.Data
 
             var patientRoleId = "430f06bf-f5cd-4d94-87f5-cb9575698d74";
             var doctorRoleId = "d251e4e9-a928-48da-aa5d-720eaa10789c";
+            var labTechnicianRoleId = "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b";
 
             var roles = new List<IdentityRole>
             {
@@ -36,6 +37,13 @@ namespace Auth.Api.Data
                     ConcurrencyStamp = doctorRoleId,
                     Name = "Doctor",
                     NormalizedName = "DOCTOR".ToUpper()
+                },
+                new IdentityRole
+                {
+                    Id = labTechnicianRoleId,
+                    ConcurrencyStamp = labTechnicianRoleId,
+                    Name = "LaboratoryTechnician",
+                    NormalizedName = "LABORATORYTECHNICIAN".ToUpper()
                 }
             };
 

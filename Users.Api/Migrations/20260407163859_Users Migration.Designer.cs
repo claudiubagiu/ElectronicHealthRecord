@@ -12,7 +12,7 @@ using Users.Api.Data;
 namespace Users.Api.Migrations
 {
     [DbContext(typeof(UsersDbContext))]
-    [Migration("20260323183020_Users Migration")]
+    [Migration("20260407163859_Users Migration")]
     partial class UsersMigration
     {
         /// <inheritdoc />
@@ -66,6 +66,45 @@ namespace Users.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Doctors");
+                });
+
+            modelBuilder.Entity("Users.Api.Models.Domain.LaboratoryTechnician", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HospitalAffiliation")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IdentityId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Specialization")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WalletAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LaboratoryTechnicians");
                 });
 
             modelBuilder.Entity("Users.Api.Models.Domain.Patient", b =>

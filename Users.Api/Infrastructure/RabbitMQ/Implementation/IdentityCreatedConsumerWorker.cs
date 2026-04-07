@@ -38,6 +38,7 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                     using var scope = _scopeFactory.CreateScope();
                     var patientsRepository = scope.ServiceProvider.GetRequiredService<IPatientsRepository>();
                     var doctorsRepository = scope.ServiceProvider.GetRequiredService<IDoctorsRepository>();
+                    var labTechniciansRepository = scope.ServiceProvider.GetRequiredService<ILaboratoryTechniciansRepository>();
 
                     IdentityCreatedEvent identityCreatedEvent = message;
 
@@ -63,6 +64,19 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                         await _genericRabbitMQService1.PublishAsync(userCreatedResponseEvent, "user-created-response-queue");
 
                         UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(doctor);
+                        userCreatedEvent.Role = identityCreatedEvent.Role;
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");
+                    }
+                    else if (identityCreatedEvent.Role == "LaboratoryTechnician")
+                    {
+                        LaboratoryTechnician labTechnician = _mapper.Map<LaboratoryTechnician>(identityCreatedEvent);
+                        await labTechniciansRepository.CreateAsync(labTechnician);
+
+                        UserCreatedResponseEvent userCreatedResponseEvent = _mapper.Map<UserCreatedResponseEvent>(labTechnician);
+                        await _genericRabbitMQService1.PublishAsync(userCreatedResponseEvent, "user-created-response-queue");
+
+                        UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(labTechnician);
                         userCreatedEvent.Role = identityCreatedEvent.Role;
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");

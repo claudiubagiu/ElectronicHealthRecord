@@ -163,6 +163,13 @@ namespace Auth.Api.Migrations
                             ConcurrencyStamp = "d251e4e9-a928-48da-aa5d-720eaa10789c",
                             Name = "Doctor",
                             NormalizedName = "DOCTOR"
+                        },
+                        new
+                        {
+                            Id = "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b",
+                            ConcurrencyStamp = "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b",
+                            Name = "LaboratoryTechnician",
+                            NormalizedName = "LABORATORYTECHNICIAN"
                         });
                 });
 

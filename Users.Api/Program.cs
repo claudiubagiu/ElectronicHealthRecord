@@ -25,6 +25,7 @@ builder.Services.AddScoped<IDoctorsRepository, DoctorsRepository>();
 builder.Services.AddScoped<IPatientsRepository, PatientsRepository>();
 builder.Services.AddScoped<ILaboratoryTechniciansRepository, LaboratoryTechniciansRepository>();
 builder.Services.AddScoped<IUsersService, UsersService>();
+builder.Services.AddScoped<IPharmacistsRepository, PharmacistsRepository>();
 
 builder.Services.AddSingleton<IConnection>(sp =>
 {

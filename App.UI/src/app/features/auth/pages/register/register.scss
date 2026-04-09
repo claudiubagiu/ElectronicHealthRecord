@@ -68,11 +68,12 @@ h1 {
 
 .role-selector {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
 .role-btn {
-  flex: 1;
+  flex: 1 1 180px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,7 +167,7 @@ h1 {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .register-card {
     padding: 24px 16px;
   }
@@ -174,5 +175,9 @@ h1 {
   .row-fields {
     flex-direction: column;
     gap: 0;
+  }
+
+  .role-btn {
+    flex: 1 1 calc(50% - 6px);
   }
 }

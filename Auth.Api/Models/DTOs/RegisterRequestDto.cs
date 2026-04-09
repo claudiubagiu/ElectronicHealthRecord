@@ -24,9 +24,14 @@ namespace Auth.Api.Models.DTOs
         public string? CNP { get; set; }
         public DateTime? DateOfBirth { get; set; }
 
-        // Doctor fields
+        // Doctor / LaboratoryTechnician fields
         public string? Specialization { get; set; }
+
+        // Doctor / Pharmacist fields
         public string? LicenseNumber { get; set; }
-        public string? HospitalAffiliation { get; set; }
+
+        // Doctor / LaboratoryTechnician / Pharmacist fields
+        // (Hospital for Doctor+LabTech, Pharmacy for Pharmacist)
+        public string? EntityAffiliation { get; set; }
     }
 }

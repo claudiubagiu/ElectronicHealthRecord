@@ -12,7 +12,7 @@
         public DateTime? DateOfBirth { get; set; }
         public string? Specialization { get; set; }
         public string? LicenseNumber { get; set; }
-        public string? HospitalAffiliation { get; set; }
+        public string? EntityAffiliation { get; set; }
         public string? Address { get; set; }
     }
 }

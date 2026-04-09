@@ -12,14 +12,21 @@ namespace Users.Api.Mappings
             CreateMap<IdentityCreatedEvent, Patient>().ReverseMap();
             CreateMap<IdentityCreatedEvent, Doctor>().ReverseMap();
             CreateMap<IdentityCreatedEvent, LaboratoryTechnician>().ReverseMap();
+            CreateMap<IdentityCreatedEvent, Pharmacist>().ReverseMap();
+
             CreateMap<UserCreatedEvent, Patient>().ReverseMap();
             CreateMap<UserCreatedEvent, Doctor>().ReverseMap();
             CreateMap<UserCreatedEvent, LaboratoryTechnician>().ReverseMap();
+            CreateMap<UserCreatedEvent, Pharmacist>().ReverseMap();
+
             CreateMap<Patient, UserCreatedResponseEvent>().ReverseMap();
             CreateMap<Doctor, UserCreatedResponseEvent>().ReverseMap();
             CreateMap<LaboratoryTechnician, UserCreatedResponseEvent>().ReverseMap();
+            CreateMap<Pharmacist, UserCreatedResponseEvent>().ReverseMap();
+
             CreateMap<Patient, PatientDto>().ReverseMap();
             CreateMap<LaboratoryTechnician, LaboratoryTechnicianDto>().ReverseMap();
+            CreateMap<Pharmacist, PharmacistDto>().ReverseMap();
         }
     }
 }

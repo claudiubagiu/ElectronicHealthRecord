@@ -14,12 +14,13 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
         private readonly IGenericRabbitMQService<UserCreatedEvent> _genericRabbitMQService;
         private readonly IGenericRabbitMQService<UserCreatedResponseEvent> _genericRabbitMQService1;
 
-        public IdentityCreatedConsumerWorker(IGenericRabbitMQConsumer<IdentityCreatedEvent> consumer, 
-                                             IServiceScopeFactory scopeFactory, 
-                                             IMapper mapper,
-                                             IGenericRabbitMQService<UserCreatedEvent> genericRabbitMQService,
-                                             IGenericRabbitMQService<UserCreatedResponseEvent> genericRabbitMQService1,
-                                             IGenericRabbitMQService<UserCreatedResponseEvent> genericRabbitMQService2)
+        public IdentityCreatedConsumerWorker(
+            IGenericRabbitMQConsumer<IdentityCreatedEvent> consumer,
+            IServiceScopeFactory scopeFactory,
+            IMapper mapper,
+            IGenericRabbitMQService<UserCreatedEvent> genericRabbitMQService,
+            IGenericRabbitMQService<UserCreatedResponseEvent> genericRabbitMQService1,
+            IGenericRabbitMQService<UserCreatedResponseEvent> genericRabbitMQService2)
         {
             _consumer = consumer;
             _scopeFactory = scopeFactory;
@@ -39,6 +40,7 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                     var patientsRepository = scope.ServiceProvider.GetRequiredService<IPatientsRepository>();
                     var doctorsRepository = scope.ServiceProvider.GetRequiredService<IDoctorsRepository>();
                     var labTechniciansRepository = scope.ServiceProvider.GetRequiredService<ILaboratoryTechniciansRepository>();
+                    var pharmacistsRepository = scope.ServiceProvider.GetRequiredService<IPharmacistsRepository>();
 
                     IdentityCreatedEvent identityCreatedEvent = message;
 
@@ -77,6 +79,19 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                         await _genericRabbitMQService1.PublishAsync(userCreatedResponseEvent, "user-created-response-queue");
 
                         UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(labTechnician);
+                        userCreatedEvent.Role = identityCreatedEvent.Role;
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");
+                    }
+                    else if (identityCreatedEvent.Role == "Pharmacist")
+                    {
+                        Pharmacist pharmacist = _mapper.Map<Pharmacist>(identityCreatedEvent);
+                        await pharmacistsRepository.CreateAsync(pharmacist);
+
+                        UserCreatedResponseEvent userCreatedResponseEvent = _mapper.Map<UserCreatedResponseEvent>(pharmacist);
+                        await _genericRabbitMQService1.PublishAsync(userCreatedResponseEvent, "user-created-response-queue");
+
+                        UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(pharmacist);
                         userCreatedEvent.Role = identityCreatedEvent.Role;
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");

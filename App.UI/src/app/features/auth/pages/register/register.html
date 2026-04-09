@@ -41,6 +41,15 @@
             <mat-icon>biotech</mat-icon>
             <span>Lab Technician</span>
           </button>
+          <button
+            type="button"
+            class="role-btn"
+            [class.active]="selectedRole === 'Pharmacist'"
+            (click)="selectRole('Pharmacist')"
+          >
+            <mat-icon>local_pharmacy</mat-icon>
+            <span>Pharmacist</span>
+          </button>
         </div>
       </div>
 
@@ -48,13 +57,13 @@
 
       <!-- Step 2: Personal details -->
       <div class="section">
-        <p class="section-label">Personal details</p>
+        <p class="section-label">Personal information</p>
 
         <div class="row-fields">
           <mat-form-field appearance="outline" class="half">
             <mat-label>First name</mat-label>
             <input matInput formControlName="firstName" placeholder="John" />
-            <mat-icon matSuffix>badge</mat-icon>
+            <mat-icon matSuffix>person</mat-icon>
             @if (registerForm.get('firstName')?.hasError('required')) {
               <mat-error>This field is required</mat-error>
             }
@@ -63,7 +72,7 @@
           <mat-form-field appearance="outline" class="half">
             <mat-label>Last name</mat-label>
             <input matInput formControlName="lastName" placeholder="Doe" />
-            <mat-icon matSuffix>badge</mat-icon>
+            <mat-icon matSuffix>person</mat-icon>
             @if (registerForm.get('lastName')?.hasError('required')) {
               <mat-error>This field is required</mat-error>
             }
@@ -101,7 +110,7 @@
         </mat-form-field>
       </div>
 
-      <!-- Step 3: Patient fields (conditional) -->
+      <!-- Patient fields -->
       @if (selectedRole === 'Patient') {
         <mat-divider></mat-divider>
         <div class="section">
@@ -127,7 +136,7 @@
         </div>
       }
 
-      <!-- Step 3: Doctor fields (conditional) -->
+      <!-- Doctor fields -->
       @if (selectedRole === 'Doctor') {
         <mat-divider></mat-divider>
         <div class="section">
@@ -152,17 +161,17 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full">
-            <mat-label>Hospital / Affiliation</mat-label>
-            <input matInput formControlName="hospitalAffiliation" placeholder="e.g. General County Hospital" />
+            <mat-label>Hospital / Clinic Affiliation</mat-label>
+            <input matInput formControlName="entityAffiliation" placeholder="e.g. General County Hospital" />
             <mat-icon matSuffix>domain</mat-icon>
-            @if (registerForm.get('hospitalAffiliation')?.hasError('required')) {
+            @if (registerForm.get('entityAffiliation')?.hasError('required')) {
               <mat-error>This field is required for Doctors</mat-error>
             }
           </mat-form-field>
         </div>
       }
 
-      <!-- Step 3: Laboratory Technician fields (conditional) -->
+      <!-- Laboratory Technician fields -->
       @if (selectedRole === 'LaboratoryTechnician') {
         <mat-divider></mat-divider>
         <div class="section">
@@ -178,11 +187,37 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full">
-            <mat-label>Hospital / Affiliation</mat-label>
-            <input matInput formControlName="hospitalAffiliation" placeholder="e.g. General County Hospital" />
+            <mat-label>Hospital / Clinic Affiliation</mat-label>
+            <input matInput formControlName="entityAffiliation" placeholder="e.g. General County Hospital" />
             <mat-icon matSuffix>domain</mat-icon>
-            @if (registerForm.get('hospitalAffiliation')?.hasError('required')) {
+            @if (registerForm.get('entityAffiliation')?.hasError('required')) {
               <mat-error>This field is required</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      }
+
+      <!-- Pharmacist fields -->
+      @if (selectedRole === 'Pharmacist') {
+        <mat-divider></mat-divider>
+        <div class="section">
+          <p class="section-label">Pharmacist information</p>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>License number</mat-label>
+            <input matInput formControlName="licenseNumber" placeholder="e.g. PH-12345" />
+            <mat-icon matSuffix>verified</mat-icon>
+            @if (registerForm.get('licenseNumber')?.hasError('required')) {
+              <mat-error>License number is required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Pharmacy Affiliation</mat-label>
+            <input matInput formControlName="entityAffiliation" placeholder="e.g. Hospital's Pharmacy'" />
+            <mat-icon matSuffix>local_pharmacy</mat-icon>
+            @if (registerForm.get('entityAffiliation')?.hasError('required')) {
+              <mat-error>Pharmacy affiliation is required</mat-error>
             }
           </mat-form-field>
         </div>
@@ -191,29 +226,31 @@
       <mat-divider></mat-divider>
 
       <!-- Submit -->
-      <button
-        mat-flat-button
-        type="submit"
-        class="submit-btn"
-        [disabled]="registerForm.invalid || isLoading"
-      >
-        @if (!isLoading) {
-          <ng-container>
-            <mat-icon>how_to_reg</mat-icon>
-            Register with MetaMask
-          </ng-container>
-        } @else {
-          <ng-container>
-            <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
-            Processing...
-          </ng-container>
-        }
-      </button>
+      <div class="section">
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit-btn"
+          [disabled]="registerForm.invalid || isLoading"
+        >
+          @if (!isLoading) {
+            <ng-container>
+              <mat-icon>how_to_reg</mat-icon>
+              Register with MetaMask
+            </ng-container>
+          } @else {
+            <ng-container>
+              <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
+              Processing...
+            </ng-container>
+          }
+        </button>
 
-      <p class="login-text">
-        Already have an account?
-        <a routerLink="/login">Sign in</a>
-      </p>
+        <p class="login-text">
+          Already have an account?
+          <a routerLink="/login">Sign in</a>
+        </p>
+      </div>
     </form>
   </div>
 </div>

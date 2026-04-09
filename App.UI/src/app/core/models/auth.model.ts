@@ -25,10 +25,12 @@ export interface RegisterRequest {
   // Patient fields
   dateOfBirth?: string;
   cnp?: string;
-  // Doctor fields
+  // Doctor / LaboratoryTechnician fields
   specialization?: string;
+  // Doctor / Pharmacist fields
   licenseNumber?: string;
-  hospitalAffiliation?: string;
+  // Doctor / LaboratoryTechnician / Pharmacist fields
+  entityAffiliation?: string;
 }
 
 export interface DecodedToken {

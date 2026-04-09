@@ -112,7 +112,7 @@ namespace Auth.Api.Services.Implementation
                         DateOfBirth = registerRequestDto.DateOfBirth,
                         Specialization = registerRequestDto.Specialization,
                         LicenseNumber = registerRequestDto.LicenseNumber,
-                        HospitalAffiliation = registerRequestDto.HospitalAffiliation,
+                        EntityAffiliation = registerRequestDto.EntityAffiliation,
                     };
                     await genericRabbitMQService.PublishAsync(userData, "identity-created-queue");
                     return Result.Ok(response);

@@ -20,7 +20,7 @@ export class Register implements OnInit {
   private fb = inject(FormBuilder);
 
   registerForm!: FormGroup;
-  selectedRole: 'Patient' | 'Doctor' | 'LaboratoryTechnician' = 'Patient';
+  selectedRole: 'Patient' | 'Doctor' | 'LaboratoryTechnician' | 'Pharmacist' = 'Patient';
   isLoading = false;
 
   ngOnInit(): void {
@@ -37,17 +37,18 @@ export class Register implements OnInit {
       // Patient fields
       dateOfBirth: [''],
       cnp: [''],
-      // Doctor fields
+      // Doctor / Pharmacist fields
       licenseNumber: [''],
-      // Shared Doctor + LaboratoryTechnician fields
+      // Doctor / LaboratoryTechnician fields
       specialization: [''],
-      hospitalAffiliation: [''],
+      // Doctor / LaboratoryTechnician / Pharmacist fields
+      entityAffiliation: [''],
     });
 
     this.updateValidators();
   }
 
-  selectRole(role: 'Patient' | 'Doctor' | 'LaboratoryTechnician'): void {
+  selectRole(role: 'Patient' | 'Doctor' | 'LaboratoryTechnician' | 'Pharmacist'): void {
     this.selectedRole = role;
     this.updateValidators();
   }
@@ -58,10 +59,9 @@ export class Register implements OnInit {
       'cnp',
       'licenseNumber',
       'specialization',
-      'hospitalAffiliation',
+      'entityAffiliation',
     ];
 
-    // Clear all first
     allConditionalFields.forEach((field) => {
       const control = this.registerForm.get(field);
       control?.clearValidators();
@@ -76,13 +76,19 @@ export class Register implements OnInit {
         control?.updateValueAndValidity();
       });
     } else if (this.selectedRole === 'Doctor') {
-      ['specialization', 'licenseNumber', 'hospitalAffiliation'].forEach((field) => {
+      ['specialization', 'licenseNumber', 'entityAffiliation'].forEach((field) => {
         const control = this.registerForm.get(field);
         control?.setValidators(Validators.required);
         control?.updateValueAndValidity();
       });
     } else if (this.selectedRole === 'LaboratoryTechnician') {
-      ['specialization', 'hospitalAffiliation'].forEach((field) => {
+      ['specialization', 'entityAffiliation'].forEach((field) => {
+        const control = this.registerForm.get(field);
+        control?.setValidators(Validators.required);
+        control?.updateValueAndValidity();
+      });
+    } else if (this.selectedRole === 'Pharmacist') {
+      ['licenseNumber', 'entityAffiliation'].forEach((field) => {
         const control = this.registerForm.get(field);
         control?.setValidators(Validators.required);
         control?.updateValueAndValidity();
@@ -111,10 +117,14 @@ export class Register implements OnInit {
             ? this.registerForm.value.specialization
             : undefined,
         licenseNumber:
-          this.selectedRole === 'Doctor' ? this.registerForm.value.licenseNumber : undefined,
-        hospitalAffiliation:
-          this.selectedRole === 'Doctor' || this.selectedRole === 'LaboratoryTechnician'
-            ? this.registerForm.value.hospitalAffiliation
+          this.selectedRole === 'Doctor' || this.selectedRole === 'Pharmacist'
+            ? this.registerForm.value.licenseNumber
+            : undefined,
+        entityAffiliation:
+          this.selectedRole === 'Doctor' ||
+          this.selectedRole === 'LaboratoryTechnician' ||
+          this.selectedRole === 'Pharmacist'
+            ? this.registerForm.value.entityAffiliation
             : undefined,
       };
 

@@ -22,7 +22,7 @@ namespace Users.Api.Migrations
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Specialization = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LicenseNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    HospitalAffiliation = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EntityAffiliation = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -40,7 +40,7 @@ namespace Users.Api.Migrations
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Specialization = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    HospitalAffiliation = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EntityAffiliation = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -65,6 +65,24 @@ namespace Users.Api.Migrations
                 {
                     table.PrimaryKey("PK_Patients", x => x.Id);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "Pharmacists",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IdentityId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LicenseNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EntityAffiliation = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Pharmacists", x => x.Id);
+                });
         }
 
         /// <inheritdoc />
@@ -78,6 +96,9 @@ namespace Users.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "Patients");
+
+            migrationBuilder.DropTable(
+                name: "Pharmacists");
         }
     }
 }

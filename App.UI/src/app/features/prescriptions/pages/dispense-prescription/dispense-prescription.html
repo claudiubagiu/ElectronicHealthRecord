@@ -1,0 +1,197 @@
+<div class="dispense-page">
+  <div class="dispense-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>local_pharmacy</mat-icon>
+      </div>
+      <h1>Dispense Prescription</h1>
+      <p class="subtitle">
+        Enter the 6-character code given by the patient to look up their prescription.
+      </p>
+    </div>
+
+    <!-- Code input -->
+    <div class="search-section">
+      <form [formGroup]="form" (ngSubmit)="onSearch()">
+        <div class="code-input-row">
+          <mat-form-field appearance="outline" class="code-field">
+            <mat-label>Prescription code</mat-label>
+            <input
+              matInput
+              formControlName="code"
+              placeholder="e.g. A3XK7M"
+              maxlength="6"
+              autocomplete="off"
+              spellcheck="false"
+              class="code-input"
+              (input)="onCodeInput()"
+            />
+            <mat-icon matSuffix>vpn_key</mat-icon>
+            @if (form.get('code')?.hasError('required') && form.get('code')?.touched) {
+            <mat-error>Please enter the 6-character code</mat-error>
+            } @if (form.get('code')?.hasError('minlength') && form.get('code')?.touched) {
+            <mat-error>Code must be exactly 6 characters</mat-error>
+            }
+          </mat-form-field>
+
+          <button
+            mat-flat-button
+            type="submit"
+            class="search-btn"
+            [disabled]="form.invalid || isSearching"
+          >
+            @if (isSearching) {
+            <mat-spinner diameter="20" class="btn-spinner"></mat-spinner>
+            } @else {
+            <ng-container>
+              <mat-icon>search</mat-icon>
+              Search
+            </ng-container>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Error: not found -->
+    @if (lookupError) {
+    <div class="result-box error-box">
+      <mat-icon class="result-icon error-icon">error_outline</mat-icon>
+      <div class="result-text">
+        <p class="result-title">Prescription not found</p>
+        <p class="result-sub">{{ lookupError }}</p>
+      </div>
+    </div>
+    }
+
+    <!-- Result: already dispensed -->
+    @if (prescription && prescription.dispensed) {
+    <div class="result-box dispensed-box">
+      <div class="dispensed-header">
+        <mat-icon class="result-icon dispensed-icon">check_circle</mat-icon>
+        <div>
+          <p class="result-title">Already dispensed</p>
+          <p class="result-sub">
+            This prescription has already been dispensed and cannot be used again.
+          </p>
+        </div>
+      </div>
+
+      <mat-divider class="inner-divider"></mat-divider>
+
+      <div class="dispensed-meta">
+        <div class="meta-row">
+          <mat-icon class="meta-icon">event_available</mat-icon>
+          <span
+            >Dispensed on
+            <strong>{{
+              formatTimestamp(prescription.dispensedTimestamp) | date : 'dd MMM yyyy, HH:mm'
+            }}</strong>
+          </span>
+        </div>
+        <div class="meta-row">
+          <mat-icon class="meta-icon">account_balance_wallet</mat-icon>
+          <span
+            >Pharmacist:
+            <span class="mono">{{ shortenAddress(prescription.dispensedBy) }}</span></span
+          >
+        </div>
+        <div class="meta-row">
+          <mat-icon class="meta-icon">person</mat-icon>
+          <span
+            >Prescribed by Dr. <strong>{{ prescription.doctorName }}</strong></span
+          >
+        </div>
+        <div class="meta-row">
+          <mat-icon class="meta-icon">schedule</mat-icon>
+          <span
+            >Created on {{ formatTimestamp(prescription.timestamp) | date : 'dd MMM yyyy' }}</span
+          >
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Result: active prescription -->
+    @if (prescription && !prescription.dispensed) {
+    <div class="result-box active-box">
+      <!-- Success banner after dispense -->
+      @if (dispensedSuccess) {
+      <div class="success-banner">
+        <mat-icon>check_circle</mat-icon>
+        Prescription dispensed successfully!
+      </div>
+      }
+
+      <div class="active-header">
+        <div class="active-badge">
+          <mat-icon>local_pharmacy</mat-icon>
+          Active prescription
+        </div>
+        <span class="active-date">
+          {{ formatTimestamp(prescription.timestamp) | date : 'dd MMM yyyy' }}
+        </span>
+      </div>
+
+      <mat-divider class="inner-divider"></mat-divider>
+
+      <!-- Prescription meta -->
+      <div class="prescription-meta">
+        <div class="meta-row">
+          <mat-icon class="meta-icon">medical_services</mat-icon>
+          <span
+            >Prescribed by Dr. <strong>{{ prescription.doctorName }}</strong></span
+          >
+        </div>
+        <div class="meta-row">
+          <mat-icon class="meta-icon">link</mat-icon>
+          <span class="mono small">{{ prescription.ipfsCid }}</span>
+        </div>
+      </div>
+
+      <mat-divider class="inner-divider"></mat-divider>
+
+      <!-- View PDF -->
+      <div class="pdf-row" (click)="onOpenPdf()">
+        <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
+        <span class="pdf-label">View prescription PDF</span>
+        @if (isOpening) {
+        <mat-spinner diameter="18" class="pdf-spinner"></mat-spinner>
+        } @else {
+        <mat-icon class="pdf-open">open_in_new</mat-icon>
+        }
+      </div>
+
+      <mat-divider class="inner-divider"></mat-divider>
+
+      <!-- Dispense button -->
+      <button
+        mat-flat-button
+        class="dispense-btn"
+        [disabled]="isDispensing || dispensedSuccess"
+        (click)="onDispense()"
+      >
+        @if (isDispensing) {
+        <mat-spinner diameter="22" class="btn-spinner"></mat-spinner>
+        Confirming on blockchain... } @else if (dispensedSuccess) {
+        <ng-container>
+          <mat-icon>check</mat-icon>
+          Dispensed
+        </ng-container>
+        } @else {
+        <ng-container>
+          <mat-icon>medication</mat-icon>
+          Dispense Prescription
+        </ng-container>
+        }
+      </button>
+
+      <p class="dispense-warning">
+        <mat-icon class="warn-icon">warning_amber</mat-icon>
+        This action is irreversible and will be recorded on the blockchain.
+      </p>
+    </div>
+    }
+  </div>
+</div>

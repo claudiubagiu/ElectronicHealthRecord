@@ -19,3 +19,18 @@ export interface LabAnalysis {
   patientAddr: string;
   exists: boolean;
 }
+
+export interface Prescription {
+  id: bigint;
+  ipfsCid: string;
+  patientAddr: string;
+  doctorAddr: string;
+  doctorName: string;
+  timestamp: bigint;
+  codeHash: string;
+  salt: string;
+  dispensed: boolean;
+  dispensedTimestamp: bigint;
+  dispensedBy: string;
+  exists: boolean;
+}

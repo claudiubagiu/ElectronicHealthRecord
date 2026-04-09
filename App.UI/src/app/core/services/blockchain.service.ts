@@ -1,8 +1,14 @@
 import { Injectable } from '@angular/core';
-import { BrowserProvider, Contract, ContractTransactionReceipt } from 'ethers';
+import {
+  BrowserProvider,
+  Contract,
+  ContractTransactionReceipt,
+  keccak256,
+  toUtf8Bytes,
+} from 'ethers';
 import { Web3Service } from './web3.service';
 import PatientRecords from '../contracts/PatientRecords.json';
-import { Diagnosis, LabAnalysis } from '../models/blockchain.model';
+import { Diagnosis, LabAnalysis, Prescription } from '../models/blockchain.model';
 import { AppError } from '../errors/app.error';
 
 declare let window: any;
@@ -421,8 +427,6 @@ export class BlockchainService {
       return await Promise.all(ids.map((id) => this.getLabAnalysis(id)));
     } catch (error: any) {
       if (error instanceof AppError) throw error;
-
-      // Re-throw original error so callers can inspect error.data.message
       throw error;
     }
   }
@@ -443,11 +447,237 @@ export class BlockchainService {
     }
   }
 
-  // ── Mappers ────────────────────────────────────────────────────────────────
+  // ── Prescriptions ──────────────────────────────────────────────────────────
 
   /**
-   * Maps the raw contract return value to a typed Diagnosis object.
+   * Doctor records a new prescription on-chain.
+   * The IPFS payload must already be uploaded before calling this.
+   *
+   * @param ipfsCid     IPFS CID of the encrypted prescription payload
+   * @param patientAddr Patient's wallet address
+   * @param doctorName  Doctor's display name
+   * @param codeHash    keccak256 of the 6-char short code (bytes32 hex string)
+   * @param salt        32-byte random salt used for PBKDF2 key derivation (bytes32 hex string)
+   * @returns The on-chain prescription ID extracted from the PrescriptionAdded event
    */
+  async addPrescription(
+    ipfsCid: string,
+    patientAddr: string,
+    doctorName: string,
+    codeHash: string,
+    salt: string
+  ): Promise<bigint> {
+    try {
+      const signed = await this.getSigned();
+      const tx = await signed['addPrescription'](ipfsCid, patientAddr, doctorName, codeHash, salt);
+      const receipt: ContractTransactionReceipt = await tx.wait();
+
+      const iface = this.contract!.interface;
+      for (const log of receipt.logs) {
+        try {
+          const parsed = iface.parseLog(log);
+          if (parsed?.name === 'PrescriptionAdded') {
+            return parsed.args['prescriptionId'] as bigint;
+          }
+        } catch {
+          // skip unrelated logs
+        }
+      }
+
+      throw new AppError({
+        message:
+          'The prescription was submitted but the confirmation event was not found. Please verify the transaction on the blockchain.',
+        status: 500,
+        title: 'Event Not Found',
+        type: 'PRESCRIPTION_EVENT_NOT_FOUND',
+      });
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      console.error('Failed to add prescription:', error);
+
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        throw new AppError({
+          message: 'You rejected the transaction to create the prescription.',
+          status: 403,
+          title: 'Transaction Rejected',
+          type: 'TX_REJECTED',
+        });
+      }
+
+      throw new AppError({
+        message: 'Failed to store the prescription on the blockchain. Please try again.',
+        status: 500,
+        title: 'Add Prescription Failed',
+        type: 'ADD_PRESCRIPTION_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Fetches a prescription by the keccak256 hash of the short code.
+   * Intentionally public — no wallet auth required, the code IS the credential.
+   * Returns the full struct including dispensed status and salt.
+   *
+   * @param codeHash keccak256 of the 6-char short code (bytes32 hex string)
+   */
+  async getPrescriptionByCodeHash(codeHash: string): Promise<Prescription> {
+    this.ensureProvider();
+
+    try {
+      const raw = await this.contract!['getPrescriptionByCodeHash'](codeHash);
+      return this.mapPrescription(raw);
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      console.error('Failed to get prescription by code hash:', error);
+
+      // Distinguish "not found" revert from a generic error
+      const reason: string = (
+        error?.reason ??
+        error?.data?.message ??
+        error?.message ??
+        ''
+      ).toLowerCase();
+
+      if (reason.includes('not found')) {
+        throw new AppError({
+          message: 'No prescription found for this code. Please check the code and try again.',
+          status: 404,
+          title: 'Prescription Not Found',
+          type: 'PRESCRIPTION_NOT_FOUND',
+        });
+      }
+
+      throw new AppError({
+        message: 'Failed to look up the prescription on the blockchain.',
+        status: 500,
+        title: 'Get Prescription Failed',
+        type: 'GET_PRESCRIPTION_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Pharmacist marks a prescription as dispensed on-chain.
+   * Irreversible — reverts if already dispensed.
+   *
+   * @param codeHash keccak256 of the 6-char short code (bytes32 hex string)
+   */
+  async dispensePrescription(codeHash: string): Promise<void> {
+    try {
+      const signed = await this.getSigned();
+      const tx = await signed['dispensePrescription'](codeHash);
+      await tx.wait();
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      console.error('Failed to dispense prescription:', error);
+
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        throw new AppError({
+          message: 'You rejected the dispense transaction.',
+          status: 403,
+          title: 'Transaction Rejected',
+          type: 'TX_REJECTED',
+        });
+      }
+
+      const reason: string = (
+        error?.reason ??
+        error?.data?.message ??
+        error?.message ??
+        ''
+      ).toLowerCase();
+
+      if (reason.includes('already dispensed')) {
+        throw new AppError({
+          message: 'This prescription has already been dispensed.',
+          status: 409,
+          title: 'Already Dispensed',
+          type: 'PRESCRIPTION_ALREADY_DISPENSED',
+        });
+      }
+
+      throw new AppError({
+        message: 'Failed to dispense the prescription on the blockchain. Please try again.',
+        status: 500,
+        title: 'Dispense Failed',
+        type: 'DISPENSE_PRESCRIPTION_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Returns all prescription IDs for a given patient.
+   * Caller must be the patient or have active on-chain access.
+   *
+   * @param patientAddress Patient's wallet address
+   */
+  async getPatientPrescriptionIds(patientAddress: string): Promise<bigint[]> {
+    try {
+      const signed = await this.getSigned();
+      return await signed['getPatientPrescriptionIds'](patientAddress);
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches a full prescription struct by on-chain ID.
+   * Caller must be the patient or have active on-chain access.
+   *
+   * @param prescriptionId On-chain prescription ID
+   */
+  async getPrescription(prescriptionId: bigint): Promise<Prescription> {
+    try {
+      const signed = await this.getSigned();
+      const raw = await signed['getPrescription'](prescriptionId);
+      return this.mapPrescription(raw);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError({
+        message: 'Failed to retrieve the prescription from the blockchain.',
+        status: 500,
+        title: 'Get Prescription Failed',
+        type: 'GET_PRESCRIPTION_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Returns all prescription IDs written by the calling doctor.
+   */
+  async getDoctorPrescriptionIds(): Promise<bigint[]> {
+    this.ensureProvider();
+
+    try {
+      return await this.contract!['getDoctorPrescriptionIds']();
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError({
+        message: 'Failed to retrieve your prescription IDs from the blockchain.',
+        status: 500,
+        title: 'Get Doctor Prescriptions Failed',
+        type: 'GET_DOCTOR_PRESCRIPTIONS_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Utility: computes keccak256 of the short code string.
+   * Used by both the doctor (on create) and the pharmacist (on lookup).
+   *
+   * @param shortCode 6-character alphanumeric short code
+   * @returns bytes32 hex string suitable for passing to the contract
+   */
+  hashShortCode(shortCode: string): string {
+    return keccak256(toUtf8Bytes(shortCode));
+  }
+
+  // ── Mappers ────────────────────────────────────────────────────────────────
+
   private mapDiagnosis(raw: any): Diagnosis {
     return {
       id: raw.id as bigint,
@@ -470,6 +700,23 @@ export class BlockchainService {
       labTechAddr: raw.labTechAddr as string,
       labTechName: raw.labTechName as string,
       patientAddr: raw.patientAddr as string,
+      exists: raw.exists as boolean,
+    };
+  }
+
+  private mapPrescription(raw: any): Prescription {
+    return {
+      id: raw.id as bigint,
+      ipfsCid: raw.ipfsCid as string,
+      patientAddr: raw.patientAddr as string,
+      doctorAddr: raw.doctorAddr as string,
+      doctorName: raw.doctorName as string,
+      timestamp: raw.timestamp as bigint,
+      codeHash: raw.codeHash as string,
+      salt: raw.salt as string,
+      dispensed: raw.dispensed as boolean,
+      dispensedTimestamp: raw.dispensedTimestamp as bigint,
+      dispensedBy: raw.dispensedBy as string,
       exists: raw.exists as boolean,
     };
   }

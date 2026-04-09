@@ -109,4 +109,28 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(['Doctor'])],
   },
+  {
+    path: 'create-prescription',
+    loadComponent: () =>
+      import('./features/prescriptions/pages/create-prescription/create-prescription').then(
+        (m) => m.CreatePrescription
+      ),
+    canActivate: [roleGuard(['Doctor'])],
+  },
+  {
+    path: 'prescriptions',
+    loadComponent: () =>
+      import('./features/prescriptions/pages/get-prescriptions/get-prescriptions').then(
+        (m) => m.GetPrescriptions
+      ),
+    canActivate: [roleGuard(['Patient'])],
+  },
+  {
+    path: 'dispense',
+    loadComponent: () =>
+      import('./features/prescriptions/pages/dispense-prescription/dispense-prescription').then(
+        (m) => m.DispensePrescription
+      ),
+    canActivate: [roleGuard(['Pharmacist'])],
+  },
 ];

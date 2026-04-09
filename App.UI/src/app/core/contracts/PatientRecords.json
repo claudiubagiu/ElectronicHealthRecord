@@ -1,5 +1,5 @@
 {
-  "address": "0xB143a5A1595226eA79F418CD90a250D9c13A9998",
+  "address": "0x7B2Cd6CC87A78B4Ce6ecfB38646E78DBBcA53512",
   "abi": [
     {
       "anonymous": false,
@@ -120,12 +120,69 @@
       "type": "event"
     },
     {
+      "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "prescriptionId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "patient",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "doctor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
           "internalType": "string",
-          "name": "title",
+          "name": "ipfsCid",
           "type": "string"
         },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "PrescriptionAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "prescriptionId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "dispensedBy",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "PrescriptionDispensed",
+      "type": "event"
+    },
+    {
+      "inputs": [
         {
           "internalType": "string",
           "name": "ipfsCid",
@@ -146,7 +203,7 @@
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "id",
+          "name": "",
           "type": "uint256"
         }
       ],
@@ -155,11 +212,6 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "string",
-          "name": "title",
-          "type": "string"
-        },
         {
           "internalType": "string",
           "name": "ipfsCid",
@@ -180,10 +232,62 @@
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "id",
+          "name": "",
           "type": "uint256"
         }
       ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "ipfsCid",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "patientAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "doctorName",
+          "type": "string"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "codeHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "salt",
+          "type": "bytes32"
+        }
+      ],
+      "name": "addPrescription",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "codeHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "dispensePrescription",
+      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -227,11 +331,6 @@
               "internalType": "uint256",
               "name": "id",
               "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "title",
-              "type": "string"
             },
             {
               "internalType": "string",
@@ -286,6 +385,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getDoctorPrescriptionIds",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -301,11 +413,6 @@
               "internalType": "uint256",
               "name": "id",
               "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "title",
-              "type": "string"
             },
             {
               "internalType": "string",
@@ -348,7 +455,7 @@
     },
     {
       "inputs": [],
-      "name": "getLabTechAnalysisIds",
+      "name": "getLabTechLabAnalysisIds",
       "outputs": [
         {
           "internalType": "uint256[]",
@@ -392,6 +499,187 @@
           "internalType": "uint256[]",
           "name": "",
           "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "patient",
+          "type": "address"
+        }
+      ],
+      "name": "getPatientPrescriptionIds",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "prescriptionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPrescription",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "ipfsCid",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "patientAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "doctorAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "doctorName",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "codeHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "dispensed",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dispensedTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "dispensedBy",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct EHRAccess.Prescription",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "codeHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getPrescriptionByCodeHash",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "ipfsCid",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "patientAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "doctorAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "doctorName",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "codeHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "dispensed",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dispensedTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "dispensedBy",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct EHRAccess.Prescription",
+          "name": "",
+          "type": "tuple"
         }
       ],
       "stateMutability": "view",
@@ -450,32 +738,6 @@
       "name": "revokeAccess",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "totalDiagnoses",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "totalLabAnalyses",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     }
   ]

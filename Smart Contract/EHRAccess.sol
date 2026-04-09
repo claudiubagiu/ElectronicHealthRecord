@@ -27,6 +27,22 @@ contract EHRAccess {
         bool    exists;
     }
 
+    // ── NEW ──
+    struct Prescription {
+        uint256 id;
+        string  ipfsCid;
+        address patientAddr;
+        address doctorAddr;
+        string  doctorName;
+        uint256 timestamp;
+        bytes32 codeHash;
+        bytes32 salt;
+        bool    dispensed;
+        uint256 dispensedTimestamp;
+        address dispensedBy;
+        bool    exists;
+    }
+
     // ── Storage ──────────────────────────────────────────────────────────────
 
     mapping(uint256 => Diagnosis)   private _diagnoses;
@@ -35,7 +51,13 @@ contract EHRAccess {
     mapping(uint256 => LabAnalysis) private _labAnalyses;
     uint256 private _nextLabAnalysisId;
 
-    // Changed: bool → uint256 (expiry timestamp). 0 = no access.
+    mapping(uint256 => Prescription)  private _prescriptions;
+    uint256 private _nextPrescriptionId = 1; // starts at 1 so 0 means "not found"
+
+    mapping(bytes32 => uint256)       private _codeHashToPrescriptionId;
+    mapping(address => uint256[])     private _patientPrescriptions;
+    mapping(address => uint256[])     private _doctorPrescriptions;
+
     mapping(address => mapping(address => uint256)) private _accessExpiry;
     mapping(address => uint256[]) private _patientDiagnoses;
     mapping(address => uint256[]) private _doctorDiagnoses;
@@ -47,6 +69,7 @@ contract EHRAccess {
 
     event AccessGranted(address indexed patient, address indexed doctor, uint256 expiresAt);
     event AccessRevoked(address indexed patient, address indexed doctor);
+
     event DiagnosisAdded(
         uint256 indexed diagnosisId,
         address indexed patient,
@@ -54,11 +77,27 @@ contract EHRAccess {
         string  ipfsCid,
         uint256 timestamp
     );
+
     event LabAnalysisAdded(
         uint256 indexed labAnalysisId,
         address indexed patient,
         address indexed labTech,
         string  ipfsCid,
+        uint256 timestamp
+    );
+
+    // ── NEW ──
+    event PrescriptionAdded(
+        uint256 indexed prescriptionId,
+        address indexed patient,
+        address indexed doctor,
+        string  ipfsCid,
+        uint256 timestamp
+    );
+
+    event PrescriptionDispensed(
+        uint256 indexed prescriptionId,
+        address indexed dispensedBy,
         uint256 timestamp
     );
 
@@ -241,5 +280,105 @@ contract EHRAccess {
 
     function totalLabAnalyses() external view returns (uint256) {
         return _nextLabAnalysisId;
+    }
+
+    // ── Prescriptions ─────────────────────────────────────────────────────────
+
+    function addPrescription(
+        string  calldata ipfsCid,
+        address          patientAddr,
+        string  calldata doctorName,
+        bytes32          codeHash,
+        bytes32          salt
+    )
+        external
+        returns (uint256 id)
+    {
+        require(bytes(ipfsCid).length > 0, "EHRAccess: empty CID");
+        require(patientAddr != address(0),  "EHRAccess: zero patient address");
+        require(patientAddr != msg.sender,  "EHRAccess: doctor must differ from patient");
+        require(
+            _codeHashToPrescriptionId[codeHash] == 0,
+            "EHRAccess: code hash collision"
+        );
+
+        id = _nextPrescriptionId++;
+
+        _prescriptions[id] = Prescription({
+            id:                 id,
+            ipfsCid:            ipfsCid,
+            patientAddr:        patientAddr,
+            doctorAddr:         msg.sender,
+            doctorName:         doctorName,
+            timestamp:          block.timestamp,
+            codeHash:           codeHash,
+            salt:               salt,
+            dispensed:          false,
+            dispensedTimestamp: 0,
+            dispensedBy:        address(0),
+            exists:             true
+        });
+
+        _codeHashToPrescriptionId[codeHash] = id;
+        _patientPrescriptions[patientAddr].push(id);
+        _doctorPrescriptions[msg.sender].push(id);
+
+        emit PrescriptionAdded(id, patientAddr, msg.sender, ipfsCid, block.timestamp);
+    }
+
+    function getPrescriptionByCodeHash(bytes32 codeHash)
+        external
+        view
+        returns (Prescription memory)
+    {
+        uint256 id = _codeHashToPrescriptionId[codeHash];
+        require(id != 0, "EHRAccess: prescription not found");
+        return _prescriptions[id];
+    }
+
+    function dispensePrescription(bytes32 codeHash) external {
+        uint256 id = _codeHashToPrescriptionId[codeHash];
+        require(id != 0, "EHRAccess: prescription not found");
+
+        Prescription storage p = _prescriptions[id];
+        require(!p.dispensed, "EHRAccess: already dispensed");
+
+        p.dispensed          = true;
+        p.dispensedBy        = msg.sender;
+        p.dispensedTimestamp = block.timestamp;
+
+        emit PrescriptionDispensed(id, msg.sender, block.timestamp);
+    }
+
+    function getPatientPrescriptionIds(address patient)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        require(
+            msg.sender == patient ||
+            (_accessExpiry[patient][msg.sender] > block.timestamp),
+            "EHRAccess: not authorized"
+        );
+        return _patientPrescriptions[patient];
+    }
+
+    function getPrescription(uint256 prescriptionId)
+        external
+        view
+        returns (Prescription memory)
+    {
+        Prescription storage p = _prescriptions[prescriptionId];
+        require(p.exists, "EHRAccess: prescription not found");
+        require(
+            msg.sender == p.patientAddr ||
+            (_accessExpiry[p.patientAddr][msg.sender] > block.timestamp),
+            "EHRAccess: not authorized"
+        );
+        return p;
+    }
+
+    function getDoctorPrescriptionIds() external view returns (uint256[] memory) {
+        return _doctorPrescriptions[msg.sender];
     }
 }

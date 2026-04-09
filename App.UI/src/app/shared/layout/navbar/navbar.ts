@@ -66,6 +66,24 @@ const ROLE_NAV_ITEMS: NavItem[] = [
     icon: 'biotech',
     roles: ['Patient'],
   },
+  {
+    label: 'Create Prescription',
+    route: '/create-prescription',
+    icon: 'receipt_long',
+    roles: ['Doctor'],
+  },
+  {
+    label: 'My Prescriptions',
+    route: '/prescriptions',
+    icon: 'receipt_long',
+    roles: ['Patient'],
+  },
+  {
+    label: 'Dispense Prescription',
+    route: '/dispense',
+    icon: 'local_pharmacy',
+    roles: ['Pharmacist'],
+  },
 ];
 
 @Component({

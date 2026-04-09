@@ -1,0 +1,381 @@
+.dispense-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 64px);
+  padding: 40px 16px;
+  background: #fafafa;
+}
+
+.dispense-card {
+  width: 100%;
+  max-width: 600px;
+  background: white;
+  border-radius: 16px;
+  padding: 40px 36px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 32px;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #212121;
+    margin: 12px 0 6px;
+  }
+
+  .subtitle {
+    font-size: 0.88rem;
+    color: rgba(0, 0, 0, 0.5);
+    margin: 0;
+    max-width: 420px;
+  }
+}
+
+.icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(123, 31, 162, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #7b1fa2;
+  }
+}
+
+// ── Code input ───────────────────────────────────────────────────────────────
+
+.search-section {
+  margin-bottom: 24px;
+}
+
+.code-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.code-field {
+  flex: 1;
+
+  ::ng-deep input.code-input {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #1a237e;
+  }
+}
+
+.search-btn {
+  height: 56px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: #7b1fa2 !important;
+  color: white !important;
+  font-weight: 600;
+  flex-shrink: 0;
+
+  &[disabled] { opacity: 0.55; }
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.btn-spinner {
+  ::ng-deep circle { stroke: white; }
+}
+
+// ── Result boxes ─────────────────────────────────────────────────────────────
+
+.result-box {
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-top: 8px;
+}
+
+// Error
+.error-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(198, 40, 40, 0.05);
+  border: 1px solid rgba(198, 40, 40, 0.2);
+}
+
+.error-icon {
+  color: #c62828;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+// Dispensed
+.dispensed-box {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dispensed-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.dispensed-icon {
+  color: rgba(0, 0, 0, 0.35);
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+// Active
+.active-box {
+  background: white;
+  border: 1px solid rgba(123, 31, 162, 0.15);
+  box-shadow: 0 2px 10px rgba(123, 31, 162, 0.06);
+}
+
+// ── Result text ──────────────────────────────────────────────────────────────
+
+.result-icon {
+  flex-shrink: 0;
+}
+
+.result-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.result-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #212121;
+}
+
+.result-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+// ── Active header ────────────────────────────────────────────────────────────
+
+.active-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.active-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #7b1fa2;
+  background: rgba(123, 31, 162, 0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.active-date {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+// ── Meta rows ────────────────────────────────────────────────────────────────
+
+.prescription-meta,
+.dispensed-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.meta-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+.mono {
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: rgba(0, 0, 0, 0.5);
+
+  &.small { font-size: 0.75rem; }
+}
+
+.inner-divider {
+  margin: 14px 0 !important;
+}
+
+// ── PDF row ──────────────────────────────────────────────────────────────────
+
+.pdf-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(123, 31, 162, 0.04);
+  border: 1px solid rgba(123, 31, 162, 0.15);
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(123, 31, 162, 0.09);
+  }
+}
+
+.pdf-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #7b1fa2;
+  flex-shrink: 0;
+}
+
+.pdf-label {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #7b1fa2;
+}
+
+.pdf-open {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #7b1fa2;
+}
+
+.pdf-spinner {
+  ::ng-deep circle { stroke: #7b1fa2; }
+}
+
+// ── Dispense button ──────────────────────────────────────────────────────────
+
+.dispense-btn {
+  width: 100%;
+  height: 52px;
+  margin-top: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  background-color: #7b1fa2 !important;
+  color: white !important;
+
+  &[disabled] { opacity: 0.6; }
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+// ── Warning ──────────────────────────────────────────────────────────────────
+
+.dispense-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.4);
+
+  .warn-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: #f57c00;
+    flex-shrink: 0;
+  }
+}
+
+// ── Success banner ───────────────────────────────────────────────────────────
+
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: rgba(46, 125, 50, 0.08);
+  border: 1px solid rgba(46, 125, 50, 0.25);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #2e7d32;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #2e7d32;
+  }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: 480px) {
+  .dispense-card {
+    padding: 24px 16px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .code-input-row {
+    flex-direction: column;
+  }
+
+  .search-btn {
+    width: 100%;
+  }
+}

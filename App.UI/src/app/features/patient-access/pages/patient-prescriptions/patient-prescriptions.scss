@@ -1,0 +1,283 @@
+.patient-prescriptions-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 16px;
+  background: #fafafa;
+}
+
+.patient-prescriptions-card {
+  width: 100%;
+  max-width: 720px;
+  background: white;
+  border-radius: 16px;
+  padding: 40px 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 32px;
+  position: relative;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 12px 0 4px;
+    color: #212121;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, 0.5);
+    margin: 0;
+  }
+}
+
+.back-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(46, 125, 50, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    color: #2e7d32;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+// ── State containers ─────────────────────────────────────────────────────────
+
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 0.95rem;
+
+  p { margin: 0; }
+
+  &.empty .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+// ── List ─────────────────────────────────────────────────────────────────────
+
+.prescriptions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prescription-item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  }
+
+  &.dispensed {
+    background: #fafafa;
+    border-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+// ── Item header ──────────────────────────────────────────────────────────────
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-doctor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212121;
+}
+
+.doctor-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #2e7d32;
+  flex-shrink: 0;
+}
+
+.item-date {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+// ── Status badge ─────────────────────────────────────────────────────────────
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  .badge-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &.active {
+    background: rgba(46, 125, 50, 0.1);
+    color: #2e7d32;
+  }
+
+  &.dispensed-badge {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+// ── Meta rows ────────────────────────────────────────────────────────────────
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.meta-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+.address {
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.dispensed-by {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.cid {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 460px;
+}
+
+// ── Open PDF button ──────────────────────────────────────────────────────────
+
+.item-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(46, 125, 50, 0.04);
+  border: 1px solid rgba(46, 125, 50, 0.18);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  margin-top: 4px;
+
+  &:hover {
+    background: rgba(46, 125, 50, 0.09);
+  }
+
+  .file-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #2e7d32;
+    flex-shrink: 0;
+  }
+
+  .file-name {
+    font-size: 0.85rem;
+    color: #2e7d32;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .open-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #2e7d32;
+    flex-shrink: 0;
+  }
+
+  .file-spinner {
+    flex-shrink: 0;
+    ::ng-deep circle { stroke: #2e7d32; }
+  }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: 480px) {
+  .patient-prescriptions-card {
+    padding: 24px 16px;
+  }
+
+  .item-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cid {
+    max-width: 220px;
+  }
+}

@@ -204,7 +204,157 @@
     }
   </div>
 
-  <!-- ===== QUICK ACTIONS ===== -->
+  <!-- ===== MY PRESCRIPTIONS ===== -->
+  <div class="carousel-section">
+    <div class="section-header">
+      <div class="section-title">
+        <mat-icon class="section-icon">receipt_long</mat-icon>
+        <h2>My Prescriptions</h2>
+      </div>
+      <div class="carousel-arrows">
+        <button mat-icon-button (click)="scrollCarousel('prescriptions-carousel', 'left')">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button mat-icon-button (click)="scrollCarousel('prescriptions-carousel', 'right')">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    @if (isLoadingPrescriptions) {
+      <div class="state-container small">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    }
+
+    @if (!isLoadingPrescriptions && prescriptions.length === 0) {
+      <div class="state-container empty small">
+        <mat-icon>receipt_long</mat-icon>
+        <p>No prescriptions found.</p>
+      </div>
+    }
+
+    @if (!isLoadingPrescriptions && prescriptions.length > 0) {
+      <div class="carousel-track" id="prescriptions-carousel">
+        @for (p of prescriptions; track p.id) {
+          <div class="carousel-card prescription-card" [class.dispensed-card]="p.dispensed">
+            <div class="card-top">
+              <div class="prescription-avatar" [class.dispensed-avatar]="p.dispensed">
+                <mat-icon>{{ p.dispensed ? 'check_circle' : 'local_pharmacy' }}</mat-icon>
+              </div>
+              <span class="prescription-status-badge" [class.dispensed-badge]="p.dispensed">
+                {{ p.dispensed ? 'Dispensed' : 'Active' }}
+              </span>
+            </div>
+            <div class="card-meta">
+              <mat-icon class="meta-icon">medical_services</mat-icon>
+              <span>Dr. {{ p.doctorName }}</span>
+            </div>
+            <div class="card-meta">
+              <mat-icon class="meta-icon">event</mat-icon>
+              <span>{{ formatTimestamp(p.timestamp) | date: 'dd MMM yyyy' }}</span>
+            </div>
+            <button
+              mat-stroked-button
+              class="view-report-btn"
+              [disabled]="openingPrescriptionId === p.id"
+              (click)="onOpenPrescription(p)"
+            >
+              @if (openingPrescriptionId === p.id) {
+                <mat-spinner diameter="16"></mat-spinner>
+                Decrypting...
+              } @else {
+                <ng-container>
+                  <mat-icon>lock_open</mat-icon>
+                  View PDF
+                </ng-container>
+              }
+            </button>
+          </div>
+        }
+
+        <div class="carousel-card view-all-card" (click)="goToPrescriptions()">
+          <mat-icon class="view-all-icon">receipt_long</mat-icon>
+          <span>View all prescriptions</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ===== MY LAB ANALYSES ===== -->
+  <div class="carousel-section">
+    <div class="section-header">
+      <div class="section-title">
+        <mat-icon class="section-icon">biotech</mat-icon>
+        <h2>My Lab Analyses</h2>
+      </div>
+      <div class="carousel-arrows">
+        <button mat-icon-button (click)="scrollCarousel('lab-analyses-carousel', 'left')">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button mat-icon-button (click)="scrollCarousel('lab-analyses-carousel', 'right')">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    @if (isLoadingLabAnalyses) {
+      <div class="state-container small">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    }
+
+    @if (!isLoadingLabAnalyses && labAnalyses.length === 0) {
+      <div class="state-container empty small">
+        <mat-icon>biotech</mat-icon>
+        <p>No lab analyses found.</p>
+      </div>
+    }
+
+    @if (!isLoadingLabAnalyses && labAnalyses.length > 0) {
+      <div class="carousel-track" id="lab-analyses-carousel">
+        @for (a of labAnalyses; track a.id) {
+          <div class="carousel-card lab-analysis-card">
+            <span class="lab-analysis-tag">Lab Analysis</span>
+            <span class="diagnosis-title">{{ a.title }}</span>
+            <div class="card-meta">
+              <mat-icon class="meta-icon">science</mat-icon>
+              <span>{{ a.labTechName }}</span>
+            </div>
+            <div class="card-meta">
+              <mat-icon class="meta-icon">event</mat-icon>
+              <span>{{ formatTimestamp(a.timestamp) | date: 'dd MMM yyyy' }}</span>
+            </div>
+            <button
+              mat-stroked-button
+              class="view-report-btn"
+              [disabled]="openingLabAnalysisId === a.id"
+              (click)="onOpenLabAnalysis(a)"
+            >
+              @if (openingLabAnalysisId === a.id) {
+                <mat-spinner diameter="16"></mat-spinner>
+                Decrypting...
+              } @else {
+                <ng-container>
+                  <mat-icon>lock_open</mat-icon>
+                  View report
+                </ng-container>
+              }
+            </button>
+          </div>
+        }
+
+        <div class="carousel-card view-all-card" (click)="goToLabAnalyses()">
+          <mat-icon class="view-all-icon">biotech</mat-icon>
+          <span>View all analyses</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
+    }
+  </div>
+
+<!-- ===== QUICK ACTIONS ===== -->
   <div class="quick-actions-section">
     <div class="quick-action-card" (click)="goToMedications()">
       <div class="action-icon medications">
@@ -219,6 +369,22 @@
         <mat-icon>assignment</mat-icon>
       </div>
       <span class="action-label">My Diagnostics</span>
+      <mat-icon class="action-arrow">chevron_right</mat-icon>
+    </div>
+
+    <div class="quick-action-card" (click)="goToPrescriptions()">
+      <div class="action-icon prescriptions">
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+      <span class="action-label">My Prescriptions</span>
+      <mat-icon class="action-arrow">chevron_right</mat-icon>
+    </div>
+
+    <div class="quick-action-card" (click)="goToLabAnalyses()">
+      <div class="action-icon lab-analyses">
+        <mat-icon>biotech</mat-icon>
+      </div>
+      <span class="action-label">My Lab Analyses</span>
       <mat-icon class="action-arrow">chevron_right</mat-icon>
     </div>
 

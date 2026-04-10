@@ -1,0 +1,94 @@
+<div class="patient-prescriptions-page">
+  <div class="patient-prescriptions-card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Back to patient profile">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="icon-wrapper">
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+      <h1>{{ patientName }}</h1>
+      <p class="subtitle">Encrypted prescriptions stored on the blockchain</p>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading) {
+      <div class="state-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading prescriptions...</p>
+      </div>
+    }
+
+    <!-- Empty -->
+    @if (!isLoading && prescriptions.length === 0) {
+      <div class="state-container empty">
+        <mat-icon class="empty-icon">receipt_long</mat-icon>
+        <p>No prescriptions found for this patient.</p>
+      </div>
+    }
+
+    <!-- List -->
+    @if (!isLoading && prescriptions.length > 0) {
+      <div class="prescriptions-list">
+        @for (p of prescriptions; track p.id) {
+          <div class="prescription-item" [class.dispensed]="p.dispensed">
+
+            <!-- Header row -->
+            <div class="item-header">
+              <div class="item-left">
+                <span class="item-doctor">
+                  <mat-icon class="doctor-icon">medical_services</mat-icon>
+                  Dr. {{ p.doctorName }}
+                </span>
+                <span class="item-date">
+                  {{ formatTimestamp(p.timestamp) | date: 'dd MMM yyyy, HH:mm' }}
+                </span>
+              </div>
+
+              <div class="status-badge" [class.active]="!p.dispensed" [class.dispensed-badge]="p.dispensed">
+                <mat-icon class="badge-icon">
+                  {{ p.dispensed ? 'check_circle' : 'local_pharmacy' }}
+                </mat-icon>
+                {{ p.dispensed ? 'Dispensed' : 'Active' }}
+              </div>
+            </div>
+
+            <!-- Dispensed info -->
+            @if (p.dispensed) {
+              <div class="item-meta">
+                <mat-icon class="meta-icon">event_available</mat-icon>
+                <span>Dispensed on
+                  <strong>{{ formatTimestamp(p.dispensedTimestamp) | date: 'dd MMM yyyy' }}</strong>
+                </span>
+                <span class="dispensed-by">
+                  &nbsp;· Pharmacist: <span class="address">{{ shortenAddress(p.dispensedBy) }}</span>
+                </span>
+              </div>
+            }
+
+            <!-- IPFS CID -->
+            <div class="item-meta">
+              <mat-icon class="meta-icon">link</mat-icon>
+              <span class="cid">{{ p.ipfsCid }}</span>
+            </div>
+
+            <!-- Open PDF -->
+            <div class="item-file" (click)="openPrescription(p)">
+              <mat-icon class="file-icon">lock</mat-icon>
+              <span class="file-name">View prescription PDF</span>
+              @if (openingId === p.id) {
+                <mat-spinner diameter="16" class="file-spinner"></mat-spinner>
+              } @else {
+                <mat-icon class="open-icon">open_in_new</mat-icon>
+              }
+            </div>
+
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

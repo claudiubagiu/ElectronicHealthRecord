@@ -8,11 +8,13 @@ import { AccessManagementService } from '../../../access-management/services/acc
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { Web3Service } from '../../../../core/services/web3.service';
 import { DiagnosticDecryptionService } from '../../../diagnostics/services/diagnostic-decryption.service';
+import { PrescriptionDecryptionService } from '../../../prescriptions/services/prescription-decryption.service';
+import { LabAnalysisService } from '../../../lab-analyses/services/lab-analysis.service';
 import { MedicationService } from '../../../medications/services/medication.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { AccessRequestDto } from '../../../../core/models/access-request.model';
-import { Diagnosis } from '../../../../core/models/blockchain.model';
+import { Diagnosis, Prescription, LabAnalysis } from '../../../../core/models/blockchain.model';
 
 @Component({
   selector: 'app-patient-profile',
@@ -28,6 +30,8 @@ export class PatientProfile implements OnInit {
   private blockchainService = inject(BlockchainService);
   private web3Service = inject(Web3Service);
   private decryptionService = inject(DiagnosticDecryptionService);
+  private prescriptionDecryptionService = inject(PrescriptionDecryptionService);
+  private labAnalysisService = inject(LabAnalysisService);
   private medicationService = inject(MedicationService);
   private notify = inject(NotificationService);
   private router = inject(Router);
@@ -43,12 +47,25 @@ export class PatientProfile implements OnInit {
   isLoadingDiagnoses = false;
   downloadingId: bigint | null = null;
 
+  prescriptions: Prescription[] = [];
+  isLoadingPrescriptions = false;
+  openingPrescriptionId: bigint | null = null;
+
+  labAnalyses: LabAnalysis[] = [];
+  isLoadingLabAnalyses = false;
+  openingLabAnalysisId: bigint | null = null;
+
   ngOnInit(): void {
     this.loadProfile();
     this.loadAccessRequests();
     this.loadDiagnoses();
+    this.loadPrescriptions();
+    this.loadLabAnalyses();
   }
 
+  /**
+   * Fetches the patient's profile from the backend API.
+   */
   async loadProfile(): Promise<void> {
     this.isLoadingProfile = true;
     try {
@@ -60,6 +77,10 @@ export class PatientProfile implements OnInit {
     }
   }
 
+  /**
+   * Loads all access requests and filters only the approved ones
+   * to display doctors who currently have access to the patient's records.
+   */
   async loadAccessRequests(): Promise<void> {
     const user = this.authService.getDecodedToken();
     if (!user) return;
@@ -75,6 +96,9 @@ export class PatientProfile implements OnInit {
     }
   }
 
+  /**
+   * Fetches all on-chain diagnoses for the connected patient wallet.
+   */
   async loadDiagnoses(): Promise<void> {
     await this.web3Service.waitForInit();
     const address = this.web3Service.getAddressOrNull();
@@ -90,6 +114,51 @@ export class PatientProfile implements OnInit {
     }
   }
 
+  /**
+   * Fetches all on-chain prescriptions for the connected patient wallet,
+   * sorted most-recent first.
+   */
+  async loadPrescriptions(): Promise<void> {
+    await this.web3Service.waitForInit();
+    const address = this.web3Service.getAddressOrNull();
+    if (!address) return;
+
+    this.isLoadingPrescriptions = true;
+    try {
+      const ids = await this.blockchainService.getPatientPrescriptionIds(address);
+      const all = await Promise.all(ids.map((id) => this.blockchainService.getPrescription(id)));
+      this.prescriptions = all.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
+    } catch {
+      this.notify.showError('Failed to load prescriptions.');
+    } finally {
+      this.isLoadingPrescriptions = false;
+    }
+  }
+
+  /**
+   * Fetches all on-chain lab analyses for the connected patient wallet,
+   * sorted most-recent first.
+   */
+  async loadLabAnalyses(): Promise<void> {
+    await this.web3Service.waitForInit();
+    const address = this.web3Service.getAddressOrNull();
+    if (!address) return;
+
+    this.isLoadingLabAnalyses = true;
+    try {
+      this.labAnalyses = await this.blockchainService.getPatientLabAnalyses(address);
+      this.labAnalyses.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
+    } catch {
+      this.notify.showError('Failed to load lab analyses.');
+    } finally {
+      this.isLoadingLabAnalyses = false;
+    }
+  }
+
+  /**
+   * Revokes a doctor's on-chain access and removes their medication envelopes.
+   * Removes the doctor from the local list on success.
+   */
   async onRevoke(request: AccessRequestDto): Promise<void> {
     this.revokingId = request.id;
     try {
@@ -106,6 +175,10 @@ export class PatientProfile implements OnInit {
     }
   }
 
+  /**
+   * Decrypts and opens a diagnosis PDF using Lit Protocol.
+   * Requires a MetaMask wallet signature to prove ownership.
+   */
   async onOpenDiagnosis(diagnosis: Diagnosis): Promise<void> {
     this.downloadingId = diagnosis.id;
     try {
@@ -115,6 +188,68 @@ export class PatientProfile implements OnInit {
     } finally {
       this.downloadingId = null;
     }
+  }
+
+  /**
+   * Decrypts and opens a prescription PDF for the patient using Lit Protocol.
+   * Requires a MetaMask wallet signature to prove ownership.
+   */
+  async onOpenPrescription(prescription: Prescription): Promise<void> {
+    this.openingPrescriptionId = prescription.id;
+    try {
+      await this.prescriptionDecryptionService.decryptAndOpenForPatient(prescription);
+    } catch {
+      this.notify.showError('Failed to decrypt prescription. Please try again.');
+    } finally {
+      this.openingPrescriptionId = null;
+    }
+  }
+
+  /**
+   * Decrypts and opens a lab analysis PDF using Lit Protocol.
+   * Requires a MetaMask wallet signature to prove ownership.
+   */
+  async onOpenLabAnalysis(analysis: LabAnalysis): Promise<void> {
+    this.openingLabAnalysisId = analysis.id;
+    try {
+      await this.labAnalysisService.decryptAndOpen(analysis);
+    } catch {
+      this.notify.showError('Failed to decrypt lab analysis. Please try again.');
+    } finally {
+      this.openingLabAnalysisId = null;
+    }
+  }
+
+  /**
+   * Converts a blockchain bigint timestamp (seconds) to a JavaScript Date.
+   */
+  formatTimestamp(timestamp: bigint): Date {
+    return new Date(Number(timestamp) * 1000);
+  }
+
+  /**
+   * Returns a shortened wallet address in the format 0x1234...abcd.
+   */
+  shortenAddress(address: string): string {
+    if (!address || address === '0x0000000000000000000000000000000000000000') return '—';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  }
+
+  /**
+   * Masks the middle digits of a CNP for privacy display.
+   */
+  maskCnp(cnp: string): string {
+    if (cnp.length <= 6) return cnp;
+    return `${cnp.substring(0, 3)}${'*'.repeat(cnp.length - 6)}${cnp.substring(cnp.length - 3)}`;
+  }
+
+  /**
+   * Copies the patient's wallet address to the clipboard and shows a success toast.
+   */
+  copyWallet(): void {
+    if (!this.patient?.walletAddress) return;
+    navigator.clipboard.writeText(this.patient.walletAddress);
+    this.notify.showSuccess('Wallet address copied!');
   }
 
   goToMedications(): void {
@@ -127,6 +262,14 @@ export class PatientProfile implements OnInit {
 
   goToAccessManagement(): void {
     this.router.navigate(['/access-management']);
+  }
+
+  goToPrescriptions(): void {
+    this.router.navigate(['/prescriptions']);
+  }
+
+  goToLabAnalyses(): void {
+    this.router.navigate(['/lab-analyses']);
   }
 
   /**
@@ -159,24 +302,5 @@ export class PatientProfile implements OnInit {
     };
 
     requestAnimationFrame(animate);
-  }
-
-  formatTimestamp(timestamp: bigint): Date {
-    return new Date(Number(timestamp) * 1000);
-  }
-
-  shortenAddress(address: string): string {
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  }
-
-  maskCnp(cnp: string): string {
-    if (cnp.length <= 6) return cnp;
-    return `${cnp.substring(0, 3)}${'*'.repeat(cnp.length - 6)}${cnp.substring(cnp.length - 3)}`;
-  }
-
-  copyWallet(): void {
-    if (!this.patient?.walletAddress) return;
-    navigator.clipboard.writeText(this.patient.walletAddress);
-    this.notify.showSuccess('Wallet address copied!');
   }
 }

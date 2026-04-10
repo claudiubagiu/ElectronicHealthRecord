@@ -89,6 +89,10 @@ export class PatientAccess implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Loads all of the doctor's access requests and builds the status map
+   * used to show the correct action button in the search results.
+   */
   async loadMyRequests(): Promise<void> {
     this.isLoadingRequests = true;
     try {
@@ -103,6 +107,9 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Loads the full history of access request actions for this doctor.
+   */
   async loadHistory(): Promise<void> {
     this.isLoadingHistory = true;
     try {
@@ -114,10 +121,16 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Returns the current access request status for a patient, or null if none exists.
+   */
   getPatientStatus(patientId: string): AccessRequestStatus | null {
     return this.requestStatusMap.get(patientId) ?? null;
   }
 
+  /**
+   * Sends a new access request to the given patient and updates the local state.
+   */
   async onRequestAccess(patient: PatientDto): Promise<void> {
     this.requestingId = patient.id;
     try {
@@ -133,8 +146,12 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
-  viewDiagnostics(req: AccessRequestDto): void {
-    this.router.navigate(['/patient', req.patientId, 'diagnostics'], {
+  /**
+   * Navigates to the doctor's view of the patient's full profile.
+   * Passes the patient name and wallet address as query params.
+   */
+  viewPatientProfile(req: AccessRequestDto): void {
+    this.router.navigate(['/patient', req.patientId, 'profile'], {
       queryParams: {
         patientName: req.patientName,
         patientWalletAddress: req.patientWalletAddress,
@@ -142,78 +159,36 @@ export class PatientAccess implements OnInit, OnDestroy {
     });
   }
 
-  viewMedications(req: AccessRequestDto): void {
-    this.router.navigate(['/patient', req.patientId, 'medications'], {
-      queryParams: {
-        patientName: req.patientName,
-      },
-    });
-  }
-
-  viewLabAnalyses(req: AccessRequestDto): void {
-    this.router.navigate(['/patient', req.patientId, 'lab-analyses'], {
-      queryParams: {
-        patientName: req.patientName,
-        patientWalletAddress: req.patientWalletAddress,
-      },
-    });
-  }
-
-  /** Returns a human-readable string for the remaining time. */
+  /**
+   * Returns a human-readable string for the remaining access time.
+   */
   getRemainingTime(expiresAt?: string): string {
     if (!expiresAt) return '';
     const now = new Date().getTime();
     const normalized = expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z';
-    const expiry = new Date(normalized).getTime();
-    const diff = expiry - now;
-
+    const exp = new Date(normalized).getTime();
+    const diff = exp - now;
     if (diff <= 0) return 'Expired';
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (days > 0) return `${days}d ${hours}h ${minutes}m remaining`;
-    if (hours > 0) return `${hours}h ${minutes}m remaining`;
-    return `${minutes}m remaining`;
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(hours / 24);
+    if (days > 0) return `Expires in ${days}d ${hours % 24}h`;
+    return `Expires in ${hours}h`;
   }
 
-  getActionIcon(action: string): string {
-    switch (action) {
-      case 'Requested':
-        return 'send';
-      case 'Approved':
-        return 'check_circle';
-      case 'Rejected':
-        return 'cancel';
-      case 'Revoked':
-        return 'remove_circle';
-      case 'Expired':
-        return 'timer_off';
-      default:
-        return 'history';
-    }
+  formatDate(date?: string): string {
+    if (!date) return '';
+    const normalized = date.endsWith('Z') ? date : date + 'Z';
+    return new Date(normalized).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
-  getActionClass(action: string): string {
-    switch (action) {
-      case 'Approved':
-        return 'approved';
-      case 'Rejected':
-        return 'rejected';
-      case 'Revoked':
-        return 'revoked';
-      case 'Requested':
-        return 'pending';
-      case 'Expired':
-        return 'expired';
-      default:
-        return '';
-    }
-  }
-
-  formatDateTime(dateStr: string): string {
-    return new Date(dateStr).toLocaleString('en-GB', {
+  formatDateTime(date?: string): string {
+    if (!date) return '';
+    const normalized = date.endsWith('Z') ? date : date + 'Z';
+    return new Date(normalized).toLocaleString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -222,11 +197,29 @@ export class PatientAccess implements OnInit, OnDestroy {
     });
   }
 
-  formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+  getActionClass(action: string): string {
+    switch (action) {
+      case 'Approved':
+        return 'badge-approved';
+      case 'Rejected':
+        return 'badge-rejected';
+      case 'Revoked':
+        return 'badge-revoked';
+      default:
+        return 'badge-requested';
+    }
+  }
+
+  getActionIcon(action: string): string {
+    switch (action) {
+      case 'Approved':
+        return 'check_circle';
+      case 'Rejected':
+        return 'cancel';
+      case 'Revoked':
+        return 'block';
+      default:
+        return 'send';
+    }
   }
 }

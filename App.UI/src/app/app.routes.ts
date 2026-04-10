@@ -133,4 +133,20 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(['Pharmacist'])],
   },
+  {
+    path: 'patient/:patientId/profile',
+    loadComponent: () =>
+      import('./features/patient-access/pages/doctor-patient-profile/doctor-patient-profile').then(
+        (m) => m.DoctorPatientProfile
+      ),
+    canActivate: [roleGuard(['Doctor'])],
+  },
+  {
+    path: 'patient/:patientId/prescriptions',
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-prescriptions/patient-prescriptions').then(
+        (m) => m.PatientPrescriptions
+      ),
+    canActivate: [roleGuard(['Doctor'])],
+  },
 ];

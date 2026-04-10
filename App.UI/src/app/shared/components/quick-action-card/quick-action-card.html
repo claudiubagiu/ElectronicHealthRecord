@@ -1,0 +1,7 @@
+<div class="quick-action-card" (click)="clicked.emit()">
+  <div class="action-icon" [class]="color">
+    <mat-icon>{{ icon }}</mat-icon>
+  </div>
+  <span class="action-label">{{ label }}</span>
+  <mat-icon class="action-arrow">chevron_right</mat-icon>
+</div>

@@ -1,0 +1,41 @@
+:host {
+  min-width: 280px;
+  max-width: 280px;
+  flex-shrink: 0;
+  display: flex;
+}
+
+.view-all-card {
+  width: 100%;
+  border: 1px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.015);
+  transition: background 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: rgba(21, 101, 192, 0.04);
+    border-color: rgba(21, 101, 192, 0.3);
+  }
+
+  .view-all-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: rgba(0, 0, 0, 0.25);
+  }
+
+  span {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  mat-icon:last-child { color: rgba(0, 0, 0, 0.35); }
+}

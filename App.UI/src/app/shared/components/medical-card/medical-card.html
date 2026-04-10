@@ -1,0 +1,22 @@
+<div class="medical-card">
+  <span class="card-title">{{ displayTitle }}</span>
+
+  @for (m of meta; track m.text) {
+  <div class="card-meta">
+    <mat-icon class="meta-icon">{{ m.icon }}</mat-icon>
+    <span>{{ m.text ?? '' }}</span>
+  </div>
+  }
+
+  <button mat-stroked-button class="action-btn" [disabled]="isLoading" (click)="actionClick.emit()">
+    @if (isLoading) {
+    <mat-spinner diameter="16"></mat-spinner>
+    {{ loadingText }}
+    } @else {
+    <ng-container>
+      <mat-icon>{{ actionIcon }}</mat-icon>
+      {{ actionLabel }}
+    </ng-container>
+    }
+  </button>
+</div>

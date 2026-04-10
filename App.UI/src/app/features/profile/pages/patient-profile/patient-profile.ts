@@ -2,6 +2,14 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
+import { CarouselSection } from '../../../../shared/components/carousel-section/carousel-section';
+import {
+  ProfileCard,
+  ProfileDetailRow,
+} from '../../../../shared/components/profile-card/profile-card';
+import { ViewAllCard } from '../../../../shared/components/view-all-card/view-all-card';
+import { MedicalCard } from '../../../../shared/components/medical-card/medical-card';
+import { QuickActionCard } from '../../../../shared/components/quick-action-card/quick-action-card';
 import { UsersService } from '../../../../core/services/users.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AccessManagementService } from '../../../access-management/services/access-management.service';
@@ -21,7 +29,15 @@ import { Diagnosis, Prescription, LabAnalysis } from '../../../../core/models/bl
   templateUrl: './patient-profile.html',
   styleUrls: ['./patient-profile.scss'],
   standalone: true,
-  imports: [...MAT_COMMON_IMPORTS, DatePipe],
+  imports: [
+    ...MAT_COMMON_IMPORTS,
+    DatePipe,
+    CarouselSection,
+    ProfileCard,
+    ViewAllCard,
+    MedicalCard,
+    QuickActionCard,
+  ],
 })
 export class PatientProfile implements OnInit {
   private usersService = inject(UsersService);
@@ -30,7 +46,7 @@ export class PatientProfile implements OnInit {
   private blockchainService = inject(BlockchainService);
   private web3Service = inject(Web3Service);
   private decryptionService = inject(DiagnosticDecryptionService);
-  private prescriptionDecryptionService = inject(PrescriptionDecryptionService);
+  private prescriptionService = inject(PrescriptionDecryptionService);
   private labAnalysisService = inject(LabAnalysisService);
   private medicationService = inject(MedicationService);
   private notify = inject(NotificationService);
@@ -63,9 +79,29 @@ export class PatientProfile implements OnInit {
     this.loadLabAnalyses();
   }
 
-  /**
-   * Fetches the patient's profile from the backend API.
-   */
+  // ── Getters ───────────────────────────────────────────────────────
+
+  get profileDetails(): ProfileDetailRow[] {
+    if (!this.patient) return [];
+    return [
+      { icon: 'fingerprint', label: 'CNP', value: this.maskCnp(this.patient.cnp) },
+      {
+        icon: 'calendar_today',
+        label: 'Date of birth',
+        value: this.formatDate(this.patient.dateOfBirth),
+      },
+      {
+        icon: 'account_balance_wallet',
+        label: 'Wallet address',
+        value: this.patient.walletAddress,
+        isWallet: true,
+        onClickCopy: () => this.copyWallet(),
+      },
+    ];
+  }
+
+  // ── Load ──────────────────────────────────────────────────────────
+
   async loadProfile(): Promise<void> {
     this.isLoadingProfile = true;
     try {
@@ -77,14 +113,9 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Loads all access requests and filters only the approved ones
-   * to display doctors who currently have access to the patient's records.
-   */
   async loadAccessRequests(): Promise<void> {
     const user = this.authService.getDecodedToken();
     if (!user) return;
-
     this.isLoadingAccess = true;
     try {
       const all = await this.accessService.getMyRequests(user.userId);
@@ -96,14 +127,10 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Fetches all on-chain diagnoses for the connected patient wallet.
-   */
   async loadDiagnoses(): Promise<void> {
     await this.web3Service.waitForInit();
     const address = this.web3Service.getAddressOrNull();
     if (!address) return;
-
     this.isLoadingDiagnoses = true;
     try {
       this.diagnoses = await this.blockchainService.getPatientDiagnoses(address);
@@ -114,15 +141,10 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Fetches all on-chain prescriptions for the connected patient wallet,
-   * sorted most-recent first.
-   */
   async loadPrescriptions(): Promise<void> {
     await this.web3Service.waitForInit();
     const address = this.web3Service.getAddressOrNull();
     if (!address) return;
-
     this.isLoadingPrescriptions = true;
     try {
       const ids = await this.blockchainService.getPatientPrescriptionIds(address);
@@ -135,15 +157,10 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Fetches all on-chain lab analyses for the connected patient wallet,
-   * sorted most-recent first.
-   */
   async loadLabAnalyses(): Promise<void> {
     await this.web3Service.waitForInit();
     const address = this.web3Service.getAddressOrNull();
     if (!address) return;
-
     this.isLoadingLabAnalyses = true;
     try {
       this.labAnalyses = await this.blockchainService.getPatientLabAnalyses(address);
@@ -155,17 +172,14 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Revokes a doctor's on-chain access and removes their medication envelopes.
-   * Removes the doctor from the local list on success.
-   */
+  // ── Actions ───────────────────────────────────────────────────────
+
   async onRevoke(request: AccessRequestDto): Promise<void> {
     this.revokingId = request.id;
     try {
       await this.blockchainService.revokeAccess(request.doctorWalletAddress);
       await this.accessService.revoke(request.id);
       await this.medicationService.deleteEnvelopes(request.doctorId, request.patientId);
-
       this.approvedDoctors = this.approvedDoctors.filter((r) => r.id !== request.id);
       this.notify.showSuccess(`Access revoked for ${request.doctorName}.`);
     } catch {
@@ -175,10 +189,6 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Decrypts and opens a diagnosis PDF using Lit Protocol.
-   * Requires a MetaMask wallet signature to prove ownership.
-   */
   async onOpenDiagnosis(diagnosis: Diagnosis): Promise<void> {
     this.downloadingId = diagnosis.id;
     try {
@@ -190,14 +200,10 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Decrypts and opens a prescription PDF for the patient using Lit Protocol.
-   * Requires a MetaMask wallet signature to prove ownership.
-   */
   async onOpenPrescription(prescription: Prescription): Promise<void> {
     this.openingPrescriptionId = prescription.id;
     try {
-      await this.prescriptionDecryptionService.decryptAndOpenForPatient(prescription);
+      await this.prescriptionService.decryptAndOpenForPatient(prescription);
     } catch {
       this.notify.showError('Failed to decrypt prescription. Please try again.');
     } finally {
@@ -205,10 +211,6 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Decrypts and opens a lab analysis PDF using Lit Protocol.
-   * Requires a MetaMask wallet signature to prove ownership.
-   */
   async onOpenLabAnalysis(analysis: LabAnalysis): Promise<void> {
     this.openingLabAnalysisId = analysis.id;
     try {
@@ -220,87 +222,51 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  /**
-   * Converts a blockchain bigint timestamp (seconds) to a JavaScript Date.
-   */
+  // ── Navigation ────────────────────────────────────────────────────
+
+  goToMedications(): void {
+    this.router.navigate(['/medications']);
+  }
+  goToDiagnostics(): void {
+    this.router.navigate(['/diagnostics']);
+  }
+  goToAccessManagement(): void {
+    this.router.navigate(['/access-management']);
+  }
+  goToPrescriptions(): void {
+    this.router.navigate(['/prescriptions']);
+  }
+  goToLabAnalyses(): void {
+    this.router.navigate(['/lab-analyses']);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────
+
   formatTimestamp(timestamp: bigint): Date {
     return new Date(Number(timestamp) * 1000);
   }
 
-  /**
-   * Returns a shortened wallet address in the format 0x1234...abcd.
-   */
+  formatDate(value: string | Date): string {
+    return new Date(value).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
   shortenAddress(address: string): string {
     if (!address || address === '0x0000000000000000000000000000000000000000') return '—';
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   }
 
-  /**
-   * Masks the middle digits of a CNP for privacy display.
-   */
   maskCnp(cnp: string): string {
     if (cnp.length <= 6) return cnp;
     return `${cnp.substring(0, 3)}${'*'.repeat(cnp.length - 6)}${cnp.substring(cnp.length - 3)}`;
   }
 
-  /**
-   * Copies the patient's wallet address to the clipboard and shows a success toast.
-   */
   copyWallet(): void {
     if (!this.patient?.walletAddress) return;
     navigator.clipboard.writeText(this.patient.walletAddress);
     this.notify.showSuccess('Wallet address copied!');
-  }
-
-  goToMedications(): void {
-    this.router.navigate(['/medications']);
-  }
-
-  goToDiagnostics(): void {
-    this.router.navigate(['/diagnostics']);
-  }
-
-  goToAccessManagement(): void {
-    this.router.navigate(['/access-management']);
-  }
-
-  goToPrescriptions(): void {
-    this.router.navigate(['/prescriptions']);
-  }
-
-  goToLabAnalyses(): void {
-    this.router.navigate(['/lab-analyses']);
-  }
-
-  /**
-   * Smoothly scrolls a carousel by one card width (280px + 16px gap)
-   * using requestAnimationFrame for consistent animation across browsers.
-   * Duration: 300ms with ease-out easing.
-   */
-  scrollCarousel(elementId: string, direction: 'left' | 'right'): void {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-
-    const distance = 296; // 280px card + 16px gap
-    const target = direction === 'left' ? -distance : distance;
-    const duration = 300;
-    const start = el.scrollLeft;
-    const startTime = performance.now();
-
-    const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
-
-    const animate = (currentTime: number): void => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = easeOutCubic(progress);
-
-      el.scrollLeft = start + target * eased;
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    };
-
-    requestAnimationFrame(animate);
   }
 }

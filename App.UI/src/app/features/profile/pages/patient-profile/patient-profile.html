@@ -1,400 +1,194 @@
 <div class="patient-profile-page">
-
   <!-- ===== PROFILE CARD ===== -->
   <div class="profile-section">
     @if (isLoadingProfile) {
-      <div class="state-container">
-        <mat-spinner diameter="40"></mat-spinner>
-      </div>
-    }
-
-    @if (!isLoadingProfile && patient) {
-      <div class="profile-card">
-        <div class="profile-header">
-          <div class="avatar-circle">
-            <mat-icon>person</mat-icon>
-          </div>
-          <div class="profile-header-info">
-            <h1>{{ patient.firstName }} {{ patient.lastName }}</h1>
-            <span class="role-badge">
-              <mat-icon>personal_injury</mat-icon>
-              Patient
-            </span>
-          </div>
-        </div>
-
-        <mat-divider></mat-divider>
-
-        <div class="profile-details">
-          <div class="detail-row">
-            <mat-icon>fingerprint</mat-icon>
-            <div class="detail-content">
-              <span class="detail-label">CNP</span>
-              <span class="detail-value">{{ maskCnp(patient.cnp) }}</span>
-            </div>
-          </div>
-
-          <div class="detail-row">
-            <mat-icon>calendar_today</mat-icon>
-            <div class="detail-content">
-              <span class="detail-label">Date of birth</span>
-              <span class="detail-value">{{ patient.dateOfBirth | date: 'dd MMM yyyy' }}</span>
-            </div>
-          </div>
-
-          <div class="detail-row">
-            <mat-icon>account_balance_wallet</mat-icon>
-            <div class="detail-content">
-              <span class="detail-label">Wallet address</span>
-              <span class="detail-value wallet" (click)="copyWallet()" matTooltip="Click to copy">
-                {{ patient.walletAddress }}
-                <mat-icon class="copy-icon">content_copy</mat-icon>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="state-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+    } @if (!isLoadingProfile && patient) {
+    <app-profile-card
+      [name]="patient.firstName + ' ' + patient.lastName"
+      role="Patient"
+      roleIcon="personal_injury"
+      avatarColor="blue"
+      [details]="profileDetails"
+    >
+    </app-profile-card>
     }
   </div>
 
   <!-- ===== DOCTORS WITH ACCESS ===== -->
-  <div class="carousel-section">
-    <div class="section-header">
-      <div class="section-title">
-        <mat-icon class="section-icon">verified_user</mat-icon>
-        <h2>Doctors with access</h2>
-      </div>
-      <div class="carousel-arrows">
-        <button mat-icon-button (click)="scrollCarousel('doctors-carousel', 'left')">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        <button mat-icon-button (click)="scrollCarousel('doctors-carousel', 'right')">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
-      </div>
-    </div>
-
-    @if (isLoadingAccess) {
-      <div class="state-container small">
-        <mat-spinner diameter="32"></mat-spinner>
-      </div>
-    }
-
-    @if (!isLoadingAccess && approvedDoctors.length === 0) {
-      <div class="state-container empty small">
-        <mat-icon>lock</mat-icon>
-        <p>No doctors currently have access to your records.</p>
-      </div>
-    }
-
-    @if (!isLoadingAccess && approvedDoctors.length > 0) {
-      <div class="carousel-track" id="doctors-carousel">
-        @for (req of approvedDoctors; track req.id) {
-          <div class="carousel-card doctor-card">
-            <div class="card-top">
-              <div class="doctor-avatar">
-                <mat-icon>medical_services</mat-icon>
-              </div>
-              <div class="doctor-info">
-                <span class="doctor-name">{{ req.doctorName }}</span>
-                <span class="doctor-wallet">{{ shortenAddress(req.doctorWalletAddress) }}</span>
-              </div>
-            </div>
-            <div class="card-meta">
-              <mat-icon class="meta-icon">event</mat-icon>
-              <span>Access granted on {{ req.createdAt | date: 'dd MMM yyyy' }}</span>
-            </div>
-            <button
-              mat-stroked-button
-              class="revoke-btn"
-              [disabled]="revokingId === req.id"
-              (click)="onRevoke(req)"
-            >
-              @if (revokingId === req.id) {
-                <mat-spinner diameter="16"></mat-spinner>
-                Signing...
-              } @else {
-                <ng-container>
-                  <mat-icon>block</mat-icon>
-                  Revoke access
-                </ng-container>
-              }
-            </button>
-          </div>
-        }
-
-        <div class="carousel-card view-all-card" (click)="goToAccessManagement()">
-          <mat-icon class="view-all-icon">admin_panel_settings</mat-icon>
-          <span>View all access</span>
-          <mat-icon>arrow_forward</mat-icon>
+  <app-carousel-section
+    title="Doctors with access"
+    icon="verified_user"
+    [isLoading]="isLoadingAccess"
+    [isEmpty]="approvedDoctors.length === 0"
+    emptyIcon="lock"
+    emptyMessage="No doctors currently have access to your records."
+  >
+    @for (req of approvedDoctors; track req.id) {
+    <div class="carousel-card doctor-card">
+      <div class="card-top">
+        <div class="doctor-avatar">
+          <mat-icon>medical_services</mat-icon>
+        </div>
+        <div class="doctor-info">
+          <span class="doctor-name">{{ req.doctorName }}</span>
+          <span class="doctor-wallet">{{ shortenAddress(req.doctorWalletAddress) }}</span>
         </div>
       </div>
+      <div class="card-meta">
+        <mat-icon class="meta-icon">event</mat-icon>
+        <span>Access granted on {{ req.createdAt || '' | date : 'dd MMM yyyy' }}</span>
+      </div>
+      <button
+        mat-stroked-button
+        class="revoke-btn"
+        [disabled]="revokingId === req.id"
+        (click)="onRevoke(req)"
+      >
+        @if (revokingId === req.id) {
+        <mat-spinner diameter="16"></mat-spinner>
+        Signing... } @else {
+        <ng-container>
+          <mat-icon>block</mat-icon>
+          Revoke access
+        </ng-container>
+        }
+      </button>
+    </div>
     }
-  </div>
+
+    <app-view-all-card
+      icon="admin_panel_settings"
+      label="View all access"
+      (clicked)="goToAccessManagement()"
+    >
+    </app-view-all-card>
+  </app-carousel-section>
 
   <!-- ===== MY DIAGNOSTICS ===== -->
-  <div class="carousel-section">
-    <div class="section-header">
-      <div class="section-title">
-        <mat-icon class="section-icon">folder_shared</mat-icon>
-        <h2>My Diagnostics</h2>
-      </div>
-      <div class="carousel-arrows">
-        <button mat-icon-button (click)="scrollCarousel('diagnostics-carousel', 'left')">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        <button mat-icon-button (click)="scrollCarousel('diagnostics-carousel', 'right')">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
-      </div>
-    </div>
-
-    @if (isLoadingDiagnoses) {
-      <div class="state-container small">
-        <mat-spinner diameter="32"></mat-spinner>
-      </div>
+  <app-carousel-section
+    title="My Diagnostics"
+    icon="folder_shared"
+    [isLoading]="isLoadingDiagnoses"
+    [isEmpty]="diagnoses.length === 0"
+    emptyIcon="inventory_2"
+    emptyMessage="No diagnoses found."
+  >
+    @for (d of diagnoses; track d.id) {
+    <app-medical-card
+      type="diagnosis"
+      [title]="d.title"
+      [meta]="[
+        { icon: 'medical_services', text: d.doctorName },
+        { icon: 'event', text: (formatTimestamp(d.timestamp) | date : 'dd MMM yyyy') }
+      ]"
+      [isLoading]="downloadingId === d.id"
+      actionLabel="View report"
+      (actionClick)="onOpenDiagnosis(d)"
+    >
+    </app-medical-card>
     }
 
-    @if (!isLoadingDiagnoses && diagnoses.length === 0) {
-      <div class="state-container empty small">
-        <mat-icon>inventory_2</mat-icon>
-        <p>No diagnoses found.</p>
-      </div>
-    }
-
-    @if (!isLoadingDiagnoses && diagnoses.length > 0) {
-      <div class="carousel-track" id="diagnostics-carousel">
-        @for (d of diagnoses; track d.id) {
-          <div class="carousel-card diagnosis-card">
-            <span class="diagnosis-tag">Diagnosis</span>
-            <span class="diagnosis-title">{{ d.title }}</span>
-            <div class="card-meta">
-              <mat-icon class="meta-icon">medical_services</mat-icon>
-              <span>{{ d.doctorName }}</span>
-            </div>
-            <div class="card-meta">
-              <mat-icon class="meta-icon">event</mat-icon>
-              <span>{{ formatTimestamp(d.timestamp) | date: 'dd MMM yyyy' }}</span>
-            </div>
-            <button
-              mat-stroked-button
-              class="view-report-btn"
-              [disabled]="downloadingId === d.id"
-              (click)="onOpenDiagnosis(d)"
-            >
-              @if (downloadingId === d.id) {
-                <mat-spinner diameter="16"></mat-spinner>
-                Decrypting...
-              } @else {
-                <ng-container>
-                  <mat-icon>lock_open</mat-icon>
-                  View report
-                </ng-container>
-              }
-            </button>
-          </div>
-        }
-
-        <div class="carousel-card view-all-card" (click)="goToDiagnostics()">
-          <mat-icon class="view-all-icon">folder_shared</mat-icon>
-          <span>View all diagnostics</span>
-          <mat-icon>arrow_forward</mat-icon>
-        </div>
-      </div>
-    }
-  </div>
+    <app-view-all-card
+      icon="folder_shared"
+      label="View all diagnostics"
+      (clicked)="goToDiagnostics()"
+    >
+    </app-view-all-card>
+  </app-carousel-section>
 
   <!-- ===== MY PRESCRIPTIONS ===== -->
-  <div class="carousel-section">
-    <div class="section-header">
-      <div class="section-title">
-        <mat-icon class="section-icon">receipt_long</mat-icon>
-        <h2>My Prescriptions</h2>
-      </div>
-      <div class="carousel-arrows">
-        <button mat-icon-button (click)="scrollCarousel('prescriptions-carousel', 'left')">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        <button mat-icon-button (click)="scrollCarousel('prescriptions-carousel', 'right')">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
-      </div>
-    </div>
-
-    @if (isLoadingPrescriptions) {
-      <div class="state-container small">
-        <mat-spinner diameter="32"></mat-spinner>
-      </div>
+  <app-carousel-section
+    title="My Prescriptions"
+    icon="receipt_long"
+    [isLoading]="isLoadingPrescriptions"
+    [isEmpty]="prescriptions.length === 0"
+    emptyIcon="receipt_long"
+    emptyMessage="No prescriptions found."
+  >
+    @for (p of prescriptions; track p.id) {
+    <app-medical-card
+      type="prescription"
+      [meta]="[
+        { icon: 'medical_services', text: 'Dr. ' + p.doctorName },
+        { icon: 'event', text: (formatTimestamp(p.timestamp) | date : 'dd MMM yyyy') }
+      ]"
+      [isLoading]="openingPrescriptionId === p.id"
+      actionLabel="View PDF"
+      (actionClick)="onOpenPrescription(p)"
+    >
+    </app-medical-card>
     }
 
-    @if (!isLoadingPrescriptions && prescriptions.length === 0) {
-      <div class="state-container empty small">
-        <mat-icon>receipt_long</mat-icon>
-        <p>No prescriptions found.</p>
-      </div>
-    }
-
-    @if (!isLoadingPrescriptions && prescriptions.length > 0) {
-      <div class="carousel-track" id="prescriptions-carousel">
-        @for (p of prescriptions; track p.id) {
-          <div class="carousel-card prescription-card" [class.dispensed-card]="p.dispensed">
-            <div class="card-top">
-              <div class="prescription-avatar" [class.dispensed-avatar]="p.dispensed">
-                <mat-icon>{{ p.dispensed ? 'check_circle' : 'local_pharmacy' }}</mat-icon>
-              </div>
-              <span class="prescription-status-badge" [class.dispensed-badge]="p.dispensed">
-                {{ p.dispensed ? 'Dispensed' : 'Active' }}
-              </span>
-            </div>
-            <div class="card-meta">
-              <mat-icon class="meta-icon">medical_services</mat-icon>
-              <span>Dr. {{ p.doctorName }}</span>
-            </div>
-            <div class="card-meta">
-              <mat-icon class="meta-icon">event</mat-icon>
-              <span>{{ formatTimestamp(p.timestamp) | date: 'dd MMM yyyy' }}</span>
-            </div>
-            <button
-              mat-stroked-button
-              class="view-report-btn"
-              [disabled]="openingPrescriptionId === p.id"
-              (click)="onOpenPrescription(p)"
-            >
-              @if (openingPrescriptionId === p.id) {
-                <mat-spinner diameter="16"></mat-spinner>
-                Decrypting...
-              } @else {
-                <ng-container>
-                  <mat-icon>lock_open</mat-icon>
-                  View PDF
-                </ng-container>
-              }
-            </button>
-          </div>
-        }
-
-        <div class="carousel-card view-all-card" (click)="goToPrescriptions()">
-          <mat-icon class="view-all-icon">receipt_long</mat-icon>
-          <span>View all prescriptions</span>
-          <mat-icon>arrow_forward</mat-icon>
-        </div>
-      </div>
-    }
-  </div>
+    <app-view-all-card
+      icon="receipt_long"
+      label="View all prescriptions"
+      (clicked)="goToPrescriptions()"
+    >
+    </app-view-all-card>
+  </app-carousel-section>
 
   <!-- ===== MY LAB ANALYSES ===== -->
-  <div class="carousel-section">
-    <div class="section-header">
-      <div class="section-title">
-        <mat-icon class="section-icon">biotech</mat-icon>
-        <h2>My Lab Analyses</h2>
-      </div>
-      <div class="carousel-arrows">
-        <button mat-icon-button (click)="scrollCarousel('lab-analyses-carousel', 'left')">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        <button mat-icon-button (click)="scrollCarousel('lab-analyses-carousel', 'right')">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
-      </div>
-    </div>
-
-    @if (isLoadingLabAnalyses) {
-      <div class="state-container small">
-        <mat-spinner diameter="32"></mat-spinner>
-      </div>
+  <app-carousel-section
+    title="My Lab Analyses"
+    icon="biotech"
+    [isLoading]="isLoadingLabAnalyses"
+    [isEmpty]="labAnalyses.length === 0"
+    emptyIcon="biotech"
+    emptyMessage="No lab analyses found."
+  >
+    @for (a of labAnalyses; track a.id) {
+    <app-medical-card
+      type="lab-analysis"
+      [title]="a.title"
+      [meta]="[
+        { icon: 'science', text: a.labTechName },
+        { icon: 'event', text: (formatTimestamp(a.timestamp) | date : 'dd MMM yyyy') }
+      ]"
+      [isLoading]="openingLabAnalysisId === a.id"
+      actionLabel="View report"
+      (actionClick)="onOpenLabAnalysis(a)"
+    >
+    </app-medical-card>
     }
 
-    @if (!isLoadingLabAnalyses && labAnalyses.length === 0) {
-      <div class="state-container empty small">
-        <mat-icon>biotech</mat-icon>
-        <p>No lab analyses found.</p>
-      </div>
-    }
+    <app-view-all-card icon="biotech" label="View all analyses" (clicked)="goToLabAnalyses()">
+    </app-view-all-card>
+  </app-carousel-section>
 
-    @if (!isLoadingLabAnalyses && labAnalyses.length > 0) {
-      <div class="carousel-track" id="lab-analyses-carousel">
-        @for (a of labAnalyses; track a.id) {
-          <div class="carousel-card lab-analysis-card">
-            <span class="lab-analysis-tag">Lab Analysis</span>
-            <span class="diagnosis-title">{{ a.title }}</span>
-            <div class="card-meta">
-              <mat-icon class="meta-icon">science</mat-icon>
-              <span>{{ a.labTechName }}</span>
-            </div>
-            <div class="card-meta">
-              <mat-icon class="meta-icon">event</mat-icon>
-              <span>{{ formatTimestamp(a.timestamp) | date: 'dd MMM yyyy' }}</span>
-            </div>
-            <button
-              mat-stroked-button
-              class="view-report-btn"
-              [disabled]="openingLabAnalysisId === a.id"
-              (click)="onOpenLabAnalysis(a)"
-            >
-              @if (openingLabAnalysisId === a.id) {
-                <mat-spinner diameter="16"></mat-spinner>
-                Decrypting...
-              } @else {
-                <ng-container>
-                  <mat-icon>lock_open</mat-icon>
-                  View report
-                </ng-container>
-              }
-            </button>
-          </div>
-        }
-
-        <div class="carousel-card view-all-card" (click)="goToLabAnalyses()">
-          <mat-icon class="view-all-icon">biotech</mat-icon>
-          <span>View all analyses</span>
-          <mat-icon>arrow_forward</mat-icon>
-        </div>
-      </div>
-    }
-  </div>
-
-<!-- ===== QUICK ACTIONS ===== -->
+  <!-- ===== QUICK ACTIONS ===== -->
   <div class="quick-actions-section">
-    <div class="quick-action-card" (click)="goToMedications()">
-      <div class="action-icon medications">
-        <mat-icon>medication</mat-icon>
-      </div>
-      <span class="action-label">My Medications</span>
-      <mat-icon class="action-arrow">chevron_right</mat-icon>
-    </div>
-
-    <div class="quick-action-card" (click)="goToDiagnostics()">
-      <div class="action-icon diagnostics">
-        <mat-icon>assignment</mat-icon>
-      </div>
-      <span class="action-label">My Diagnostics</span>
-      <mat-icon class="action-arrow">chevron_right</mat-icon>
-    </div>
-
-    <div class="quick-action-card" (click)="goToPrescriptions()">
-      <div class="action-icon prescriptions">
-        <mat-icon>receipt_long</mat-icon>
-      </div>
-      <span class="action-label">My Prescriptions</span>
-      <mat-icon class="action-arrow">chevron_right</mat-icon>
-    </div>
-
-    <div class="quick-action-card" (click)="goToLabAnalyses()">
-      <div class="action-icon lab-analyses">
-        <mat-icon>biotech</mat-icon>
-      </div>
-      <span class="action-label">My Lab Analyses</span>
-      <mat-icon class="action-arrow">chevron_right</mat-icon>
-    </div>
-
-    <div class="quick-action-card" (click)="goToAccessManagement()">
-      <div class="action-icon access">
-        <mat-icon>admin_panel_settings</mat-icon>
-      </div>
-      <span class="action-label">Access Management</span>
-      <mat-icon class="action-arrow">chevron_right</mat-icon>
-    </div>
+    <app-quick-action-card
+      label="My Medications"
+      icon="medication"
+      color="purple"
+      (clicked)="goToMedications()"
+    />
+    <app-quick-action-card
+      label="My Diagnostics"
+      icon="assignment"
+      color="blue"
+      (clicked)="goToDiagnostics()"
+    />
+    <app-quick-action-card
+      label="My Prescriptions"
+      icon="receipt_long"
+      color="green"
+      (clicked)="goToPrescriptions()"
+    />
+    <app-quick-action-card
+      label="My Lab Analyses"
+      icon="biotech"
+      color="cyan"
+      (clicked)="goToLabAnalyses()"
+    />
+    <app-quick-action-card
+      label="Access Management"
+      icon="admin_panel_settings"
+      color="orange"
+      (clicked)="goToAccessManagement()"
+    />
   </div>
-
 </div>

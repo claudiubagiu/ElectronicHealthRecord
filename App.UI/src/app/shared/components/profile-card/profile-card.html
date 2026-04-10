@@ -1,0 +1,41 @@
+<div class="profile-card">
+  @if (showBackButton) {
+    <button mat-icon-button class="back-btn" (click)="backClick.emit()" [matTooltip]="backTooltip">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  }
+
+  <div class="profile-header" [class.with-back]="showBackButton">
+    <div class="avatar-circle" [class.orange]="avatarColor === 'orange'">
+      <mat-icon>person</mat-icon>
+    </div>
+    <div class="profile-header-info">
+      <h1>{{ name }}</h1>
+      <span class="role-badge" [class.orange]="avatarColor === 'orange'">
+        <mat-icon>{{ roleIcon }}</mat-icon>
+        {{ role }}
+      </span>
+    </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="profile-details">
+    @for (detail of details; track detail.label) {
+      <div class="detail-row">
+        <mat-icon>{{ detail.icon }}</mat-icon>
+        <div class="detail-content">
+          <span class="detail-label">{{ detail.label }}</span>
+          @if (detail.isWallet && detail.onClickCopy) {
+            <span class="detail-value wallet" (click)="detail.onClickCopy()" matTooltip="Click to copy">
+              {{ detail.value }}
+              <mat-icon class="copy-icon">content_copy</mat-icon>
+            </span>
+          } @else {
+            <span class="detail-value">{{ detail.value }}</span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,5 +1,5 @@
 {
-  "address": "0x7B2Cd6CC87A78B4Ce6ecfB38646E78DBBcA53512",
+  "address": "0x5C244b03A445d1CF440acCAA7D3481a49a79d00A",
   "abi": [
     {
       "anonymous": false,
@@ -185,6 +185,11 @@
       "inputs": [
         {
           "internalType": "string",
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
           "name": "ipfsCid",
           "type": "string"
         },
@@ -203,7 +208,7 @@
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "id",
           "type": "uint256"
         }
       ],
@@ -212,6 +217,11 @@
     },
     {
       "inputs": [
+        {
+          "internalType": "string",
+          "name": "title",
+          "type": "string"
+        },
         {
           "internalType": "string",
           "name": "ipfsCid",
@@ -232,7 +242,7 @@
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "id",
           "type": "uint256"
         }
       ],
@@ -271,7 +281,7 @@
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "id",
           "type": "uint256"
         }
       ],
@@ -331,6 +341,11 @@
               "internalType": "uint256",
               "name": "id",
               "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
             },
             {
               "internalType": "string",
@@ -416,6 +431,11 @@
             },
             {
               "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
               "name": "ipfsCid",
               "type": "string"
             },
@@ -455,7 +475,7 @@
     },
     {
       "inputs": [],
-      "name": "getLabTechLabAnalysisIds",
+      "name": "getLabTechAnalysisIds",
       "outputs": [
         {
           "internalType": "uint256[]",
@@ -738,6 +758,32 @@
       "name": "revokeAccess",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalDiagnoses",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalLabAnalyses",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     }
   ]

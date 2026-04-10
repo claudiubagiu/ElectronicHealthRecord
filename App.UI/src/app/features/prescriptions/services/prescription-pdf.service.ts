@@ -1,362 +1,328 @@
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
-import { PrescriptionPayload } from '../models/prescription.model';
+
+// ─── Types (re-exported so prescription-submission.service can import from here) ──
+
+export interface MedicationEntry {
+  name: string;
+  dose: string;
+  frequency: string;
+  duration: string;
+}
+
+export interface PrescriptionFormData {
+  medications: MedicationEntry[];
+  notes: string;
+}
+
+export interface PrescriptionPayload {
+  prescription: PrescriptionFormData;
+  shortCode: string;
+  patientName: string;
+  doctorName: string;
+  timestamp: number;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const PAGE_W = 210;
+const PAGE_H = 297;
+const MARGIN_L = 18;
+const MARGIN_R = 18;
+const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
+const LINE_H = 5.5;
+const LABEL_W = 52;
+
+// ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class PrescriptionPdfService {
-  private readonly PW = 210;
-  private readonly PH = 297;
-  private readonly ML = 18;
-  private readonly MR = 18;
-  private readonly MT = 18;
-  private readonly MB = 22;
+  async generatePrescriptionPdf(payload: PrescriptionPayload): Promise<Blob> {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const ctx = new RenderContext(doc);
 
-  private readonly C = {
-    navy: [17, 35, 90] as [number, number, number],
-    blue: [37, 99, 206] as [number, number, number],
-    green: [46, 125, 50] as [number, number, number],
-    greenBg: [232, 245, 233] as [number, number, number],
-    greenPale: [241, 248, 241] as [number, number, number],
-    accent: [0, 180, 140] as [number, number, number],
-    accentBg: [230, 252, 246] as [number, number, number],
-    text: [30, 30, 40] as [number, number, number],
-    textMid: [80, 85, 100] as [number, number, number],
-    textLight: [130, 135, 150] as [number, number, number],
-    border: [210, 218, 235] as [number, number, number],
-    row: [247, 250, 255] as [number, number, number],
-    white: [255, 255, 255] as [number, number, number],
-    codeBg: [232, 234, 246] as [number, number, number],
-    codeText: [26, 35, 126] as [number, number, number],
-  };
-
-  private y = 0;
-  private doc!: jsPDF;
-
-  async generatePrescriptionPdf(data: PrescriptionPayload): Promise<Blob> {
-    this.doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    this.y = this.MT;
-
-    this.drawSideStripe();
-    this.drawHeader(data);
-    this.drawPatientCard(data);
-    this.drawMedicationsSection(data);
-    if (data.prescription.notes?.trim()) {
-      this.drawNotesSection(data.prescription.notes);
+    this.renderHeader(ctx, payload);
+    this.renderPatientBlock(ctx, payload);
+    this.renderMedications(ctx, payload);
+    if (payload.prescription.notes?.trim()) {
+      this.renderNotes(ctx, payload.prescription.notes);
     }
-    this.drawShortCodeSection(data.shortCode);
-    this.drawSignatureArea(data);
+    this.renderShortCode(ctx, payload.shortCode);
+    this.renderFooter(ctx, payload);
 
-    const total = this.doc.getNumberOfPages();
-    for (let i = 1; i <= total; i++) {
-      this.doc.setPage(i);
-      if (i > 1) this.drawSideStripe();
-      this.drawFooter(i, total);
-    }
-
-    return this.doc.output('blob');
+    return doc.output('blob');
   }
 
-  // ── Sidebar stripe ───────────────────────────────────────────────────────
+  // ── Header ───────────────────────────────────────────────────────────────────
 
-  private drawSideStripe(): void {
-    this.doc.setFillColor(...this.C.blue);
-    this.doc.rect(0, 0, 5, this.PH, 'F');
-    this.doc.setFillColor(...this.C.navy);
-    this.doc.rect(0, 0, 5, 60, 'F');
-  }
+  private renderHeader(ctx: RenderContext, payload: PrescriptionPayload): void {
+    const doc = ctx.doc;
 
-  // ── Header ───────────────────────────────────────────────────────────────
+    // Top rule
+    doc.setDrawColor(30, 30, 30);
+    doc.setLineWidth(0.8);
+    doc.line(MARGIN_L, 14, PAGE_W - MARGIN_R, 14);
 
-  private drawHeader(data: PrescriptionPayload): void {
-    const headerH = 32;
-    const startX = 9;
-    const w = this.PW - startX - this.MR;
+    // Document type label
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 100, 100);
+    doc.text('MEDICAL PRESCRIPTION', MARGIN_L, 11);
 
-    this.doc.setFillColor(...this.C.navy);
-    this.doc.roundedRect(startX, this.y, w, headerH, 3, 3, 'F');
-
-    // Green cross icon
-    const iconX = startX + 8;
-    const iconY = this.y + headerH / 2;
-    this.doc.setFillColor(...this.C.green);
-    this.doc.roundedRect(iconX - 4.5, iconY - 4.5, 9, 9, 1.5, 1.5, 'F');
-    this.doc.setFillColor(...this.C.white);
-    this.doc.rect(iconX - 0.8, iconY - 3, 1.6, 6, 'F');
-    this.doc.rect(iconX - 3, iconY - 0.8, 6, 1.6, 'F');
+    // Date & doctor — right-aligned
+    const dateLabel = this.formatDate(new Date(payload.timestamp).toISOString().split('T')[0]);
+    doc.setFontSize(8.5);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Date: ${dateLabel}`, PAGE_W - MARGIN_R, 18, { align: 'right' });
+    doc.text(`Doctor: ${payload.doctorName}`, PAGE_W - MARGIN_R, 23, { align: 'right' });
 
     // Title
-    this.doc.setTextColor(...this.C.white);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(16);
-    this.doc.text('ELECTRONIC PRESCRIPTION', startX + 20, this.y + 13);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(20, 20, 20);
+    doc.text('PRESCRIPTION', MARGIN_L, 24);
 
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(8);
-    this.doc.setTextColor(180, 200, 240);
-    this.doc.text('Encrypted · Stored on IPFS · Verified on Blockchain', startX + 20, this.y + 20);
+    // Thin rule under title
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN_L, 27, PAGE_W - MARGIN_R, 27);
 
-    // Date top-right
-    this.doc.setTextColor(...this.C.white);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(8);
-    const dateStr = new Date(data.timestamp).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-    this.doc.text(dateStr, startX + w - 5, this.y + 10, { align: 'right' });
-
-    this.y += headerH + 6;
+    ctx.y = 33;
   }
 
-  // ── Patient card ─────────────────────────────────────────────────────────
+  // ── Patient block ─────────────────────────────────────────────────────────────
 
-  private drawPatientCard(data: PrescriptionPayload): void {
-    const startX = 9;
-    const cardW = this.PW - startX - this.MR;
-    const cardH = 22;
+  private renderPatientBlock(ctx: RenderContext, payload: PrescriptionPayload): void {
+    const doc = ctx.doc;
 
-    this.doc.setFillColor(...this.C.greenPale);
-    this.doc.roundedRect(startX, this.y, cardW, cardH, 2, 2, 'F');
-    this.doc.setDrawColor(...this.C.green);
-    this.doc.setLineWidth(0.3);
-    this.doc.roundedRect(startX, this.y, cardW, cardH, 2, 2, 'S');
+    doc.setFillColor(245, 245, 245);
+    doc.rect(MARGIN_L, ctx.y, CONTENT_W, 14, 'F');
 
-    // Patient
-    this.doc.setTextColor(...this.C.green);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(7.5);
-    this.doc.text('PATIENT', startX + 8, this.y + 7.5);
-    this.doc.setTextColor(...this.C.navy);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(9.5);
-    this.doc.text(data.patientName, startX + 8, this.y + 14);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(80, 80, 80);
+    doc.text('PATIENT', MARGIN_L + 4, ctx.y + 5.5);
 
-    // Doctor
-    this.doc.setTextColor(...this.C.green);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(7.5);
-    this.doc.text('PRESCRIBING DOCTOR', startX + cardW - 8, this.y + 7.5, { align: 'right' });
-    this.doc.setTextColor(...this.C.navy);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(9.5);
-    this.doc.text(data.doctorName, startX + cardW - 8, this.y + 14, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(20, 20, 20);
+    doc.text(payload.patientName, MARGIN_L + 4, ctx.y + 11.5);
 
-    this.y += cardH + 8;
+    ctx.y += 19;
   }
 
-  // ── Medications section ──────────────────────────────────────────────────
+  // ── Medications ───────────────────────────────────────────────────────────────
 
-  private drawMedicationsSection(data: PrescriptionPayload): void {
-    const startX = 9;
-    const w = this.PW - startX - this.MR;
+  private renderMedications(ctx: RenderContext, payload: PrescriptionPayload): void {
+    const doc = ctx.doc;
+    const meds = payload.prescription.medications;
 
-    // Section heading
-    this.doc.setFillColor(...this.C.blue);
-    this.doc.circle(startX + 5, this.y + 4, 4.5, 'F');
-    this.doc.setTextColor(...this.C.white);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(9);
-    this.doc.text('01', startX + 5, this.y + 5.3, { align: 'center' });
+    // Section header
+    ctx.ensureSpace(20);
+    doc.setDrawColor(30, 30, 30);
+    doc.setLineWidth(0.5);
+    doc.line(MARGIN_L, ctx.y, PAGE_W - MARGIN_R, ctx.y);
 
-    this.doc.setTextColor(...this.C.navy);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(11.5);
-    this.doc.text('PRESCRIBED MEDICATIONS', startX + 14, this.y + 5.5);
-    this.doc.setDrawColor(...this.C.blue);
-    this.doc.setLineWidth(0.6);
-    this.doc.line(startX + 14, this.y + 8, startX + 14 + 68, this.y + 8);
-    this.y += 14;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(30, 30, 30);
+    ctx.y += 4.5;
+    doc.text('MEDICATIONS', MARGIN_L, ctx.y);
+    ctx.y += 6;
 
-    // Table header
-    const colX = [startX, startX + 65, startX + 100, startX + 135];
-    const colW = [55, 35, 35, w - 135];
-    const headers = ['Medication', 'Dose', 'Frequency', 'Duration'];
+    meds.forEach((med, index) => {
+      ctx.ensureSpace(28);
 
-    this.doc.setFillColor(...this.C.navy);
-    this.doc.rect(startX, this.y, w, 8, 'F');
-    this.doc.setTextColor(...this.C.white);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(8);
-    headers.forEach((h, i) => {
-      this.doc.text(h, colX[i] + 3, this.y + 5.5);
-    });
-    this.y += 8;
+      // Medication number badge — just a plain bold number
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(60, 60, 60);
+      doc.text(`${index + 1}.`, MARGIN_L, ctx.y + LINE_H - 1);
 
-    // Table rows
-    data.prescription.medications.forEach((med, idx) => {
-      const rowH = 10;
-      this.ensureSpace(rowH);
+      const col = MARGIN_L + 7;
+      const colW = CONTENT_W - 7;
 
-      if (idx % 2 === 1) {
-        this.doc.setFillColor(...this.C.row);
-        this.doc.rect(startX, this.y, w, rowH, 'F');
+      // Medication name
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(20, 20, 20);
+      doc.text(med.name, col, ctx.y + LINE_H - 1);
+      ctx.y += LINE_H + 1;
+
+      // Dose / Frequency / Duration — inline row
+      const details: Array<{ label: string; value: string }> = [
+        { label: 'Dose', value: med.dose },
+        { label: 'Frequency', value: med.frequency },
+        { label: 'Duration', value: med.duration },
+      ];
+
+      let x = col;
+      details.forEach(({ label, value }) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
+        const lblW = doc.getTextWidth(`${label}: `);
+        doc.text(`${label}: `, x, ctx.y + LINE_H - 1);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(20, 20, 20);
+        const valW = doc.getTextWidth(value);
+        doc.text(value, x + lblW, ctx.y + LINE_H - 1);
+
+        x += lblW + valW + 10;
+      });
+
+      ctx.y += LINE_H + 1;
+
+      // Separator between medications (not after the last one)
+      if (index < meds.length - 1) {
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.2);
+        doc.line(col, ctx.y + 1, PAGE_W - MARGIN_R, ctx.y + 1);
+        ctx.y += 4;
+      } else {
+        ctx.y += 2;
       }
-
-      this.doc.setTextColor(...this.C.text);
-      this.doc.setFont('helvetica', 'bold');
-      this.doc.setFontSize(8.5);
-      this.doc.text(med.name, colX[0] + 3, this.y + 6.5);
-
-      this.doc.setFont('helvetica', 'normal');
-      this.doc.setFontSize(8.5);
-      this.doc.text(med.dose, colX[1] + 3, this.y + 6.5);
-      this.doc.text(med.frequency, colX[2] + 3, this.y + 6.5);
-      this.doc.text(med.duration, colX[3] + 3, this.y + 6.5);
-
-      // Row border
-      this.doc.setDrawColor(...this.C.border);
-      this.doc.setLineWidth(0.1);
-      this.doc.line(startX, this.y + rowH, startX + w, this.y + rowH);
-
-      this.y += rowH;
     });
-
-    this.y += 6;
   }
 
-  // ── Notes section ────────────────────────────────────────────────────────
+  // ── Notes ─────────────────────────────────────────────────────────────────────
 
-  private drawNotesSection(notes: string): void {
-    const startX = 9;
-    const w = this.PW - startX - this.MR;
+  private renderNotes(ctx: RenderContext, notes: string): void {
+    const doc = ctx.doc;
 
-    this.ensureSpace(20);
+    ctx.ensureSpace(20);
+    doc.setDrawColor(30, 30, 30);
+    doc.setLineWidth(0.5);
+    doc.line(MARGIN_L, ctx.y, PAGE_W - MARGIN_R, ctx.y);
 
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(8.5);
-    const lines = this.doc.splitTextToSize(notes, w - 10);
-    const boxH = Math.max(14, lines.length * 5 + 10);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(30, 30, 30);
+    ctx.y += 4.5;
+    doc.text('NOTES', MARGIN_L, ctx.y);
+    ctx.y += 5;
 
-    this.ensureSpace(boxH + 4);
-
-    this.doc.setFillColor(...this.C.accentBg);
-    this.doc.roundedRect(startX, this.y, w, boxH, 2, 2, 'F');
-    this.doc.setDrawColor(...this.C.accent);
-    this.doc.setLineWidth(0.3);
-    this.doc.roundedRect(startX, this.y, w, boxH, 2, 2, 'S');
-
-    this.doc.setTextColor(...this.C.green);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(7.5);
-    this.doc.text('NOTES', startX + 5, this.y + 6);
-
-    this.doc.setTextColor(...this.C.text);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(8.5);
-    this.doc.text(lines, startX + 5, this.y + 11);
-
-    this.y += boxH + 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(20, 20, 20);
+    const lines = doc.splitTextToSize(notes, CONTENT_W);
+    ctx.ensureSpace(lines.length * LINE_H + 4);
+    doc.text(lines, MARGIN_L, ctx.y + LINE_H - 1);
+    ctx.y += lines.length * LINE_H + 4;
   }
 
-  // ── Short code section ───────────────────────────────────────────────────
+  // ── Short code block ──────────────────────────────────────────────────────────
 
-  private drawShortCodeSection(shortCode: string): void {
-    const startX = 9;
-    const w = this.PW - startX - this.MR;
+  private renderShortCode(ctx: RenderContext, shortCode: string): void {
+    const doc = ctx.doc;
 
-    this.ensureSpace(32);
+    ctx.ensureSpace(28);
 
-    this.doc.setFillColor(...this.C.codeBg);
-    this.doc.roundedRect(startX, this.y, w, 28, 3, 3, 'F');
-    this.doc.setDrawColor(...this.C.codeText);
-    this.doc.setLineWidth(0.4);
-    this.doc.roundedRect(startX, this.y, w, 28, 3, 3, 'S');
+    // Some breathing room
+    ctx.y += 4;
 
-    this.doc.setTextColor(...this.C.codeText);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(8);
-    this.doc.text('PHARMACY CODE — PRESENT TO PHARMACIST', startX + w / 2, this.y + 7, {
-      align: 'center',
-    });
+    doc.setDrawColor(30, 30, 30);
+    doc.setLineWidth(0.5);
+    doc.line(MARGIN_L, ctx.y, PAGE_W - MARGIN_R, ctx.y);
 
-    // Spaced characters for the code
-    const spaced = shortCode.split('').join('   ');
-    this.doc.setFont('courier', 'bold');
-    this.doc.setFontSize(22);
-    this.doc.text(spaced, startX + w / 2, this.y + 21, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(30, 30, 30);
+    ctx.y += 4.5;
+    doc.text('DISPENSING CODE', MARGIN_L, ctx.y);
+    ctx.y += 6;
 
-    this.y += 34;
+    // Code box — outlined rectangle, large monospace-style text
+    const boxW = 60;
+    const boxH = 14;
+    const boxX = MARGIN_L;
+    doc.setDrawColor(60, 60, 60);
+    doc.setLineWidth(0.5);
+    doc.rect(boxX, ctx.y, boxW, boxH);
+
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(20, 20, 20);
+    doc.text(shortCode, boxX + boxW / 2, ctx.y + boxH / 2 + 3, { align: 'center' });
+
+    // Hint text to the right of the box
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 100, 100);
+    const hintX = boxX + boxW + 6;
+    const hintW = CONTENT_W - boxW - 6;
+    const hint =
+      'Present this code to the pharmacist. ' +
+      'The pharmacist will use it to decrypt and access the prescription.';
+    const hintLines = doc.splitTextToSize(hint, hintW);
+    doc.text(hintLines, hintX, ctx.y + 5);
+
+    ctx.y += boxH + 6;
   }
 
-  // ── Signature area ───────────────────────────────────────────────────────
+  // ── Footer ────────────────────────────────────────────────────────────────────
 
-  private drawSignatureArea(data: PrescriptionPayload): void {
-    const startX = 9;
-    const boxW = this.PW - startX - this.MR;
+  private renderFooter(ctx: RenderContext, payload: PrescriptionPayload): void {
+    const doc = ctx.doc;
+    const pageCount = (doc as any).internal.getNumberOfPages();
 
-    this.ensureSpace(38);
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
 
-    this.doc.setDrawColor(...this.C.border);
-    this.doc.setLineWidth(0.2);
-    this.doc.line(startX, this.y, startX + boxW, this.y);
-    this.y += 8;
+      doc.setDrawColor(180, 180, 180);
+      doc.setLineWidth(0.3);
+      doc.line(MARGIN_L, PAGE_H - 14, PAGE_W - MARGIN_R, PAGE_H - 14);
 
-    const sigX = startX + boxW - 70;
-    this.doc.setDrawColor(...this.C.navy);
-    this.doc.setLineWidth(0.4);
-    this.doc.line(sigX, this.y + 12, sigX + 60, this.y + 12);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(140, 140, 140);
 
-    this.doc.setTextColor(...this.C.navy);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(8.5);
-    this.doc.text(data.doctorName, sigX + 30, this.y + 18, { align: 'center' });
+      doc.text(`Doctor: ${payload.doctorName}`, MARGIN_L, PAGE_H - 10);
+      doc.text(`Page ${i} of ${pageCount}`, PAGE_W / 2, PAGE_H - 10, { align: 'center' });
+      doc.text('Confidential medical document', PAGE_W - MARGIN_R, PAGE_H - 10, { align: 'right' });
 
-    this.doc.setTextColor(...this.C.textMid);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(7);
-    this.doc.text('Prescribing Physician', sigX + 30, this.y + 22, { align: 'center' });
-    this.doc.text(
-      `Date: ${new Date(data.timestamp).toLocaleDateString('en-GB')}`,
-      sigX + 30,
-      this.y + 26,
-      { align: 'center' }
-    );
-
-    // Stamp placeholder
-    this.doc.setDrawColor(...this.C.border);
-    this.doc.setLineWidth(0.3);
-    const stampX = startX + 15;
-    const stampY = this.y;
-    this.doc.roundedRect(stampX, stampY, 30, 26, 2, 2, 'S');
-    this.doc.setTextColor(...this.C.textLight);
-    this.doc.setFont('helvetica', 'italic');
-    this.doc.setFontSize(7);
-    this.doc.text('Medical', stampX + 15, stampY + 11, { align: 'center' });
-    this.doc.text('Stamp', stampX + 15, stampY + 15, { align: 'center' });
-
-    this.y += 30;
+      // Signature line on last page
+      if (i === pageCount) {
+        const sigY = PAGE_H - 22;
+        doc.setDrawColor(60, 60, 60);
+        doc.setLineWidth(0.3);
+        doc.line(PAGE_W - MARGIN_R - 44, sigY, PAGE_W - MARGIN_R, sigY);
+        doc.setFontSize(7);
+        doc.setTextColor(120, 120, 120);
+        doc.text("Doctor's signature", PAGE_W - MARGIN_R - 22, sigY + 3.5, { align: 'center' });
+      }
+    }
   }
 
-  // ── Footer ───────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────────
 
-  private drawFooter(page: number, total: number): void {
-    const footY = this.PH - 14;
-
-    this.doc.setDrawColor(...this.C.border);
-    this.doc.setLineWidth(0.2);
-    this.doc.line(9, footY, this.PW - this.MR, footY);
-
-    this.doc.setTextColor(...this.C.textLight);
-    this.doc.setFont('helvetica', 'italic');
-    this.doc.setFontSize(6.5);
-    this.doc.text(
-      'This document is an encrypted electronic prescription. Valid only when dispensed through the EHR system.',
-      9,
-      footY + 5
-    );
-
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.text(`Page ${page} / ${total}`, this.PW - this.MR, footY + 5, { align: 'right' });
+  private formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return dateStr;
+    }
   }
+}
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+// ─── Render Context ───────────────────────────────────────────────────────────
 
-  private ensureSpace(needed: number): void {
-    if (this.y + needed > this.PH - this.MB) {
+class RenderContext {
+  y = 0;
+
+  constructor(public doc: jsPDF) {}
+
+  ensureSpace(neededMm: number): void {
+    if (this.y + neededMm > PAGE_H - 22) {
       this.doc.addPage();
-      this.y = this.MT;
-      this.drawSideStripe();
+      this.y = 18;
     }
   }
 }

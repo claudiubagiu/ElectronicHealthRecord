@@ -362,7 +362,7 @@ export class BlockchainService {
   ): Promise<bigint> {
     try {
       const signed = await this.getSigned();
-      const tx = await signed['addLabAnalysis'](title, ipfsCid, patientAddr, labTechName);
+      const tx = await signed['addLabAnalysis'](title, ipfsCid, patientAddr, labTechName); // FIX: title adăugat
       const receipt: ContractTransactionReceipt = await tx.wait();
 
       const iface = this.contract!.interface;
@@ -532,7 +532,6 @@ export class BlockchainService {
 
       console.error('Failed to get prescription by code hash:', error);
 
-      // Distinguish "not found" revert from a generic error
       const reason: string = (
         error?.reason ??
         error?.data?.message ??

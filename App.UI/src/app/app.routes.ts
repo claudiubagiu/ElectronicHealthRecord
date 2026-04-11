@@ -149,4 +149,8 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(['Doctor'])],
   },
+  {
+    path: '',
+    loadComponent: () => import('./features/home/pages/home/home').then((m) => m.Home),
+  },
 ];

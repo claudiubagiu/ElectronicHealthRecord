@@ -1,0 +1,363 @@
+// ── Variables ─────────────────────────────────────────────────────────────────
+$blue: #1565c0;
+$teal: #00897b;
+$purple: #7b1fa2;
+$cyan: #0288d1;
+$text: #212121;
+$muted: rgba(0, 0, 0, 0.55);
+
+// ── Base ──────────────────────────────────────────────────────────────────────
+.home-page {
+  overflow-x: hidden;
+  background: #fafafa;
+}
+
+// ── Divider ───────────────────────────────────────────────────────────────────
+.section-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.08) 20%,
+    rgba(0, 0, 0, 0.08) 80%,
+    transparent 100%
+  );
+  margin: 0 80px;
+
+  @media (max-width: 768px) {
+    margin: 0 24px;
+  }
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────────
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 48px;
+  padding: 56px 80px 64px 80px;
+  background: #fafafa;
+  box-sizing: border-box;
+
+  @media (max-width: 960px) {
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 48px 24px;
+    text-align: center;
+  }
+}
+
+.hero-content {
+  flex: 1;
+  max-width: 520px;
+  padding-top: 32px;
+}
+
+.hero-content h1 {
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: $text;
+  margin: 0 0 20px;
+}
+
+.hero-accent {
+  background: linear-gradient(90deg, $blue, $cyan);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: $muted;
+  margin: 0 0 36px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+
+  @media (max-width: 960px) {
+    justify-content: center;
+  }
+}
+
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  @media (max-width: 960px) {
+    justify-content: center;
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+
+  .stat-number {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: $blue;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.stat-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+// ── Hero image ────────────────────────────────────────────────────────────────
+.hero-image-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 700px;
+  padding-top: 16px;
+
+  @media (max-width: 960px) {
+    max-width: 100%;
+    padding-top: 0;
+  }
+}
+
+.hero-image {
+  width: 100%;
+  display: block;
+
+  -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 18%,
+      black 82%,
+      transparent 100%
+    ),
+    linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-composite: destination-in;
+
+  mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  mask-composite: intersect;
+
+  animation: float 5s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+.btn-primary {
+  background: $blue !important;
+  color: white !important;
+  border-radius: 10px !important;
+  padding: 0 24px !important;
+  height: 48px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  box-shadow: 0 4px 16px rgba(21, 101, 192, 0.25) !important;
+
+  mat-icon {
+    margin-right: 6px;
+  }
+  &:hover {
+    background: #0d47a1 !important;
+  }
+}
+
+.btn-secondary {
+  border-radius: 10px !important;
+  height: 48px !important;
+  padding: 0 24px !important;
+  font-weight: 600 !important;
+  border-color: rgba(21, 101, 192, 0.4) !important;
+  color: $blue !important;
+}
+
+.btn-large {
+  height: 56px !important;
+  font-size: 1rem !important;
+}
+
+// ── Sections ──────────────────────────────────────────────────────────────────
+.section {
+  padding: 80px;
+  background: #fafafa;
+
+  @media (max-width: 768px) {
+    padding: 56px 24px;
+  }
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: $text;
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+.section-subtitle {
+  text-align: center;
+  color: $muted;
+  font-size: 1rem;
+  margin: 0 0 48px;
+}
+
+// ── How it works ──────────────────────────────────────────────────────────────
+.steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.step {
+  flex: 1;
+  min-width: 180px;
+  max-width: 220px;
+  text-align: center;
+  padding: 28px 20px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 14px 0 8px;
+    color: $text;
+  }
+
+  p {
+    font-size: 0.85rem;
+    color: $muted;
+    line-height: 1.55;
+    margin: 0;
+  }
+}
+
+.step-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+
+  mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+    color: white;
+  }
+}
+
+.step-blue {
+  background: $blue;
+}
+.step-teal {
+  background: $teal;
+}
+.step-purple {
+  background: $purple;
+}
+.step-cyan {
+  background: $cyan;
+}
+
+// ── Features ──────────────────────────────────────────────────────────────────
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  padding: 28px 24px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(21, 101, 192, 0.12);
+    transform: translateY(-4px);
+  }
+
+  h3 {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: $text;
+    margin: 12px 0 8px;
+  }
+
+  p {
+    font-size: 0.85rem;
+    color: $muted;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .feature-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: $blue;
+  }
+}
+
+// ── CTA ───────────────────────────────────────────────────────────────────────
+.cta-card {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  padding-top: 16px;
+
+  .cta-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: $blue;
+    margin-bottom: 24px;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    color: $text;
+    margin: 0 0 12px;
+  }
+
+  p {
+    color: $muted;
+    font-size: 1rem;
+    margin: 0 0 32px;
+  }
+}

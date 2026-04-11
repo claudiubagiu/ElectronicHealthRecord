@@ -1,0 +1,145 @@
+<div class="home-page">
+  <!-- ═══════════════════════ HERO ═══════════════════════ -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>
+        Medical records,<br />
+        <span class="hero-accent">secured on-chain.</span>
+      </h1>
+      <p class="hero-subtitle">
+        MedChain connects patients, doctors, pharmacists and laboratories in a single decentralized
+        ecosystem — giving you full control over your medical data.
+      </p>
+      <div class="hero-actions">
+        @if (!(isAuthenticated$ | async)) {
+        <button mat-flat-button class="btn-primary" routerLink="/register">
+          <mat-icon>rocket_launch</mat-icon>
+          Get Started
+        </button>
+        }
+        <button mat-stroked-button class="btn-secondary" routerLink="/about">Learn More</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-number">100%</span>
+          <span class="stat-label">On-chain</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-number">4</span>
+          <span class="stat-label">Roles</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-number">IPFS</span>
+          <span class="stat-label">Storage</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-image-wrapper">
+      <img src="hero.png" alt="MedChain ecosystem" class="hero-image" />
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ═══════════════════════ HOW IT WORKS ═══════════════════════ -->
+  <section class="section how-it-works">
+    <h2 class="section-title">How it works</h2>
+    <p class="section-subtitle">Four actors, one secure chain.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon step-blue"><mat-icon>person</mat-icon></div>
+        <h3>Patient</h3>
+        <p>Own your records. Grant or revoke access to any healthcare provider at any time.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon step-teal"><mat-icon>medical_services</mat-icon></div>
+        <h3>Doctor</h3>
+        <p>Add diagnostics and prescriptions to a tamper-proof ledger with a single transaction.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon step-purple"><mat-icon>local_pharmacy</mat-icon></div>
+        <h3>Pharmacist</h3>
+        <p>Verify and dispense prescriptions instantly — no phone calls, no paper trails.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon step-cyan"><mat-icon>biotech</mat-icon></div>
+        <h3>Lab Technician</h3>
+        <p>Upload lab analyses directly to IPFS and link them to the patient's on-chain profile.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ═══════════════════════ FEATURES ═══════════════════════ -->
+  <section class="section features">
+    <h2 class="section-title">Why MedChain?</h2>
+    <p class="section-subtitle">Built for transparency, privacy, and speed.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <mat-icon class="feature-icon">link</mat-icon>
+        <h3>Immutable Records</h3>
+        <p>
+          Every diagnostic, prescription and lab result is stored on-chain — no one can alter the
+          history.
+        </p>
+      </div>
+      <div class="feature-card">
+        <mat-icon class="feature-icon">lock</mat-icon>
+        <h3>Patient-Controlled Access</h3>
+        <p>
+          You decide who sees your data. Revoke access at any moment directly from your dashboard.
+        </p>
+      </div>
+      <div class="feature-card">
+        <mat-icon class="feature-icon">cloud_done</mat-icon>
+        <h3>IPFS File Storage</h3>
+        <p>
+          Large medical documents live on IPFS — decentralized, content-addressed and
+          censorship-resistant.
+        </p>
+      </div>
+      <div class="feature-card">
+        <mat-icon class="feature-icon">account_balance_wallet</mat-icon>
+        <h3>Web3 Identity</h3>
+        <p>
+          Login with MetaMask — no passwords, no central authority, just your cryptographic
+          signature.
+        </p>
+      </div>
+      <div class="feature-card">
+        <mat-icon class="feature-icon">speed</mat-icon>
+        <h3>Microservice Architecture</h3>
+        <p>Independent APIs for users, diagnostics, medications and more — scalable by design.</p>
+      </div>
+      <div class="feature-card">
+        <mat-icon class="feature-icon">shield</mat-icon>
+        <h3>Role-Based Access</h3>
+        <p>
+          Granular permissions ensure doctors, pharmacists and lab techs only see what they're
+          allowed to.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ CTA — doar pentru vizitatori ═══════════════════════ -->
+  @if (!(isAuthenticated$ | async)) {
+  <div class="section-divider"></div>
+
+  <section class="section cta">
+    <div class="cta-card">
+      <mat-icon class="cta-icon">local_hospital</mat-icon>
+      <h2>Ready to take control of your health data?</h2>
+      <p>Connect your wallet and join the decentralized healthcare revolution.</p>
+      <button mat-flat-button class="btn-primary btn-large" routerLink="/register">
+        <mat-icon>account_balance_wallet</mat-icon>
+        Connect Wallet & Register
+      </button>
+    </div>
+  </section>
+  }
+</div>

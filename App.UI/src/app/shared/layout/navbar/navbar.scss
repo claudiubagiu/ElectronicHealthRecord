@@ -45,9 +45,14 @@
   gap: 8px;
 
   .login-btn {
-    color: white;
-    border-color: rgba(255, 255, 255, 0.6);
-    background-color: orange;
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    background-color: #42a5f5 !important;
+    border-radius: 8px !important;
+
+    &:hover {
+      background-color: #1e88e5 !important;
+    }
 
     mat-icon {
       margin-right: 4px;
@@ -58,6 +63,8 @@
   }
 
   .register-btn {
+    border-radius: 8px !important;
+
     mat-icon {
       margin-right: 4px;
       font-size: 18px;

@@ -1,202 +1,100 @@
 .diagnostics-page {
-  min-height: 100vh;
   display: flex;
-  justify-content: center;
   align-items: flex-start;
-  padding: 40px 16px;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  padding: 32px 16px;
+  box-sizing: border-box;
   background: #fafafa;
 }
 
 .diagnostics-card {
   width: 100%;
   max-width: 720px;
-  background: white;
-  border-radius: 16px;
-  padding: 40px 32px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-// Header
+// ── Header ────────────────────────────────────────────────────────────────────
+
 .card-header {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   margin-bottom: 32px;
+  position: relative;
+}
 
-  h1 {
-    font-size: 1.6rem;
-    font-weight: 600;
-    margin: 12px 0 4px;
-    color: #212121;
-  }
-
-  .subtitle {
-    font-size: 0.9rem;
-    color: rgba(0, 0, 0, 0.5);
-    margin: 0;
-  }
+.back-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .icon-wrapper {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: rgba(245, 124, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(21, 101, 192, 0.1);
+  margin-bottom: 14px;
 
   mat-icon {
-    color: #f57c00;
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #1565c0;
   }
 }
 
-// State containers
+h1 {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #212121;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+// ── States ────────────────────────────────────────────────────────────────────
+
 .state-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 48px 0;
+  padding: 56px 0;
   color: rgba(0, 0, 0, 0.45);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+
+  p { margin: 0; }
 
   &.empty .empty-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    color: rgba(0, 0, 0, 0.2);
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    color: rgba(0, 0, 0, 0.18);
   }
 }
 
-// List
+// ── List ──────────────────────────────────────────────────────────────────────
+
 .diagnostics-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.diagnostic-item {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: box-shadow 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
-  }
-}
-
-// Item header
-.item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: 12px;
 }
 
-.item-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #212121;
-}
+// ── Responsive ────────────────────────────────────────────────────────────────
 
-.item-date {
-  font-size: 0.78rem;
-  color: rgba(0, 0, 0, 0.45);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-// Meta row
-.item-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.6);
-
-  .meta-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    color: rgba(0, 0, 0, 0.35);
-    flex-shrink: 0;
-  }
-
-  .address, .cid {
-    font-family: monospace;
-    font-size: 0.8rem;
-    color: rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 400px;
-  }
-}
-
-// File row
-.item-file {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.03);
-  cursor: pointer;
-  transition: background 0.15s ease;
-  margin-top: 4px;
-
-  &:hover {
-    background: rgba(245, 124, 0, 0.06);
-  }
-
-  .file-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-    color: #f57c00;
-    flex-shrink: 0;
-  }
-
-  .file-name {
-    font-size: 0.85rem;
-    color: #212121;
-    font-weight: 500;
-    flex: 1;
-  }
-
-  .open-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    color: rgba(0, 0, 0, 0.35);
-    flex-shrink: 0;
-  }
-
-  .file-spinner {
-    flex-shrink: 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .diagnostics-card {
-    padding: 24px 16px;
-  }
-
-  .item-header {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .item-meta .cid {
-    max-width: 200px;
+@media (max-width: 600px) {
+  .diagnostics-page {
+    padding: 16px 12px;
   }
 }

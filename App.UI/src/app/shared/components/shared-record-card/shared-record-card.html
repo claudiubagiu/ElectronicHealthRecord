@@ -1,0 +1,58 @@
+<div class="shared-record-card">
+
+  <div class="card-header">
+    <span class="card-title">{{ displayTitle }}</span>
+    @if (dateMs) {
+      <span class="card-date">{{ dateMs | date: 'd MMM y, HH:mm' }}</span>
+    }
+  </div>
+
+  @if (authorName) {
+    <div class="card-meta">
+      <mat-icon class="meta-icon">medical_services</mat-icon>
+      <span>{{ authorName }}</span>
+    </div>
+  }
+
+  @if (status) {
+    <div class="card-meta">
+      <mat-icon class="meta-icon status-icon"
+        [class.icon-active]="status === 'active'"
+        [class.icon-dispensed]="status === 'dispensed'">
+        {{ status === 'active' ? 'local_pharmacy' : 'check_circle' }}
+      </mat-icon>
+      <span class="status-chip"
+        [class.status-active]="status === 'active'"
+        [class.status-dispensed]="status === 'dispensed'">
+        {{ status === 'active' ? 'Available at pharmacy' : 'Already dispensed' }}
+      </span>
+    </div>
+  }
+
+  @if (walletAddress) {
+    <div class="card-meta">
+      <mat-icon class="meta-icon">account_balance_wallet</mat-icon>
+      <span class="mono">{{ shortWallet }}</span>
+    </div>
+  }
+
+  @if (ipfsCid) {
+    <div class="card-meta">
+      <mat-icon class="meta-icon">link</mat-icon>
+      <span class="mono cid">{{ shortCid }}</span>
+    </div>
+  }
+
+  <div class="card-footer" (click)="!isDownloading && downloadClick.emit()">
+    <div class="footer-left">
+      <mat-icon class="lock-icon">lock</mat-icon>
+      <span>Encrypted document</span>
+    </div>
+    @if (isDownloading) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      <mat-icon class="download-icon">download</mat-icon>
+    }
+  </div>
+
+</div>

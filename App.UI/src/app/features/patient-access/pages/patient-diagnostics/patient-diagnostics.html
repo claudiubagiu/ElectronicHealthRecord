@@ -1,12 +1,17 @@
 <div class="patient-diagnostics-page">
   <div class="patient-diagnostics-card">
 
+    <!-- Header -->
     <div class="card-header">
+      <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Back to patient profile">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+
       <div class="icon-wrapper">
         <mat-icon>folder_shared</mat-icon>
       </div>
       <h1>{{ patientName }}</h1>
-      <p class="subtitle">Health records stored on the blockchain</p>
+      <p class="subtitle">Diagnoses stored on the blockchain</p>
     </div>
 
     <!-- Loading -->
@@ -29,39 +34,16 @@
     @if (!isLoading && diagnoses.length > 0) {
       <div class="diagnostics-list">
         @for (d of diagnoses; track d.id) {
-          <div class="diagnostic-item">
-
-            <div class="item-header">
-              <span class="item-title">{{ d.title }}</span>
-              <span class="item-date">{{ formatTimestamp(d.timestamp) | date: 'dd MMM yyyy, HH:mm' }}</span>
-            </div>
-
-            <div class="item-meta">
-              <mat-icon class="meta-icon">medical_services</mat-icon>
-              <span>Diagnosed by <strong>{{ d.doctorName }}</strong></span>
-            </div>
-
-            <div class="item-meta">
-              <mat-icon class="meta-icon">account_balance_wallet</mat-icon>
-              <span class="address">{{ shortenAddress(d.doctorAddr) }}</span>
-            </div>
-
-            <div class="item-meta">
-              <mat-icon class="meta-icon">link</mat-icon>
-              <span class="cid">{{ d.ipfsCid }}</span>
-            </div>
-
-            <div class="item-file" (click)="openFile(d)">
-              <mat-icon class="file-icon">lock</mat-icon>
-              <span class="file-name">Encrypted document</span>
-              @if (downloadingId === d.id) {
-                <mat-spinner diameter="16" class="file-spinner"></mat-spinner>
-              } @else {
-                <mat-icon class="open-icon">download</mat-icon>
-              }
-            </div>
-
-          </div>
+          <app-shared-record-card
+            type="diagnosis"
+            [title]="d.title"
+            [timestamp]="Number(d.timestamp)"
+            [authorName]="d.doctorName"
+            [walletAddress]="d.doctorAddr"
+            [ipfsCid]="d.ipfsCid"
+            [isDownloading]="downloadingId === d.id"
+            (downloadClick)="openFile(d)">
+          </app-shared-record-card>
         }
       </div>
     }

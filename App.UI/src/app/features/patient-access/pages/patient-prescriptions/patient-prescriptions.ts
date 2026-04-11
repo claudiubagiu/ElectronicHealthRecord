@@ -1,18 +1,18 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatePipe } from '@angular/common';
-import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { PrescriptionDecryptionService } from '../../../prescriptions/services/prescription-decryption.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { Prescription } from '../../../../core/models/blockchain.model';
+import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
+import { SharedRecordCard } from '../../../../shared/components/shared-record-card/shared-record-card';
 
 @Component({
   selector: 'app-patient-prescriptions',
   templateUrl: './patient-prescriptions.html',
   styleUrls: ['./patient-prescriptions.scss'],
   standalone: true,
-  imports: [...MAT_COMMON_IMPORTS],
+  imports: [...MAT_COMMON_IMPORTS, SharedRecordCard],
 })
 export class PatientPrescriptions implements OnInit {
   private route = inject(ActivatedRoute);
@@ -21,13 +21,15 @@ export class PatientPrescriptions implements OnInit {
   private decryptionService = inject(PrescriptionDecryptionService);
   private notify = inject(NotificationService);
 
+  patientId = '';
   patientName = '';
   patientWalletAddress = '';
-  patientId = '';
 
   prescriptions: Prescription[] = [];
   isLoading = false;
   openingId: bigint | null = null;
+
+  readonly Number = Number;
 
   ngOnInit(): void {
     this.patientId = this.route.snapshot.paramMap.get('patientId') ?? '';
@@ -36,11 +38,6 @@ export class PatientPrescriptions implements OnInit {
     this.loadPrescriptions();
   }
 
-  /**
-   * Fetches all on-chain prescriptions for the patient using their wallet address.
-   * The doctor has active on-chain access, so the contract call will succeed.
-   * Results are sorted most-recent first.
-   */
   async loadPrescriptions(): Promise<void> {
     if (!this.patientWalletAddress) {
       this.notify.showError('Missing patient wallet address.');
@@ -59,11 +56,6 @@ export class PatientPrescriptions implements OnInit {
     }
   }
 
-  /**
-   * Decrypts and opens the prescription PDF for the doctor.
-   * Uses the patient Lit Protocol path — the doctor's on-chain access
-   * satisfies the ACCs, so decryption will succeed without a patient signature.
-   */
   async openPrescription(prescription: Prescription): Promise<void> {
     this.openingId = prescription.id;
     try {
@@ -75,24 +67,6 @@ export class PatientPrescriptions implements OnInit {
     }
   }
 
-  /**
-   * Converts a blockchain bigint timestamp (seconds) to a JavaScript Date.
-   */
-  formatTimestamp(timestamp: bigint): Date {
-    return new Date(Number(timestamp) * 1000);
-  }
-
-  /**
-   * Returns a shortened wallet address in the format 0x1234...abcd.
-   */
-  shortenAddress(address: string): string {
-    if (!address || address === '0x0000000000000000000000000000000000000000') return '—';
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  }
-
-  /**
-   * Navigates back to the patient's profile page.
-   */
   goBack(): void {
     this.router.navigate(['/patient', this.patientId, 'profile'], {
       queryParams: {

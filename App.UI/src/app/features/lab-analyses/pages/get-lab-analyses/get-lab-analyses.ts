@@ -1,28 +1,32 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { Web3Service } from '../../../../core/services/web3.service';
 import { LabAnalysisService } from '../../services/lab-analysis.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { LabAnalysis } from '../../../../core/models/blockchain.model';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
+import { SharedRecordCard } from '../../../../shared/components/shared-record-card/shared-record-card';
 
 @Component({
   selector: 'app-get-lab-analyses',
   templateUrl: './get-lab-analyses.html',
   styleUrls: ['./get-lab-analyses.scss'],
   standalone: true,
-  imports: [...MAT_COMMON_IMPORTS],
+  imports: [...MAT_COMMON_IMPORTS, SharedRecordCard],
 })
 export class GetLabAnalyses implements OnInit {
   private blockchainService = inject(BlockchainService);
   private web3Service = inject(Web3Service);
-  private decryptionService = inject(LabAnalysisService);
+  private labAnalysisService = inject(LabAnalysisService);
   private notify = inject(NotificationService);
+  private router = inject(Router);
 
   analyses: LabAnalysis[] = [];
   isLoading = false;
   downloadingId: bigint | null = null;
+
+  readonly Number = Number;
 
   ngOnInit(): void {
     this.loadAnalyses();
@@ -39,9 +43,9 @@ export class GetLabAnalyses implements OnInit {
 
     this.isLoading = true;
     try {
-      this.analyses = await this.blockchainService.getPatientLabAnalyses(address);
-    } catch (error: any) {
-      console.error('[GetLabAnalyses] error:', error);
+      const all = await this.blockchainService.getPatientLabAnalyses(address);
+      this.analyses = all.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
+    } catch {
       this.notify.showError('Failed to load lab analyses.');
     } finally {
       this.isLoading = false;
@@ -51,7 +55,7 @@ export class GetLabAnalyses implements OnInit {
   async openFile(analysis: LabAnalysis): Promise<void> {
     this.downloadingId = analysis.id;
     try {
-      await this.decryptionService.decryptAndOpen(analysis);
+      await this.labAnalysisService.decryptAndOpen(analysis);
     } catch {
       this.notify.showError('Failed to decrypt file.');
     } finally {
@@ -59,11 +63,7 @@ export class GetLabAnalyses implements OnInit {
     }
   }
 
-  formatTimestamp(timestamp: bigint): Date {
-    return new Date(Number(timestamp) * 1000);
-  }
-
-  shortenAddress(address: string): string {
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  goBack(): void {
+    this.router.navigate(['/profile']);
   }
 }

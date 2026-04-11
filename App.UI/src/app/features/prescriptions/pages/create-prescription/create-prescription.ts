@@ -62,6 +62,7 @@ export class CreatePrescription implements OnInit, OnDestroy {
   buildForm(): void {
     this.form = this.fb.group({
       patientSearch: ['', [Validators.required, this.patientSelectedValidator.bind(this)]],
+      title: ['', Validators.required],
       medications: this.fb.array([this.createMedicationRow()]),
       notes: [''],
     });
@@ -174,6 +175,7 @@ export class CreatePrescription implements OnInit, OnDestroy {
 
       const result = await this.submissionService.submit({
         formData: {
+          title: this.form.value.title ?? '',
           medications: this.medications.value,
           notes: this.form.value.notes ?? '',
         },

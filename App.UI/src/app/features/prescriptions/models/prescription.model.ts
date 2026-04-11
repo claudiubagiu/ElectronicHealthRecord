@@ -6,6 +6,7 @@ export interface PrescriptionMedication {
 }
 
 export interface PrescriptionFormData {
+  title: string;
   medications: PrescriptionMedication[];
   notes: string;
 }

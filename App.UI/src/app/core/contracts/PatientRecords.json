@@ -1,5 +1,5 @@
 {
-  "address": "0x5C244b03A445d1CF440acCAA7D3481a49a79d00A",
+  "address": "0xA05DaF684A30a331F468457FBae29A92435a7DeB",
   "abi": [
     {
       "anonymous": false,
@@ -251,6 +251,11 @@
     },
     {
       "inputs": [
+        {
+          "internalType": "string",
+          "name": "title",
+          "type": "string"
+        },
         {
           "internalType": "string",
           "name": "ipfsCid",
@@ -562,6 +567,11 @@
             },
             {
               "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
               "name": "ipfsCid",
               "type": "string"
             },
@@ -640,6 +650,11 @@
               "internalType": "uint256",
               "name": "id",
               "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
             },
             {
               "internalType": "string",

@@ -29,19 +29,19 @@ export interface NavItem {
  */
 const ROLE_NAV_ITEMS: NavItem[] = [
   {
+    label: 'Access Management',
+    route: '/access-management',
+    icon: 'admin_panel_settings',
+    roles: ['Patient'],
+  },
+  { label: 'Patient Access', route: '/patient-access', icon: 'manage_accounts', roles: ['Doctor'] },
+  {
     label: 'Add Diagnostic',
     route: '/add-diagnostic',
     icon: 'medical_services',
     roles: ['Doctor'],
   },
   { label: 'My Diagnostics', route: '/diagnostics', icon: 'assignment', roles: ['Patient'] },
-  { label: 'Patient Access', route: '/patient-access', icon: 'manage_accounts', roles: ['Doctor'] },
-  {
-    label: 'Access Management',
-    route: '/access-management',
-    icon: 'admin_panel_settings',
-    roles: ['Patient'],
-  },
   {
     label: 'Add Medication',
     route: '/add-medication',
@@ -67,8 +67,8 @@ const ROLE_NAV_ITEMS: NavItem[] = [
     roles: ['Patient'],
   },
   {
-    label: 'Create Prescription',
-    route: '/create-prescription',
+    label: 'Add Prescription',
+    route: '/add-prescription',
     icon: 'receipt_long',
     roles: ['Doctor'],
   },

@@ -27,9 +27,9 @@ contract EHRAccess {
         bool    exists;
     }
 
-    // ── NEW ──
     struct Prescription {
         uint256 id;
+        string  title;
         string  ipfsCid;
         address patientAddr;
         address doctorAddr;
@@ -52,7 +52,7 @@ contract EHRAccess {
     uint256 private _nextLabAnalysisId;
 
     mapping(uint256 => Prescription)  private _prescriptions;
-    uint256 private _nextPrescriptionId = 1; // starts at 1 so 0 means "not found"
+    uint256 private _nextPrescriptionId = 1;
 
     mapping(bytes32 => uint256)       private _codeHashToPrescriptionId;
     mapping(address => uint256[])     private _patientPrescriptions;
@@ -86,7 +86,6 @@ contract EHRAccess {
         uint256 timestamp
     );
 
-    // ── NEW ──
     event PrescriptionAdded(
         uint256 indexed prescriptionId,
         address indexed patient,
@@ -242,24 +241,21 @@ contract EHRAccess {
         emit LabAnalysisAdded(id, patientAddr, msg.sender, ipfsCid, block.timestamp);
     }
 
-    /// @notice Fetch a single lab analysis. Caller must be the patient or have active access.
     function getLabAnalysis(uint256 labAnalysisId)
         external
         view
         returns (LabAnalysis memory)
     {
-        LabAnalysis storage a = _labAnalyses[labAnalysisId];
-        require(a.exists, "EHRAccess: lab analysis not found");
+        LabAnalysis storage l = _labAnalyses[labAnalysisId];
+        require(l.exists, "EHRAccess: lab analysis not found");
         require(
-            msg.sender == a.patientAddr ||
-            msg.sender == a.labTechAddr ||
-            (_accessExpiry[a.patientAddr][msg.sender] > block.timestamp),
+            msg.sender == l.patientAddr ||
+            (_accessExpiry[l.patientAddr][msg.sender] > block.timestamp),
             "EHRAccess: not authorized"
         );
-        return a;
+        return l;
     }
 
-    /// @notice Returns all lab analysis IDs for a given patient.
     function getPatientLabAnalysisIds(address patient)
         external
         view
@@ -285,6 +281,7 @@ contract EHRAccess {
     // ── Prescriptions ─────────────────────────────────────────────────────────
 
     function addPrescription(
+        string  calldata title,
         string  calldata ipfsCid,
         address          patientAddr,
         string  calldata doctorName,
@@ -294,6 +291,7 @@ contract EHRAccess {
         external
         returns (uint256 id)
     {
+        require(bytes(title).length   > 0, "EHRAccess: empty title");
         require(bytes(ipfsCid).length > 0, "EHRAccess: empty CID");
         require(patientAddr != address(0),  "EHRAccess: zero patient address");
         require(patientAddr != msg.sender,  "EHRAccess: doctor must differ from patient");
@@ -306,6 +304,7 @@ contract EHRAccess {
 
         _prescriptions[id] = Prescription({
             id:                 id,
+            title:              title,
             ipfsCid:            ipfsCid,
             patientAddr:        patientAddr,
             doctorAddr:         msg.sender,

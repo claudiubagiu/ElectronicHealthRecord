@@ -76,6 +76,21 @@
 
       <mat-divider></mat-divider>
 
+      <!-- Prescription Title -->
+      <div class="section">
+        <p class="section-label">Title *</p>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Title</mat-label>
+          <input matInput formControlName="title" placeholder="e.g. Respiratory infection treatment"/>
+          <mat-icon matSuffix>title</mat-icon>
+          @if (form.get('title')?.hasError('required') && form.get('title')?.touched) {
+          <mat-error>Title is required.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <mat-divider></mat-divider>
+
       <!-- Medications List -->
       <div class="section">
         <p class="section-label">Medications *</p>
@@ -102,9 +117,8 @@
               <mat-form-field appearance="outline" class="full">
                 <mat-label>Medication name</mat-label>
                 <input matInput formControlName="name" placeholder="e.g. Amoxicillin" />
-                <mat-icon matSuffix>medication</mat-icon>
                 @if (med.get('name')?.hasError('required') && med.get('name')?.touched) {
-                <mat-error>Required</mat-error>
+                <mat-error>Name is required.</mat-error>
                 }
               </mat-form-field>
 
@@ -113,24 +127,27 @@
                   <mat-label>Dose</mat-label>
                   <input matInput formControlName="dose" placeholder="e.g. 500mg" />
                   @if (med.get('dose')?.hasError('required') && med.get('dose')?.touched) {
-                  <mat-error>Required</mat-error>
+                  <mat-error>Required.</mat-error>
                   }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="third">
                   <mat-label>Frequency</mat-label>
-                  <input matInput formControlName="frequency" placeholder="e.g. 2x/day" />
-                  @if (med.get('frequency')?.hasError('required') && med.get('frequency')?.touched)
-                  {
-                  <mat-error>Required</mat-error>
+                  <input matInput formControlName="frequency" placeholder="e.g. 3x/day" />
+                  @if (
+                    med.get('frequency')?.hasError('required') && med.get('frequency')?.touched
+                  ) {
+                  <mat-error>Required.</mat-error>
                   }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="third">
                   <mat-label>Duration</mat-label>
                   <input matInput formControlName="duration" placeholder="e.g. 7 days" />
-                  @if (med.get('duration')?.hasError('required') && med.get('duration')?.touched) {
-                  <mat-error>Required</mat-error>
+                  @if (
+                    med.get('duration')?.hasError('required') && med.get('duration')?.touched
+                  ) {
+                  <mat-error>Required.</mat-error>
                   }
                 </mat-form-field>
               </div>
@@ -140,8 +157,8 @@
         </div>
 
         <button mat-stroked-button type="button" class="add-med-btn" (click)="addMedication()">
-          <mat-icon>add_circle</mat-icon>
-          Add Medication
+          <mat-icon>add</mat-icon>
+          Add medication
         </button>
       </div>
 
@@ -151,7 +168,7 @@
       <div class="section">
         <p class="section-label">Notes (optional)</p>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Additional notes</mat-label>
+          <mat-label>Additional instructions or notes</mat-label>
           <textarea
             matInput
             formControlName="notes"

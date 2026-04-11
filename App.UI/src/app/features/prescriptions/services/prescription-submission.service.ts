@@ -106,6 +106,7 @@ export class PrescriptionSubmissionService {
         .join('');
 
     const prescriptionId = await this.blockchainService.addPrescription(
+      formData.title,
       ipfsCid,
       patientAddress,
       doctorName,

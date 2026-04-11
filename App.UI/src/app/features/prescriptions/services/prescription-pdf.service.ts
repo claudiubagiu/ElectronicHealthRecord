@@ -11,6 +11,7 @@ export interface MedicationEntry {
 }
 
 export interface PrescriptionFormData {
+  title: string;
   medications: MedicationEntry[];
   notes: string;
 }
@@ -76,18 +77,33 @@ export class PrescriptionPdfService {
     doc.text(`Date: ${dateLabel}`, PAGE_W - MARGIN_R, 18, { align: 'right' });
     doc.text(`Doctor: ${payload.doctorName}`, PAGE_W - MARGIN_R, 23, { align: 'right' });
 
-    // Title
+    // Title label
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(20, 20, 20);
     doc.text('PRESCRIPTION', MARGIN_L, 24);
 
-    // Thin rule under title
-    doc.setDrawColor(180, 180, 180);
-    doc.setLineWidth(0.3);
-    doc.line(MARGIN_L, 27, PAGE_W - MARGIN_R, 27);
+    // Prescription title (from form)
+    if (payload.prescription.title?.trim()) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.text(payload.prescription.title, MARGIN_L, 30);
 
-    ctx.y = 33;
+      // Thin rule under prescription title
+      doc.setDrawColor(180, 180, 180);
+      doc.setLineWidth(0.3);
+      doc.line(MARGIN_L, 33, PAGE_W - MARGIN_R, 33);
+
+      ctx.y = 39;
+    } else {
+      // Thin rule under title
+      doc.setDrawColor(180, 180, 180);
+      doc.setLineWidth(0.3);
+      doc.line(MARGIN_L, 27, PAGE_W - MARGIN_R, 27);
+
+      ctx.y = 33;
+    }
   }
 
   // ── Patient block ─────────────────────────────────────────────────────────────

@@ -83,9 +83,9 @@ export class BlockchainService {
       throw new AppError({
         message:
           'Failed to connect to your wallet for signing. Please ensure MetaMask is unlocked.',
-        status: 500,
-        title: 'Signer Unavailable',
-        type: 'SIGNER_UNAVAILABLE',
+        status: 401,
+        title: 'Wallet Not Connected',
+        type: 'WALLET_NOT_CONNECTED',
       });
     }
   }
@@ -320,8 +320,6 @@ export class BlockchainService {
       return await Promise.all(ids.map((id) => this.getDiagnosis(id)));
     } catch (error) {
       if (error instanceof AppError) throw error;
-
-      console.error('Failed to get doctor diagnoses:', error);
       throw new AppError({
         message: 'Failed to retrieve your diagnoses from the blockchain.',
         status: 500,
@@ -362,7 +360,7 @@ export class BlockchainService {
   ): Promise<bigint> {
     try {
       const signed = await this.getSigned();
-      const tx = await signed['addLabAnalysis'](title, ipfsCid, patientAddr, labTechName); // FIX: title adăugat
+      const tx = await signed['addLabAnalysis'](title, ipfsCid, patientAddr, labTechName);
       const receipt: ContractTransactionReceipt = await tx.wait();
 
       const iface = this.contract!.interface;
@@ -453,6 +451,7 @@ export class BlockchainService {
    * Doctor records a new prescription on-chain.
    * The IPFS payload must already be uploaded before calling this.
    *
+   * @param title       Short title for the prescription (e.g., "Respiratory infection treatment")
    * @param ipfsCid     IPFS CID of the encrypted prescription payload
    * @param patientAddr Patient's wallet address
    * @param doctorName  Doctor's display name
@@ -461,6 +460,7 @@ export class BlockchainService {
    * @returns The on-chain prescription ID extracted from the PrescriptionAdded event
    */
   async addPrescription(
+    title: string,
     ipfsCid: string,
     patientAddr: string,
     doctorName: string,
@@ -469,7 +469,14 @@ export class BlockchainService {
   ): Promise<bigint> {
     try {
       const signed = await this.getSigned();
-      const tx = await signed['addPrescription'](ipfsCid, patientAddr, doctorName, codeHash, salt);
+      const tx = await signed['addPrescription'](
+        title,
+        ipfsCid,
+        patientAddr,
+        doctorName,
+        codeHash,
+        salt
+      );
       const receipt: ContractTransactionReceipt = await tx.wait();
 
       const iface = this.contract!.interface;
@@ -706,6 +713,7 @@ export class BlockchainService {
   private mapPrescription(raw: any): Prescription {
     return {
       id: raw.id as bigint,
+      title: raw.title as string,
       ipfsCid: raw.ipfsCid as string,
       patientAddr: raw.patientAddr as string,
       doctorAddr: raw.doctorAddr as string,

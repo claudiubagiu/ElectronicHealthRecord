@@ -22,6 +22,7 @@ export interface LabAnalysis {
 
 export interface Prescription {
   id: bigint;
+  title: string;
   ipfsCid: string;
   patientAddr: string;
   doctorAddr: string;

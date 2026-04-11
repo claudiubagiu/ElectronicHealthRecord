@@ -110,7 +110,7 @@ export const routes: Routes = [
     canActivate: [roleGuard(['Doctor'])],
   },
   {
-    path: 'create-prescription',
+    path: 'add-prescription',
     loadComponent: () =>
       import('./features/prescriptions/pages/create-prescription/create-prescription').then(
         (m) => m.CreatePrescription

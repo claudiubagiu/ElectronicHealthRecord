@@ -18,7 +18,6 @@ import { Web3Service } from '../../../../core/services/web3.service';
 import { DiagnosticDecryptionService } from '../../../diagnostics/services/diagnostic-decryption.service';
 import { PrescriptionDecryptionService } from '../../../prescriptions/services/prescription-decryption.service';
 import { LabAnalysisService } from '../../../lab-analyses/services/lab-analysis.service';
-import { MedicationService } from '../../../medications/services/medication.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { AccessRequestDto } from '../../../../core/models/access-request.model';
@@ -48,7 +47,6 @@ export class PatientProfile implements OnInit {
   private decryptionService = inject(DiagnosticDecryptionService);
   private prescriptionService = inject(PrescriptionDecryptionService);
   private labAnalysisService = inject(LabAnalysisService);
-  private medicationService = inject(MedicationService);
   private notify = inject(NotificationService);
   private router = inject(Router);
 
@@ -179,7 +177,6 @@ export class PatientProfile implements OnInit {
     try {
       await this.blockchainService.revokeAccess(request.doctorWalletAddress);
       await this.accessService.revoke(request.id);
-      await this.medicationService.deleteEnvelopes(request.doctorId, request.patientId);
       this.approvedDoctors = this.approvedDoctors.filter((r) => r.id !== request.id);
       this.notify.showSuccess(`Access revoked for ${request.doctorName}.`);
     } catch {
@@ -224,9 +221,6 @@ export class PatientProfile implements OnInit {
 
   // ── Navigation ────────────────────────────────────────────────────
 
-  goToMedications(): void {
-    this.router.navigate(['/medications']);
-  }
   goToDiagnostics(): void {
     this.router.navigate(['/diagnostics']);
   }

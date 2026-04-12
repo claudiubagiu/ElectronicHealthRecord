@@ -36,7 +36,7 @@ export class AccessManagementService {
 
   /**
    * Fetches the IDs of all doctors with approved access to a patient.
-   * Used when creating medication envelopes.
+   * Used when creating envelopes.
    */
   async getApprovedDoctorIds(patientId: string): Promise<string[]> {
     const requests = await this.getMyRequests(patientId);

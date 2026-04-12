@@ -8,29 +8,25 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AccessRequestDto } from '../../../../core/models/access-request.model';
 import { AccessRequestHistoryDto } from '../../../../core/models/access-request-history.model';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
-import { MedicationService } from '../../../medications/services/medication.service';
-import { MedicationCryptoService } from '../../../medications/services/medication-crypto.service';
 import { MedicalDataService } from '../../../medical-data/services/medical-data.service';
 import { MedicalDataCryptoService } from '../../../medical-data/services/medical-data-crypto.service';
+import { AccessHistoryListComponent } from '../../../../shared/components/access-history-list/access-history-list';
 
 @Component({
   selector: 'app-access-management',
   templateUrl: './access-management.html',
   styleUrls: ['./access-management.scss'],
   standalone: true,
-  imports: [CommonModule, ...MAT_COMMON_IMPORTS, MatTabsModule],
+  imports: [CommonModule, ...MAT_COMMON_IMPORTS, MatTabsModule, AccessHistoryListComponent],
 })
 export class AccessManagement implements OnInit {
   private service = inject(AccessManagementService);
   private blockchainService = inject(BlockchainService);
-  private medicationService = inject(MedicationService);
-  private medicationCryptoService = inject(MedicationCryptoService);
   private medicalDataService = inject(MedicalDataService);
   private medicalDataCryptoService = inject(MedicalDataCryptoService);
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
 
-  /** Default access duration: 7 days in seconds. */
   private readonly ACCESS_DURATION_SECONDS = 7 * 24 * 60 * 60;
 
   allRequests: AccessRequestDto[] = [];
@@ -83,26 +79,16 @@ export class AccessManagement implements OnInit {
   async onApprove(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
-      // 1. Blockchain first — patient signs grantAccess with 7-day duration
       await this.blockchainService.grantAccess(
         request.doctorWalletAddress,
         this.ACCESS_DURATION_SECONDS
       );
 
-      // 2. After on-chain confirmation, update in backend
       const updated = await this.service.approve(request.id);
       this.updateLocal(updated);
 
       const user = this.authService.getDecodedToken();
       if (user) {
-        // 3. Create medication envelopes for the newly approved doctor
-        try {
-          await this.medicationCryptoService.grantEnvelopesToDoctor(request.doctorId, user.userId);
-        } catch (e) {
-          console.warn('Failed to create medication envelopes for doctor:', e);
-        }
-
-        // 4. Create medical data envelopes for the newly approved doctor
         try {
           await this.medicalDataCryptoService.grantEnvelopesToDoctor(request.doctorId, user.userId);
         } catch (e) {
@@ -136,21 +122,11 @@ export class AccessManagement implements OnInit {
   async onRevoke(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
-      // 1. Blockchain — revoke on-chain
       await this.blockchainService.revokeAccess(request.doctorWalletAddress);
 
-      // 2. Backend — update access request status
       const updated = await this.service.revoke(request.id);
       this.updateLocal(updated);
 
-      // 3. Delete medication envelopes for this doctor
-      try {
-        await this.medicationService.deleteEnvelopes(request.doctorId, request.patientId);
-      } catch (e) {
-        console.warn('Failed to delete medication envelopes:', e);
-      }
-
-      // 4. Delete medical data envelopes for this doctor
       try {
         await this.medicalDataService.deleteEnvelopes(request.doctorId, request.patientId);
       } catch (e) {
@@ -170,7 +146,6 @@ export class AccessManagement implements OnInit {
     this.allRequests = this.allRequests.map((r) => (r.id === updated.id ? updated : r));
   }
 
-  /** Returns a human-readable string for the remaining time or 'Expired'. */
   getRemainingTime(expiresAt?: string): string {
     if (!expiresAt) return '';
     const now = new Date().getTime();
@@ -188,46 +163,6 @@ export class AccessManagement implements OnInit {
     if (hours > 0) return `${hours}h ${minutes}m remaining`;
     return `${minutes}m remaining`;
   }
-
-  getActionClass(action: string): string {
-    switch (action) {
-      case 'Approved':
-        return 'badge-approved';
-      case 'Rejected':
-        return 'badge-rejected';
-      case 'Revoked':
-        return 'badge-revoked';
-      case 'Expired':
-        return 'badge-expired';
-      default:
-        return '';
-    }
-  }
-
-  getActionIcon(action: string): string {
-    switch (action) {
-      case 'Approved':
-        return 'check_circle';
-      case 'Rejected':
-        return 'cancel';
-      case 'Revoked':
-        return 'block';
-      case 'Expired':
-        return 'timer_off';
-      default:
-        return '';
-    }
-  }
-
-  formatDateTime(dateStr: string): string {
-    return new Date(dateStr).toLocaleString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-    }
 
   formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('en-GB', {

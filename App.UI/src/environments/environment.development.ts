@@ -6,7 +6,6 @@ export const environment = {
     diagnostics: 'http://diagnostics.api.docker.localhost/api/Diagnostics',
     accessRequest: 'http://diagnostics.api.docker.localhost/api/AccessRequest',
     ipfs: 'http://ipfs.api.docker.localhost/api/Ipfs',
-    medications: 'http://medications.api.docker.localhost/api/Medication',
     medicalData: 'http://medicaldata.api.docker.localhost/api/MedicalRecord',
   },
 };

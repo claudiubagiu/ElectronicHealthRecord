@@ -1,0 +1,36 @@
+<div class="tab-content">
+  @if (isLoading) {
+    <div class="loading-state">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+  }
+
+  @if (!isLoading && entries.length === 0) {
+    <div class="empty-state">
+      <mat-icon>history_toggle_off</mat-icon>
+      <p>No history yet</p>
+    </div>
+  }
+
+  @if (!isLoading && entries.length > 0) {
+    <div class="rows-list">
+      @for (entry of entries; track entry.id) {
+        <div class="request-row">
+          <div class="entry-info">
+            <div class="entry-avatar">
+              <mat-icon>{{ avatarIcon }}</mat-icon>
+            </div>
+            <div class="entry-details">
+              <span class="entry-name">{{ entry[nameField] }}</span>
+              <span class="entry-date">{{ formatDateTime(entry.timestamp) }}</span>
+            </div>
+          </div>
+          <span class="status-badge" [ngClass]="getActionClass(entry.action)">
+            <mat-icon>{{ getActionIcon(entry.action) }}</mat-icon>
+            {{ entry.action }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+</div>

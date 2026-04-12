@@ -10,11 +10,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { Web3Service } from '../../../core/services/web3.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { AppError } from '../../../core/errors/app.error';
 
-/**
- * Represents a navigation item that is gated behind one or more roles.
- * If `roles` is empty, the item is visible to all authenticated users.
- */
 export interface NavItem {
   label: string;
   route: string;
@@ -22,11 +20,6 @@ export interface NavItem {
   roles: string[];
 }
 
-/**
- * Role-based navigation items.
- * To add a new role or page, simply append an entry here —
- * the navbar template iterates over this array dynamically.
- */
 const ROLE_NAV_ITEMS: NavItem[] = [
   {
     label: 'Access Management',
@@ -43,41 +36,19 @@ const ROLE_NAV_ITEMS: NavItem[] = [
   },
   { label: 'My Diagnostics', route: '/diagnostics', icon: 'assignment', roles: ['Patient'] },
   {
-    label: 'Add Medication',
-    route: '/add-medication',
-    icon: 'medication',
-    roles: ['Doctor'],
-  },
-  {
-    label: 'My Medications',
-    route: '/medications',
-    icon: 'medication',
-    roles: ['Patient'],
-  },
-  {
     label: 'Upload Analysis',
     route: '/add-lab-analysis',
     icon: 'biotech',
     roles: ['LaboratoryTechnician'],
   },
-  {
-    label: 'My Lab Analyses',
-    route: '/lab-analyses',
-    icon: 'biotech',
-    roles: ['Patient'],
-  },
+  { label: 'My Lab Analyses', route: '/lab-analyses', icon: 'biotech', roles: ['Patient'] },
   {
     label: 'Add Prescription',
     route: '/add-prescription',
     icon: 'receipt_long',
     roles: ['Doctor'],
   },
-  {
-    label: 'My Prescriptions',
-    route: '/prescriptions',
-    icon: 'receipt_long',
-    roles: ['Patient'],
-  },
+  { label: 'My Prescriptions', route: '/prescriptions', icon: 'receipt_long', roles: ['Patient'] },
   {
     label: 'Dispense Prescription',
     route: '/dispense',
@@ -120,15 +91,30 @@ export class Navbar {
   private authService = inject(AuthService);
   private router = inject(Router);
   private web3Service = inject(Web3Service);
+  private notify = inject(NotificationService);
 
   isSidenavOpen = false;
+  isLoggingIn = false;
 
   isAuthenticated$ = this.authService.isAuthenticated$;
   user$ = this.authService.user$;
   roles$ = this.authService.roles$;
 
-  /** Role-based nav items exposed to the template. */
   readonly roleNavItems = ROLE_NAV_ITEMS;
+
+  async onLogin(): Promise<void> {
+    this.isLoggingIn = true;
+    try {
+      await this.authService.login();
+      this.notify.showSuccess('Successfully connected!', 1000);
+      this.router.navigate(['/']);
+    } catch (error: unknown) {
+      const message = error instanceof AppError ? error.message : 'Login failed. Please try again.';
+      this.notify.showError(message);
+    } finally {
+      this.isLoggingIn = false;
+    }
+  }
 
   toggleSidenav(): void {
     this.isSidenavOpen = !this.isSidenavOpen;
@@ -138,10 +124,6 @@ export class Navbar {
     return this.web3Service.getShortAddress();
   }
 
-  /**
-   * Returns only the nav items that the user has access to
-   * based on their current roles.
-   */
   getVisibleItems(roles: string[]): NavItem[] {
     return this.roleNavItems.filter(
       (item) => item.roles.length === 0 || item.roles.some((r) => roles.includes(r))

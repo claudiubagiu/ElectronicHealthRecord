@@ -137,43 +137,12 @@
             History
           </ng-template>
 
-          <div class="tab-content">
-            @if (isLoadingHistory) {
-              <div class="loading-state">
-                <mat-spinner diameter="36"></mat-spinner>
-              </div>
-            }
-
-            @if (!isLoadingHistory && historyEntries.length === 0) {
-              <div class="empty-state">
-                <mat-icon>history_toggle_off</mat-icon>
-                <p>No history yet</p>
-              </div>
-            }
-
-            @if (!isLoadingHistory && historyEntries.length > 0) {
-              <div class="rows-list">
-                @for (entry of historyEntries; track entry.id) {
-                  <div class="request-row">
-                    <div class="doctor-info">
-                      <div class="doctor-avatar"><mat-icon>medical_services</mat-icon></div>
-                      <div class="doctor-details">
-                        <span class="doctor-name">{{ entry.doctorName }}</span>
-                        <span class="request-date">{{ formatDateTime(entry.timestamp) }}</span>
-                      </div>
-                    </div>
-                    <span
-                      class="status-badge"
-                      [ngClass]="getActionClass(entry.action)"
-                    >
-                      <mat-icon>{{ getActionIcon(entry.action) }}</mat-icon>
-                      {{ entry.action }}
-                    </span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
+          <app-access-history-list
+            [entries]="historyEntries"
+            [isLoading]="isLoadingHistory"
+            nameField="doctorName"
+            avatarIcon="medical_services"
+          />
         </mat-tab>
 
       </mat-tab-group>

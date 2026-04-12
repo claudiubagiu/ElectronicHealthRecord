@@ -1,0 +1,121 @@
+.tab-content {
+  padding: 24px 0 8px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 0;
+  gap: 8px;
+  color: rgba(0, 0, 0, 0.35);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+.rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.request-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.015);
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.03);
+  }
+}
+
+.entry-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.entry-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+
+  mat-icon {
+    color: rgba(0, 0, 0, 0.4);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.entry-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.entry-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #212121;
+}
+
+.entry-date {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+
+  &.badge-approved  { background: rgba(46, 125, 50, 0.1);   color: #2e7d32; }
+  &.badge-rejected  { background: rgba(198, 40, 40, 0.1);   color: #c62828; }
+  &.badge-revoked   { background: rgba(0, 0, 0, 0.07);      color: rgba(0, 0, 0, 0.5); }
+  &.badge-expired   { background: rgba(255, 152, 0, 0.1);   color: #e65100; }
+  &.badge-requested { background: rgba(21, 101, 192, 0.1);  color: #1565c0; }
+}
+
+@media (max-width: 480px) {
+  .request-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

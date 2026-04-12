@@ -233,44 +233,6 @@ services:
     networks:
       - proxy
 
-  medications.api:
-    image: ${DOCKER_REGISTRY-}medicationsapi
-    build:
-      context: Medications.Api
-      dockerfile: Dockerfile
-    container_name: medications-api
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.medications-api.rule=Host(`medications.api.docker.localhost`)"
-      - "traefik.http.routers.medications-api.entrypoints=web"
-      - "traefik.http.routers.medications-api.middlewares=cors-frontend@docker"
-      - "traefik.http.routers.medications-api.service=medications-api"
-      - "traefik.http.services.medications-api.loadbalancer.server.port=8080"
-    depends_on:
-      medications.database:
-        condition: service_started
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - proxy
-
-  medications.database:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: medications-database
-    restart: unless-stopped
-    environment:
-      - SA_PASSWORD=Password1@
-      - ACCEPT_EULA=Y
-    ports:
-      - "1436:1433"
-    expose:
-      - "1433"
-    volumes:
-      - medications_database:/var/opt/mssql
-    networks:
-      - proxy
-
   medicaldata.api:
     image: ${DOCKER_REGISTRY-}medicaldataapi
     build:
@@ -313,7 +275,6 @@ volumes:
   auth_database:
   users_database:
   diagnostics_database:
-  medications_database:
   medicaldata_database:
   rabbitmq_data:
 

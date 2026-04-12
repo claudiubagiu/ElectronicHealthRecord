@@ -9,6 +9,7 @@
     </div>
 
     <mat-tab-group animationDuration="200ms" class="access-tabs">
+
       <!-- ===== TAB 1: Request Access ===== -->
       <mat-tab>
         <ng-template mat-tab-label>
@@ -166,41 +167,14 @@
           History
         </ng-template>
 
-        <div class="tab-content">
-          @if (isLoadingHistory) {
-            <div class="loading-state">
-              <mat-spinner diameter="36"></mat-spinner>
-            </div>
-          }
-          @if (!isLoadingHistory && historyEntries.length === 0) {
-            <div class="empty-state">
-              <mat-icon>history_toggle_off</mat-icon>
-              <p>No history yet</p>
-            </div>
-          }
-          @if (!isLoadingHistory && historyEntries.length > 0) {
-            <div class="requests-list">
-              @for (entry of historyEntries; track entry.id) {
-                <div class="request-row">
-                  <div class="request-patient">
-                    <div class="patient-avatar"><mat-icon>person</mat-icon></div>
-                    <div class="patient-details">
-                      <span class="patient-name">{{ entry.patientName }}</span>
-                      <span class="request-date">{{ formatDateTime(entry.timestamp) }}</span>
-                    </div>
-                  </div>
-                  <div class="row-right">
-                    <span class="status-badge" [ngClass]="getActionClass(entry.action)">
-                      <mat-icon>{{ getActionIcon(entry.action) }}</mat-icon>
-                      {{ entry.action }}
-                    </span>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
+        <app-access-history-list
+          [entries]="historyEntries"
+          [isLoading]="isLoadingHistory"
+          nameField="patientName"
+          avatarIcon="person"
+        />
       </mat-tab>
+
     </mat-tab-group>
   </div>
 </div>

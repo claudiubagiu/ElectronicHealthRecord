@@ -1,30 +1,37 @@
 <mat-sidenav-container class="sidenav-container">
   <!-- ==================== Sidenav (mobile) ==================== -->
-  <mat-sidenav
-    #sidenav
-    mode="over"
-    [(opened)]="isSidenavOpen"
-    class="sidenav"
-  >
+  <mat-sidenav #sidenav mode="over" [(opened)]="isSidenavOpen" class="sidenav">
     <mat-nav-list>
       <!-- Navigation links -->
-      <a mat-list-item routerLink="/" routerLinkActive="active-link"
-         [routerLinkActiveOptions]="{ exact: true }" (click)="sidenav.close()">
+      <a
+        mat-list-item
+        routerLink="/"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="sidenav.close()"
+      >
         <mat-icon matListItemIcon>home</mat-icon>
         <span matListItemTitle>Home</span>
       </a>
-      <a mat-list-item routerLink="/about" routerLinkActive="active-link"
-         (click)="sidenav.close()">
+      <a mat-list-item routerLink="/about" routerLinkActive="active-link" (click)="sidenav.close()">
         <mat-icon matListItemIcon>info</mat-icon>
         <span matListItemTitle>About</span>
       </a>
-      <a mat-list-item routerLink="/services" routerLinkActive="active-link"
-         (click)="sidenav.close()">
+      <a
+        mat-list-item
+        routerLink="/services"
+        routerLinkActive="active-link"
+        (click)="sidenav.close()"
+      >
         <mat-icon matListItemIcon>build</mat-icon>
         <span matListItemTitle>Services</span>
       </a>
-      <a mat-list-item routerLink="/contact" routerLinkActive="active-link"
-         (click)="sidenav.close()">
+      <a
+        mat-list-item
+        routerLink="/contact"
+        routerLinkActive="active-link"
+        (click)="sidenav.close()"
+      >
         <mat-icon matListItemIcon>mail</mat-icon>
         <span matListItemTitle>Contact</span>
       </a>
@@ -32,53 +39,60 @@
       <mat-divider></mat-divider>
 
       <!-- Sidenav: Authenticated -->
-      @if (isAuthenticated$ | async) {
-        @if (user$ | async; as user) {
-          <div class="sidenav-user-info">
-            <mat-icon class="sidenav-avatar-icon">account_circle</mat-icon>
-            <span class="sidenav-username">{{ getShortAddress() }}</span>
-          </div>
-        }
+      @if (isAuthenticated$ | async) { @if (user$ | async; as user) {
+      <div class="sidenav-user-info">
+        <mat-icon class="sidenav-avatar-icon">account_circle</mat-icon>
+        <span class="sidenav-username">{{ getShortAddress() }}</span>
+      </div>
+      }
 
-        <!-- Role-based links (data-driven) -->
-        @if (roles$ | async; as roles) {
-          @for (item of getVisibleItems(roles); track item.route) {
-            <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link"
-               (click)="sidenav.close()">
-              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-              <span matListItemTitle>{{ item.label }}</span>
-            </a>
-          }
-        }
+      <!-- Role-based links (data-driven) -->
+      @if (roles$ | async; as roles) { @for (item of getVisibleItems(roles); track item.route) {
+      <a
+        mat-list-item
+        [routerLink]="item.route"
+        routerLinkActive="active-link"
+        (click)="sidenav.close()"
+      >
+        <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+        <span matListItemTitle>{{ item.label }}</span>
+      </a>
+      } }
 
-        <a mat-list-item routerLink="/profile" routerLinkActive="active-link"
-           (click)="sidenav.close()">
-          <mat-icon matListItemIcon>person</mat-icon>
-          <span matListItemTitle>Profile</span>
-        </a>
-        <a mat-list-item (click)="logout(); sidenav.close()">
-          <mat-icon matListItemIcon>logout</mat-icon>
-          <span matListItemTitle>Sign out</span>
-        </a>
+      <a
+        mat-list-item
+        routerLink="/profile"
+        routerLinkActive="active-link"
+        (click)="sidenav.close()"
+      >
+        <mat-icon matListItemIcon>person</mat-icon>
+        <span matListItemTitle>Profile</span>
+      </a>
+      <a mat-list-item (click)="logout(); sidenav.close()">
+        <mat-icon matListItemIcon>logout</mat-icon>
+        <span matListItemTitle>Sign out</span>
+      </a>
       } @else {
-        <!-- Sidenav: Unauthenticated -->
-        <a mat-list-item routerLink="/login" routerLinkActive="active-link"
-           (click)="sidenav.close()">
-          <mat-icon matListItemIcon>login</mat-icon>
-          <span matListItemTitle>Sign in</span>
-        </a>
-        <a mat-list-item routerLink="/register" routerLinkActive="active-link"
-           (click)="sidenav.close()">
-          <mat-icon matListItemIcon>person_add</mat-icon>
-          <span matListItemTitle>Register</span>
-        </a>
+      <!-- Sidenav: Unauthenticated -->
+      <a mat-list-item (click)="onLogin(); sidenav.close()" [class.disabled]="isLoggingIn">
+        <mat-icon matListItemIcon>login</mat-icon>
+        <span matListItemTitle>{{ isLoggingIn ? 'Connecting...' : 'Sign in' }}</span>
+      </a>
+      <a
+        mat-list-item
+        routerLink="/register"
+        routerLinkActive="active-link"
+        (click)="sidenav.close()"
+      >
+        <mat-icon matListItemIcon>person_add</mat-icon>
+        <span matListItemTitle>Register</span>
+      </a>
       }
     </mat-nav-list>
   </mat-sidenav>
 
   <!-- ==================== Main content ==================== -->
   <mat-sidenav-content>
-
     <!-- ==================== Toolbar / Navbar ==================== -->
     <mat-toolbar color="primary" class="toolbar">
       <!-- Hamburger menu button (mobile only) -->
@@ -97,69 +111,72 @@
 
       <!-- Navigation links (desktop) -->
       <nav class="nav-links">
-        <a mat-button routerLink="/" routerLinkActive="active-link"
-           [routerLinkActiveOptions]="{ exact: true }">Home</a>
-        <a mat-button routerLink="/about"    routerLinkActive="active-link">About</a>
+        <a
+          mat-button
+          routerLink="/"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+          >Home</a
+        >
+        <a mat-button routerLink="/about" routerLinkActive="active-link">About</a>
         <a mat-button routerLink="/services" routerLinkActive="active-link">Services</a>
-        <a mat-button routerLink="/contact"  routerLinkActive="active-link">Contact</a>
+        <a mat-button routerLink="/contact" routerLinkActive="active-link">Contact</a>
       </nav>
 
       <!-- ===== Desktop: Authenticated => Profile with menu ===== -->
       @if (isAuthenticated$ | async) {
-        <button
-          mat-icon-button
-          [matMenuTriggerFor]="profileMenu"
-          class="profile-button"
-          aria-label="Profile menu"
-        >
-          <mat-icon>account_circle</mat-icon>
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="profileMenu"
+        class="profile-button"
+        aria-label="Profile menu"
+      >
+        <mat-icon>account_circle</mat-icon>
+      </button>
+
+      <mat-menu #profileMenu="matMenu" xPosition="before">
+        @if (user$ | async; as user) {
+        <div class="profile-menu-header">
+          <mat-icon class="profile-menu-icon">account_circle</mat-icon>
+          <span class="profile-menu-address">{{ getShortAddress() }}</span>
+        </div>
+        }
+        <mat-divider></mat-divider>
+        <button mat-menu-item routerLink="/profile">
+          <mat-icon>person</mat-icon>
+          <span>Profile</span>
+        </button>
+        <button mat-menu-item routerLink="/settings">
+          <mat-icon>settings</mat-icon>
+          <span>Settings</span>
         </button>
 
-        <mat-menu #profileMenu="matMenu" xPosition="before">
-          @if (user$ | async; as user) {
-            <div class="profile-menu-header">
-              <mat-icon class="profile-menu-icon">account_circle</mat-icon>
-              <span class="profile-menu-address">{{ getShortAddress() }}</span>
-            </div>
-          }
-          <mat-divider></mat-divider>
-          <button mat-menu-item routerLink="/profile">
-            <mat-icon>person</mat-icon>
-            <span>Profile</span>
-          </button>
-          <button mat-menu-item routerLink="/settings">
-            <mat-icon>settings</mat-icon>
-            <span>Settings</span>
-          </button>
+        <!-- Role-based menu items (data-driven) -->
+        @if (roles$ | async; as roles) { @for (item of getVisibleItems(roles); track item.route) {
+        <button mat-menu-item [routerLink]="item.route">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </button>
+        } }
 
-          <!-- Role-based menu items (data-driven) -->
-          @if (roles$ | async; as roles) {
-            @for (item of getVisibleItems(roles); track item.route) {
-              <button mat-menu-item [routerLink]="item.route">
-                <mat-icon>{{ item.icon }}</mat-icon>
-                <span>{{ item.label }}</span>
-              </button>
-            }
-          }
-
-          <mat-divider></mat-divider>
-          <button mat-menu-item (click)="logout()">
-            <mat-icon color="warn">logout</mat-icon>
-            <span>Sign out</span>
-          </button>
-        </mat-menu>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon color="warn">logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
       } @else {
-        <!-- ===== Desktop: Unauthenticated => Login + Register ===== -->
-        <div class="auth-buttons">
-          <a mat-stroked-button routerLink="/login" class="login-btn">
-            <mat-icon>login</mat-icon>
-            Sign in
-          </a>
-          <a mat-flat-button routerLink="/register" color="accent" class="register-btn">
-            <mat-icon>person_add</mat-icon>
-            Register
-          </a>
-        </div>
+      <!-- ===== Desktop: Unauthenticated => Login + Register ===== -->
+      <div class="auth-buttons">
+        <button mat-stroked-button class="login-btn" (click)="onLogin()" [disabled]="isLoggingIn">
+          <mat-icon>{{ isLoggingIn ? 'hourglass_empty' : 'login' }}</mat-icon>
+          {{ isLoggingIn ? 'Connecting...' : 'Sign in' }}
+        </button>
+        <a mat-flat-button routerLink="/register" color="accent" class="register-btn">
+          <mat-icon>person_add</mat-icon>
+          Register
+        </a>
+      </div>
       }
     </mat-toolbar>
 

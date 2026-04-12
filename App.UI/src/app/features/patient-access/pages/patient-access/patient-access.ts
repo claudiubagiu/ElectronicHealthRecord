@@ -15,13 +15,20 @@ import { AccessRequestHistoryDto } from '../../../../core/models/access-request-
 import { PatientDto } from '../../../../core/models/patient.model';
 import { UsersService } from '../../../../core/services/users.service';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
+import { AccessHistoryListComponent } from '../../../../shared/components/access-history-list/access-history-list';
 
 @Component({
   selector: 'app-patient-access',
   templateUrl: './patient-access.html',
   styleUrls: ['./patient-access.scss'],
   standalone: true,
-  imports: [CommonModule, ...MAT_FORM_IMPORTS, MatTabsModule, MatChipsModule],
+  imports: [
+    CommonModule,
+    ...MAT_FORM_IMPORTS,
+    MatTabsModule,
+    MatChipsModule,
+    AccessHistoryListComponent,
+  ],
 })
 export class PatientAccess implements OnInit, OnDestroy {
   private usersService = inject(UsersService);
@@ -89,10 +96,6 @@ export class PatientAccess implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Loads all of the doctor's access requests and builds the status map
-   * used to show the correct action button in the search results.
-   */
   async loadMyRequests(): Promise<void> {
     this.isLoadingRequests = true;
     try {
@@ -107,9 +110,6 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Loads the full history of access request actions for this doctor.
-   */
   async loadHistory(): Promise<void> {
     this.isLoadingHistory = true;
     try {
@@ -121,16 +121,10 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Returns the current access request status for a patient, or null if none exists.
-   */
   getPatientStatus(patientId: string): AccessRequestStatus | null {
     return this.requestStatusMap.get(patientId) ?? null;
   }
 
-  /**
-   * Sends a new access request to the given patient and updates the local state.
-   */
   async onRequestAccess(patient: PatientDto): Promise<void> {
     this.requestingId = patient.id;
     try {
@@ -146,10 +140,6 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Navigates to the doctor's view of the patient's full profile.
-   * Passes the patient name and wallet address as query params.
-   */
   viewPatientProfile(req: AccessRequestDto): void {
     this.router.navigate(['/patient', req.patientId, 'profile'], {
       queryParams: {
@@ -159,20 +149,22 @@ export class PatientAccess implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Returns a human-readable string for the remaining access time.
-   */
   getRemainingTime(expiresAt?: string): string {
     if (!expiresAt) return '';
     const now = new Date().getTime();
     const normalized = expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z';
     const exp = new Date(normalized).getTime();
     const diff = exp - now;
+
     if (diff <= 0) return 'Expired';
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(hours / 24);
-    if (days > 0) return `Expires in ${days}d ${hours % 24}h`;
-    return `Expires in ${hours}h`;
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) return `${days}d ${hours}h ${minutes}m remaining`;
+    if (hours > 0) return `${hours}h ${minutes}m remaining`;
+    return `${minutes}m remaining`;
   }
 
   formatDate(date?: string): string {
@@ -183,43 +175,5 @@ export class PatientAccess implements OnInit, OnDestroy {
       month: 'short',
       year: 'numeric',
     });
-  }
-
-  formatDateTime(date?: string): string {
-    if (!date) return '';
-    const normalized = date.endsWith('Z') ? date : date + 'Z';
-    return new Date(normalized).toLocaleString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-
-  getActionClass(action: string): string {
-    switch (action) {
-      case 'Approved':
-        return 'badge-approved';
-      case 'Rejected':
-        return 'badge-rejected';
-      case 'Revoked':
-        return 'badge-revoked';
-      default:
-        return 'badge-requested';
-    }
-  }
-
-  getActionIcon(action: string): string {
-    switch (action) {
-      case 'Approved':
-        return 'check_circle';
-      case 'Rejected':
-        return 'cancel';
-      case 'Revoked':
-        return 'block';
-      default:
-        return 'send';
-    }
   }
 }

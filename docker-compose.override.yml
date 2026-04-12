@@ -27,3 +27,10 @@ services:
     ports:
       - "8080"
 
+  medicaldata.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+    ports:
+      - "8080"
+

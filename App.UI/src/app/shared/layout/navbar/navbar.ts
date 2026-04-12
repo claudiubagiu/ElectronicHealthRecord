@@ -84,6 +84,18 @@ const ROLE_NAV_ITEMS: NavItem[] = [
     icon: 'local_pharmacy',
     roles: ['Pharmacist'],
   },
+  {
+    label: 'Add Medical Data',
+    route: '/add-medical-data',
+    icon: 'health_and_safety',
+    roles: ['Doctor'],
+  },
+  {
+    label: 'My Medical Data',
+    route: '/medical-data',
+    icon: 'health_and_safety',
+    roles: ['Patient'],
+  },
 ];
 
 @Component({

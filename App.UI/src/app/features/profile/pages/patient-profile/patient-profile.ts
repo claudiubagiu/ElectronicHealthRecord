@@ -239,6 +239,9 @@ export class PatientProfile implements OnInit {
   goToLabAnalyses(): void {
     this.router.navigate(['/lab-analyses']);
   }
+  goToMedicalData(): void {
+    this.router.navigate(['/medical-data']);
+  }
 
   // ── Helpers ───────────────────────────────────────────────────────
 

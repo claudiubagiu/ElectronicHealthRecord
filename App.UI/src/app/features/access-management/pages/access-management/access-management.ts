@@ -10,6 +10,8 @@ import { AccessRequestHistoryDto } from '../../../../core/models/access-request-
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 import { MedicationService } from '../../../medications/services/medication.service';
 import { MedicationCryptoService } from '../../../medications/services/medication-crypto.service';
+import { MedicalDataService } from '../../../medical-data/services/medical-data.service';
+import { MedicalDataCryptoService } from '../../../medical-data/services/medical-data-crypto.service';
 
 @Component({
   selector: 'app-access-management',
@@ -23,11 +25,13 @@ export class AccessManagement implements OnInit {
   private blockchainService = inject(BlockchainService);
   private medicationService = inject(MedicationService);
   private medicationCryptoService = inject(MedicationCryptoService);
+  private medicalDataService = inject(MedicalDataService);
+  private medicalDataCryptoService = inject(MedicalDataCryptoService);
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
 
   /** Default access duration: 7 days in seconds. */
-  private readonly ACCESS_DURATION_SECONDS = 7 * 24 * 60 * 60; // 604800
+  private readonly ACCESS_DURATION_SECONDS = 7 * 24 * 60 * 60;
 
   allRequests: AccessRequestDto[] = [];
   historyEntries: AccessRequestHistoryDto[] = [];
@@ -89,13 +93,20 @@ export class AccessManagement implements OnInit {
       const updated = await this.service.approve(request.id);
       this.updateLocal(updated);
 
-      // 3. Create medication envelopes for the newly approved doctor
       const user = this.authService.getDecodedToken();
       if (user) {
+        // 3. Create medication envelopes for the newly approved doctor
         try {
           await this.medicationCryptoService.grantEnvelopesToDoctor(request.doctorId, user.userId);
         } catch (e) {
           console.warn('Failed to create medication envelopes for doctor:', e);
+        }
+
+        // 4. Create medical data envelopes for the newly approved doctor
+        try {
+          await this.medicalDataCryptoService.grantEnvelopesToDoctor(request.doctorId, user.userId);
+        } catch (e) {
+          console.warn('Failed to create medical data envelopes for doctor:', e);
         }
       }
 
@@ -133,7 +144,18 @@ export class AccessManagement implements OnInit {
       this.updateLocal(updated);
 
       // 3. Delete medication envelopes for this doctor
-      await this.medicationService.deleteEnvelopes(request.doctorId, request.patientId);
+      try {
+        await this.medicationService.deleteEnvelopes(request.doctorId, request.patientId);
+      } catch (e) {
+        console.warn('Failed to delete medication envelopes:', e);
+      }
+
+      // 4. Delete medical data envelopes for this doctor
+      try {
+        await this.medicalDataService.deleteEnvelopes(request.doctorId, request.patientId);
+      } catch (e) {
+        console.warn('Failed to delete medical data envelopes:', e);
+      }
 
       this.notify.showSuccess(`Access revoked for ${request.doctorName}.`);
       this.loadHistory();
@@ -167,35 +189,31 @@ export class AccessManagement implements OnInit {
     return `${minutes}m remaining`;
   }
 
+  getActionClass(action: string): string {
+    switch (action) {
+      case 'Approved':
+        return 'badge-approved';
+      case 'Rejected':
+        return 'badge-rejected';
+      case 'Revoked':
+        return 'badge-revoked';
+      case 'Expired':
+        return 'badge-expired';
+      default:
+        return '';
+    }
+  }
+
   getActionIcon(action: string): string {
     switch (action) {
-      case 'Requested':
-        return 'send';
       case 'Approved':
         return 'check_circle';
       case 'Rejected':
         return 'cancel';
       case 'Revoked':
-        return 'remove_circle';
+        return 'block';
       case 'Expired':
         return 'timer_off';
-      default:
-        return 'history';
-    }
-  }
-
-  getActionClass(action: string): string {
-    switch (action) {
-      case 'Approved':
-        return 'approved';
-      case 'Rejected':
-        return 'rejected';
-      case 'Revoked':
-        return 'revoked';
-      case 'Requested':
-        return 'pending';
-      case 'Expired':
-        return 'expired';
       default:
         return '';
     }
@@ -209,7 +227,7 @@ export class AccessManagement implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     });
-  }
+    }
 
   formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('en-GB', {

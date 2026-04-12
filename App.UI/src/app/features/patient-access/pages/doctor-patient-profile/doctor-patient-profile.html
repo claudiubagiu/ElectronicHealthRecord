@@ -1,5 +1,4 @@
 <div class="doctor-patient-profile-page">
-
   <!-- ===== PROFILE CARD ===== -->
   <app-profile-card
     [name]="patientName"
@@ -9,7 +8,8 @@
     [showBackButton]="true"
     backTooltip="Back to Patient Access"
     (backClick)="goBack()"
-    [details]="profileDetails">
+    [details]="profileDetails"
+  >
   </app-profile-card>
 
   <!-- ===== DIAGNOSTICS ===== -->
@@ -19,28 +19,29 @@
     [isLoading]="isLoadingDiagnoses"
     [isEmpty]="diagnoses.length === 0"
     emptyIcon="inventory_2"
-    emptyMessage="No diagnoses found.">
-
+    emptyMessage="No diagnoses found."
+  >
     @for (d of diagnoses; track d.id) {
-      <app-medical-card
-        type="diagnosis"
-        [title]="d.title"
-        [meta]="[
-          { icon: 'medical_services', text: d.doctorName },
-          { icon: 'event', text: (formatTimestamp(d.timestamp) | date: 'dd MMM yyyy') }
-        ]"
-        [isLoading]="openingDiagnosisId === d.id"
-        actionLabel="View report"
-        (actionClick)="onOpenDiagnosis(d)">
-      </app-medical-card>
+    <app-medical-card
+      type="diagnosis"
+      [title]="d.title"
+      [meta]="[
+        { icon: 'medical_services', text: d.doctorName },
+        { icon: 'event', text: (formatTimestamp(d.timestamp) | date : 'dd MMM yyyy') }
+      ]"
+      [isLoading]="openingDiagnosisId === d.id"
+      actionLabel="View report"
+      (actionClick)="onOpenDiagnosis(d)"
+    >
+    </app-medical-card>
     }
 
     <app-view-all-card
       icon="folder_shared"
       label="View all diagnostics"
-      (clicked)="goToDiagnostics()">
+      (clicked)="goToDiagnostics()"
+    >
     </app-view-all-card>
-
   </app-carousel-section>
 
   <!-- ===== PRESCRIPTIONS ===== -->
@@ -50,27 +51,28 @@
     [isLoading]="isLoadingPrescriptions"
     [isEmpty]="prescriptions.length === 0"
     emptyIcon="receipt_long"
-    emptyMessage="No prescriptions found.">
-
+    emptyMessage="No prescriptions found."
+  >
     @for (p of prescriptions; track p.id) {
-      <app-medical-card
-        type="prescription"
-        [meta]="[
-          { icon: 'medical_services', text: 'Dr. ' + p.doctorName },
-          { icon: 'event', text: (formatTimestamp(p.timestamp) | date: 'dd MMM yyyy') }
-        ]"
-        [isLoading]="openingPrescriptionId === p.id"
-        actionLabel="View PDF"
-        (actionClick)="onOpenPrescription(p)">
-      </app-medical-card>
+    <app-medical-card
+      type="prescription"
+      [meta]="[
+        { icon: 'medical_services', text: 'Dr. ' + p.doctorName },
+        { icon: 'event', text: (formatTimestamp(p.timestamp) | date : 'dd MMM yyyy') }
+      ]"
+      [isLoading]="openingPrescriptionId === p.id"
+      actionLabel="View PDF"
+      (actionClick)="onOpenPrescription(p)"
+    >
+    </app-medical-card>
     }
 
     <app-view-all-card
       icon="receipt_long"
       label="View all prescriptions"
-      (clicked)="goToPrescriptions()">
+      (clicked)="goToPrescriptions()"
+    >
     </app-view-all-card>
-
   </app-carousel-section>
 
   <!-- ===== LAB ANALYSES ===== -->
@@ -80,28 +82,25 @@
     [isLoading]="isLoadingLabAnalyses"
     [isEmpty]="labAnalyses.length === 0"
     emptyIcon="biotech"
-    emptyMessage="No lab analyses found.">
-
+    emptyMessage="No lab analyses found."
+  >
     @for (a of labAnalyses; track a.id) {
-      <app-medical-card
-        type="lab-analysis"
-        [title]="a.title"
-        [meta]="[
-          { icon: 'science', text: a.labTechName },
-          { icon: 'event', text: (formatTimestamp(a.timestamp) | date: 'dd MMM yyyy') }
-        ]"
-        [isLoading]="openingLabAnalysisId === a.id"
-        actionLabel="View report"
-        (actionClick)="onOpenLabAnalysis(a)">
-      </app-medical-card>
+    <app-medical-card
+      type="lab-analysis"
+      [title]="a.title"
+      [meta]="[
+        { icon: 'science', text: a.labTechName },
+        { icon: 'event', text: (formatTimestamp(a.timestamp) | date : 'dd MMM yyyy') }
+      ]"
+      [isLoading]="openingLabAnalysisId === a.id"
+      actionLabel="View report"
+      (actionClick)="onOpenLabAnalysis(a)"
+    >
+    </app-medical-card>
     }
 
-    <app-view-all-card
-      icon="biotech"
-      label="View all analyses"
-      (clicked)="goToLabAnalyses()">
+    <app-view-all-card icon="biotech" label="View all analyses" (clicked)="goToLabAnalyses()">
     </app-view-all-card>
-
   </app-carousel-section>
 
   <!-- ===== QUICK ACTIONS ===== -->
@@ -110,22 +109,31 @@
       label="All Diagnostics"
       icon="folder_shared"
       color="blue"
-      (clicked)="goToDiagnostics()"/>
+      (clicked)="goToDiagnostics()"
+    />
     <app-quick-action-card
       label="Medications"
       icon="medication"
       color="purple"
-      (clicked)="goToMedications()"/>
+      (clicked)="goToMedications()"
+    />
     <app-quick-action-card
       label="Lab Analyses"
       icon="biotech"
       color="cyan"
-      (clicked)="goToLabAnalyses()"/>
+      (clicked)="goToLabAnalyses()"
+    />
     <app-quick-action-card
       label="Prescriptions"
       icon="receipt_long"
       color="green"
-      (clicked)="goToPrescriptions()"/>
+      (clicked)="goToPrescriptions()"
+    />
+    <app-quick-action-card
+      label="Medical Data"
+      icon="health_and_safety"
+      color="orange"
+      (clicked)="goToMedicalData()"
+    />
   </div>
-
 </div>

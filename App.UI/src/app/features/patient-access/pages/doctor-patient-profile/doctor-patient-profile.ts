@@ -195,6 +195,12 @@ export class DoctorPatientProfile implements OnInit {
     });
   }
 
+  goToMedicalData(): void {
+    this.router.navigate(['/patient', this.patientId, 'medical-data'], {
+      queryParams: { patientName: this.patientName },
+    });
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────
 
   formatTimestamp(timestamp: bigint): Date {

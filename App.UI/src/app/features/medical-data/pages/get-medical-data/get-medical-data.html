@@ -1,0 +1,83 @@
+<div class="get-medical-data-page">
+  <div class="get-medical-data-card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Back to profile">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="icon-wrapper">
+        <mat-icon>health_and_safety</mat-icon>
+      </div>
+      <h1>My Medical Data</h1>
+      <p class="subtitle">Your allergies, conditions, immunizations and more — end-to-end encrypted</p>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading) {
+      <div class="state-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Decrypting your records...</p>
+      </div>
+    }
+
+    <!-- Empty -->
+    @if (!isLoading && records.length === 0) {
+      <div class="state-container empty">
+        <mat-icon class="empty-icon">health_and_safety</mat-icon>
+        <p>No medical records found.</p>
+      </div>
+    }
+
+    <!-- Grouped records -->
+    @if (!isLoading && records.length > 0) {
+      @for (group of groupedRecords; track group.type) {
+        <div class="group-section">
+
+          <!-- Group header -->
+          <div class="group-header" [style.--group-color]="getConfig(group.type).color">
+            <div class="group-icon-wrapper">
+              <mat-icon>{{ getConfig(group.type).icon }}</mat-icon>
+            </div>
+            <span class="group-label">{{ getConfig(group.type).label }}</span>
+            <span class="group-count">{{ group.items.length }}</span>
+          </div>
+
+          <!-- Records in group -->
+          <div class="records-list">
+            @for (record of group.items; track record.id) {
+              <div class="record-item">
+
+                <div class="record-header">
+                  <span class="record-type-badge" [style.background]="getConfig(record.recordType).color + '18'" [style.color]="getConfig(record.recordType).color">
+                    <mat-icon>{{ getConfig(record.recordType).icon }}</mat-icon>
+                    {{ getConfig(record.recordType).label }}
+                  </span>
+                  <span class="record-date">{{ formatDate(record.createdAt) }}</span>
+                </div>
+
+                <div class="record-details">
+                  @for (row of getDetailRows(record); track row.label) {
+                    <div class="detail-row">
+                      <mat-icon class="detail-icon">{{ row.icon }}</mat-icon>
+                      <span class="detail-label">{{ row.label }}:</span>
+                      <span class="detail-value">{{ row.value }}</span>
+                    </div>
+                  }
+                </div>
+
+                <div class="record-footer">
+                  <mat-icon class="footer-icon">lock</mat-icon>
+                  <span>End-to-end encrypted</span>
+                </div>
+
+              </div>
+            }
+          </div>
+
+        </div>
+      }
+    }
+
+  </div>
+</div>

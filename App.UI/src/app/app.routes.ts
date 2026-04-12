@@ -153,4 +153,28 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./features/home/pages/home/home').then((m) => m.Home),
   },
+  {
+    path: 'add-medical-data',
+    loadComponent: () =>
+      import('./features/medical-data/pages/add-medical-data/add-medical-data').then(
+        (m) => m.AddMedicalData
+      ),
+    canActivate: [roleGuard(['Doctor'])],
+  },
+  {
+    path: 'medical-data',
+    loadComponent: () =>
+      import('./features/medical-data/pages/get-medical-data/get-medical-data').then(
+        (m) => m.GetMedicalData
+      ),
+    canActivate: [roleGuard(['Patient'])],
+  },
+  {
+    path: 'patient/:patientId/medical-data',
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-medical-data/patient-medical-data').then(
+        (m) => m.PatientMedicalData
+      ),
+    canActivate: [roleGuard(['Doctor'])],
+  },
 ];

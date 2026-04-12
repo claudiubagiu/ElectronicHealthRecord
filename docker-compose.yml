@@ -271,11 +271,50 @@ services:
     networks:
       - proxy
 
+  medicaldata.api:
+    image: ${DOCKER_REGISTRY-}medicaldataapi
+    build:
+      context: MedicalData.Api
+      dockerfile: Dockerfile
+    container_name: medicaldata-api
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.medicaldata-api.rule=Host(`medicaldata.api.docker.localhost`)"
+      - "traefik.http.routers.medicaldata-api.entrypoints=web"
+      - "traefik.http.routers.medicaldata-api.middlewares=cors-frontend@docker"
+      - "traefik.http.routers.medicaldata-api.service=medicaldata-api"
+      - "traefik.http.services.medicaldata-api.loadbalancer.server.port=8080"
+    depends_on:
+      medicaldata.database:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - proxy
+
+  medicaldata.database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: medicaldata-database
+    restart: unless-stopped
+    environment:
+      - SA_PASSWORD=Password1@
+      - ACCEPT_EULA=Y
+    ports:
+      - "1437:1433"
+    expose:
+      - "1433"
+    volumes:
+      - medicaldata_database:/var/opt/mssql
+    networks:
+      - proxy
+
 volumes:
   auth_database:
   users_database:
   diagnostics_database:
   medications_database:
+  medicaldata_database:
   rabbitmq_data:
 
 networks:

@@ -22,14 +22,6 @@ export const routes: Routes = [
     canActivate: [roleGuard(['Patient'])],
   },
   {
-    path: 'add-diagnostic',
-    loadComponent: () =>
-      import('./features/diagnostics/pages/add-diagnostic/add-diagnostic').then(
-        (m) => m.AddDiagnostic
-      ),
-    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
-  },
-  {
     path: 'diagnostics',
     loadComponent: () =>
       import('./features/diagnostics/pages/get-diagnostics/get-diagnostics').then(
@@ -58,6 +50,22 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/patient-access/pages/doctor-patient-profile/doctor-patient-profile').then(
         (m) => m.DoctorPatientProfile
+      ),
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+  },
+  {
+    path: 'patient/:patientId/add-diagnostic',
+    loadComponent: () =>
+      import('./features/diagnostics/pages/add-diagnostic/add-diagnostic').then(
+        (m) => m.AddDiagnostic
+      ),
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+  },
+  {
+    path: 'patient/:patientId/add-prescription',
+    loadComponent: () =>
+      import('./features/prescriptions/pages/create-prescription/create-prescription').then(
+        (m) => m.CreatePrescription
       ),
     canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
   },
@@ -108,14 +116,6 @@ export const routes: Routes = [
         (m) => m.GetLabAnalyses
       ),
     canActivate: [roleGuard(['Patient'])],
-  },
-  {
-    path: 'add-prescription',
-    loadComponent: () =>
-      import('./features/prescriptions/pages/create-prescription/create-prescription').then(
-        (m) => m.CreatePrescription
-      ),
-    canActivate: [roleGuard(['Doctor'])],
   },
   {
     path: 'prescriptions',

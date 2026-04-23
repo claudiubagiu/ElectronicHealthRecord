@@ -1,23 +1,10 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  FormArray,
-  Validators,
-  AbstractControl,
-  ValidationErrors,
-} from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, of, takeUntil } from 'rxjs';
-import {
-  MatAutocompleteModule,
-  MatAutocompleteSelectedEvent,
-} from '@angular/material/autocomplete';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
 import { PrescriptionSubmissionService } from '../../services/prescription-submission.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { UsersService } from '../../../../core/services/users.service';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { AppError } from '../../../../core/errors/app.error';
 import { CommonModule } from '@angular/common';
@@ -27,41 +14,48 @@ import { CommonModule } from '@angular/common';
   templateUrl: './create-prescription.html',
   styleUrls: ['./create-prescription.scss'],
   standalone: true,
-  imports: [...MAT_FORM_IMPORTS, MatAutocompleteModule, MatDialogModule, CommonModule],
+  imports: [...MAT_FORM_IMPORTS, CommonModule],
 })
-export class CreatePrescription implements OnInit, OnDestroy {
+export class CreatePrescription implements OnInit {
   private fb = inject(FormBuilder);
   private submissionService = inject(PrescriptionSubmissionService);
   private authService = inject(AuthService);
-  private usersService = inject(UsersService);
   private notify = inject(NotificationService);
-  private dialog = inject(MatDialog);
-  private destroy$ = new Subject<void>();
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   form!: FormGroup;
   isLoading = false;
-  isSearching = false;
-  searchPerformed = false;
-  filteredPatients: PatientDto[] = [];
   selectedPatient: PatientDto | null = null;
 
-  // Shown after successful submission
   createdShortCode: string | null = null;
   showSuccessModal = false;
 
   ngOnInit(): void {
     this.buildForm();
-    this.setupPatientSearch();
-  }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    const patientId = this.route.snapshot.paramMap.get('patientId') ?? '';
+    const patientName = this.route.snapshot.queryParamMap.get('patientName') ?? '';
+    const patientWalletAddress =
+      this.route.snapshot.queryParamMap.get('patientWalletAddress') ?? '';
+
+    const spaceIndex = patientName.indexOf(' ');
+    const firstName = spaceIndex > -1 ? patientName.substring(0, spaceIndex) : patientName;
+    const lastName = spaceIndex > -1 ? patientName.substring(spaceIndex + 1) : '';
+
+    this.selectedPatient = {
+      id: patientId,
+      firstName,
+      lastName,
+      walletAddress: patientWalletAddress,
+      cnp: '',
+      identityId: '',
+      dateOfBirth: '',
+    };
   }
 
   buildForm(): void {
     this.form = this.fb.group({
-      patientSearch: ['', [Validators.required, this.patientSelectedValidator.bind(this)]],
       title: ['', Validators.required],
       medications: this.fb.array([this.createMedicationRow()]),
       notes: [''],
@@ -91,74 +85,15 @@ export class CreatePrescription implements OnInit, OnDestroy {
     }
   }
 
-  patientSelectedValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) return null;
-    if (typeof control.value === 'string' && !this.selectedPatient) {
-      return { invalidPatient: true };
-    }
-    return null;
-  }
-
-  setupPatientSearch(): void {
-    this.form
-      .get('patientSearch')!
-      .valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap((value) => {
-          if (this.selectedPatient) return of([]);
-          const term = (value ?? '').trim();
-          if (term.length < 2) {
-            this.filteredPatients = [];
-            this.searchPerformed = false;
-            return of([]);
-          }
-          this.isSearching = true;
-          return this.usersService.searchPatients(term);
-        }),
-        takeUntil(this.destroy$)
-      )
-      .subscribe({
-        next: (patients) => {
-          this.filteredPatients = patients;
-          this.isSearching = false;
-          this.searchPerformed = true;
-        },
-        error: () => {
-          this.isSearching = false;
-          this.searchPerformed = true;
-        },
-      });
-  }
-
-  displayPatient(patient: PatientDto): string {
-    return patient ? `${patient.firstName} ${patient.lastName}` : '';
-  }
-
-  onPatientSelected(event: MatAutocompleteSelectedEvent): void {
-    this.selectedPatient = event.option.value as PatientDto;
-    this.form.get('patientSearch')!.updateValueAndValidity();
-  }
-
-  clearPatient(event?: Event): void {
-    event?.stopPropagation();
-    this.selectedPatient = null;
-    this.form.get('patientSearch')!.setValue('');
-    this.filteredPatients = [];
-    this.searchPerformed = false;
-  }
-
   get isFormReady(): boolean {
-    return this.form.valid && this.selectedPatient !== null;
+    return this.form.valid && !!this.selectedPatient;
   }
 
   closeSuccessModal(): void {
     this.showSuccessModal = false;
     this.createdShortCode = null;
-    // Reset form for a new prescription
-    this.form.reset();
-    this.selectedPatient = null;
-    this.filteredPatients = [];
+    this.form.get('title')?.reset();
+    this.form.get('notes')?.reset();
     while (this.medications.length > 1) {
       this.medications.removeAt(1);
     }
@@ -192,5 +127,14 @@ export class CreatePrescription implements OnInit, OnDestroy {
     } finally {
       this.isLoading = false;
     }
+  }
+
+  goBack(): void {
+    this.router.navigate(['/patient', this.selectedPatient?.id, 'profile'], {
+      queryParams: {
+        patientName: `${this.selectedPatient?.firstName} ${this.selectedPatient?.lastName}`,
+        patientWalletAddress: this.selectedPatient?.walletAddress,
+      },
+    });
   }
 }

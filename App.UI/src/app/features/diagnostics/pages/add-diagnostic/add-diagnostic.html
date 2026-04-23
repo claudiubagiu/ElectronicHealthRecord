@@ -1,6 +1,5 @@
 <div class="add-diagnostic-page">
   <div class="add-diagnostic-card">
-
     <!-- ── Header ─────────────────────────────────────────────────────────── -->
     <div class="card-header">
       <div class="icon-wrapper">
@@ -11,80 +10,19 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
-
-      <!-- ── Patient ────────────────────────────────────────────────────── -->
+      <!-- ── Patient banner ────────────────────────────────────────────── -->
       <div class="patient-section">
-        <p class="section-label">Patient *</p>
-
-        <mat-form-field
-          appearance="outline"
-          class="full"
-          [class.patient-selected]="selectedPatient"
-        >
-          @if (!selectedPatient) {
-          <mat-label>Search patient by name</mat-label>
-          }
-          @if (selectedPatient) {
-          <div matPrefix class="patient-chip-prefix">
-            <mat-icon class="chip-icon">person</mat-icon>
-            <span class="chip-name">{{ selectedPatient.firstName }} {{ selectedPatient.lastName }}</span>
-            <span class="chip-cnp">CNP: {{ selectedPatient.cnp }}</span>
-          </div>
-          }
-
-          <input
-            matInput
-            formControlName="patientSearch"
-            [placeholder]="selectedPatient ? '' : 'e.g. John Smith'"
-            [matAutocomplete]="patientAuto"
-            [style.display]="selectedPatient ? 'none' : 'block'"
-          />
-
-          @if (selectedPatient) {
-          <button matSuffix mat-icon-button type="button" class="clear-btn" (click)="clearPatient($event)">
-            <mat-icon>close</mat-icon>
-          </button>
-          }
-          @if (!selectedPatient && !isSearching) {
-          <mat-icon matSuffix>search</mat-icon>
-          }
-          @if (isSearching) {
-          <mat-spinner matSuffix diameter="18"></mat-spinner>
-          }
-
-          <mat-autocomplete
-            #patientAuto="matAutocomplete"
-            [displayWith]="displayPatient"
-            (optionSelected)="onPatientSelected($event)"
-          >
-            @for (p of filteredPatients; track p.id) {
-            <mat-option [value]="p">
-              <div class="patient-option">
-                <mat-icon class="patient-option-icon">person</mat-icon>
-                <div class="patient-option-info">
-                  <span class="patient-name">{{ p.firstName }} {{ p.lastName }}</span>
-                  <span class="patient-cnp-small">CNP: {{ p.cnp }}</span>
-                </div>
-              </div>
-            </mat-option>
-            }
-            @if (!isSearching && filteredPatients.length === 0 && searchPerformed) {
-            <mat-option disabled>No patients found</mat-option>
-            }
-          </mat-autocomplete>
-
-          @if (form.get('patientSearch')?.hasError('required')) {
-          <mat-error>Please select a patient</mat-error>
-          }
-          @if (form.get('patientSearch')?.hasError('invalidPatient')) {
-          <mat-error>Please select a valid patient from the list</mat-error>
-          }
-        </mat-form-field>
+        <p class="section-label">Patient</p>
+        <div class="patient-preselected-banner">
+          <mat-icon class="preselected-icon">person</mat-icon>
+          <span class="preselected-name">
+            {{ selectedPatient?.firstName }} {{ selectedPatient?.lastName }}
+          </span>
+        </div>
       </div>
 
       <!-- ── Categories accordion ───────────────────────────────────────── -->
       <mat-accordion class="categories-accordion" multi>
-
         <!-- ═══ 1. GENERAL INFORMATION ═════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel" [expanded]="true">
           <mat-expansion-panel-header>
@@ -100,7 +38,6 @@
           </mat-expansion-panel-header>
 
           <div class="panel-content">
-
             <mat-form-field appearance="outline" class="full">
               <mat-label>Diagnosis title *</mat-label>
               <input matInput formControlName="title" placeholder="e.g. Cardiology Consultation" />
@@ -126,58 +63,51 @@
                 <span class="optional-tag">optional</span>
               </p>
 
-              @if (!selectedPatient) {
-                <div class="lab-ref-hint">
-                  <mat-icon>info</mat-icon>
-                  <span>Select a patient first to see their lab analyses.</span>
-                </div>
-              }
-
-              @if (selectedPatient && isLoadingAnalyses) {
-                <div class="lab-ref-hint">
-                  <mat-spinner diameter="16"></mat-spinner>
-                  <span>Loading analyses...</span>
-                </div>
-              }
-
-              @if (selectedPatient && labAnalysesLoaded && labAnalyses.length === 0) {
-                <div class="lab-ref-hint">
-                  @if (labAccessDenied) {
-                    <mat-icon>lock</mat-icon>
-                    <span>You don't have access to this patient's data.</span>
-                  } @else {
-                    <mat-icon>science</mat-icon>
-                    <span>No lab analyses found for this patient.</span>
-                  }
-                </div>
-              }
-
-              @if (selectedPatient && labAnalysesLoaded && labAnalyses.length > 0) {
-                @if (!selectedAnalysis) {
-                  <mat-form-field appearance="outline" class="full">
-                    <mat-label>Select a lab analysis</mat-label>
-                    <mat-select #analysisSelect (selectionChange)="selectAnalysis(analysisSelect.value)">
-                      @for (a of labAnalyses; track a.id) {
-                        <mat-option [value]="a">
-                          {{ a.title }} — {{ formatTimestamp(a.timestamp) }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                    <mat-icon matSuffix>biotech</mat-icon>
-                  </mat-form-field>
+              @if (isLoadingAnalyses) {
+              <div class="lab-ref-hint">
+                <mat-spinner diameter="16"></mat-spinner>
+                <span>Loading analyses...</span>
+              </div>
+              } @if (!isLoadingAnalyses && labAnalysesLoaded && labAnalyses.length === 0) {
+              <div class="lab-ref-hint">
+                @if (labAccessDenied) {
+                <mat-icon>lock</mat-icon>
+                <span>You don't have access to this patient's data.</span>
                 } @else {
-                  <div class="selected-analysis">
-                    <mat-icon class="analysis-icon">biotech</mat-icon>
-                    <div class="analysis-info">
-                      <span class="analysis-title">{{ selectedAnalysis.title }}</span>
-                      <span class="analysis-date">{{ formatTimestamp(selectedAnalysis.timestamp) }}</span>
-                    </div>
-                    <button mat-icon-button type="button" (click)="clearAnalysis()">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  </div>
+                <mat-icon>science</mat-icon>
+                <span>No lab analyses found for this patient.</span>
                 }
-              }
+              </div>
+              } @if (!isLoadingAnalyses && labAnalysesLoaded && labAnalyses.length > 0) { @if
+              (!selectedAnalysis) {
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Select a lab analysis</mat-label>
+                <mat-select
+                  #analysisSelect
+                  (selectionChange)="selectAnalysis(analysisSelect.value)"
+                >
+                  @for (a of labAnalyses; track a.id) {
+                  <mat-option [value]="a">
+                    {{ a.title }} — {{ formatTimestamp(a.timestamp) }}
+                  </mat-option>
+                  }
+                </mat-select>
+                <mat-icon matSuffix>biotech</mat-icon>
+              </mat-form-field>
+              } @else {
+              <div class="selected-analysis">
+                <mat-icon class="analysis-icon">biotech</mat-icon>
+                <div class="analysis-info">
+                  <span class="analysis-title">{{ selectedAnalysis.title }}</span>
+                  <span class="analysis-date">{{
+                    formatTimestamp(selectedAnalysis.timestamp)
+                  }}</span>
+                </div>
+                <button mat-icon-button type="button" (click)="clearAnalysis()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              } }
             </div>
 
             @if (customGeneralInfo.length > 0) {
@@ -186,7 +116,12 @@
               <div class="custom-field-chip">
                 <span class="cf-label">{{ cf.label }}:</span>
                 <span class="cf-value">{{ cf.value }}</span>
-                <button mat-icon-button type="button" class="cf-remove" (click)="removeCustomField('generalInfo', i)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="cf-remove"
+                  (click)="removeCustomField('generalInfo', i)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -197,24 +132,34 @@
             <div class="add-field-row">
               <mat-form-field appearance="outline" class="field-label-input">
                 <mat-label>Field name</mat-label>
-                <input matInput formControlName="newLabel_generalInfo" placeholder="e.g. Department" />
+                <input
+                  matInput
+                  formControlName="newLabel_generalInfo"
+                  placeholder="e.g. Department"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline" class="field-value-input">
                 <mat-label>Value</mat-label>
-                <input matInput formControlName="newValue_generalInfo" placeholder="e.g. Cardiology" />
+                <input
+                  matInput
+                  formControlName="newValue_generalInfo"
+                  placeholder="e.g. Cardiology"
+                />
               </mat-form-field>
               <button
                 mat-stroked-button
                 type="button"
                 class="add-field-btn"
                 (click)="addCustomField('generalInfo')"
-                [disabled]="!form.get('newLabel_generalInfo')?.value || !form.get('newValue_generalInfo')?.value"
+                [disabled]="
+                  !form.get('newLabel_generalInfo')?.value ||
+                  !form.get('newValue_generalInfo')?.value
+                "
               >
                 <mat-icon>add</mat-icon>
                 Add
               </button>
             </div>
-
           </div>
         </mat-expansion-panel>
 
@@ -233,7 +178,6 @@
           </mat-expansion-panel-header>
 
           <div class="panel-content">
-
             <mat-form-field appearance="outline" class="full">
               <mat-label>Chief complaint *</mat-label>
               <textarea
@@ -287,7 +231,12 @@
               <div class="custom-field-chip">
                 <span class="cf-label">{{ cf.label }}:</span>
                 <span class="cf-value">{{ cf.value }}</span>
-                <button mat-icon-button type="button" class="cf-remove" (click)="removeCustomField('anamnesis', i)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="cf-remove"
+                  (click)="removeCustomField('anamnesis', i)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -302,20 +251,25 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="field-value-input">
                 <mat-label>Value</mat-label>
-                <input matInput formControlName="newValue_anamnesis" placeholder="e.g. Smoker, sedentary" />
+                <input
+                  matInput
+                  formControlName="newValue_anamnesis"
+                  placeholder="e.g. Smoker, sedentary"
+                />
               </mat-form-field>
               <button
                 mat-stroked-button
                 type="button"
                 class="add-field-btn"
                 (click)="addCustomField('anamnesis')"
-                [disabled]="!form.get('newLabel_anamnesis')?.value || !form.get('newValue_anamnesis')?.value"
+                [disabled]="
+                  !form.get('newLabel_anamnesis')?.value || !form.get('newValue_anamnesis')?.value
+                "
               >
                 <mat-icon>add</mat-icon>
                 Add
               </button>
             </div>
-
           </div>
         </mat-expansion-panel>
 
@@ -334,7 +288,6 @@
           </mat-expansion-panel-header>
 
           <div class="panel-content">
-
             <div class="row-fields">
               <mat-form-field appearance="outline" class="half">
                 <mat-label>Blood pressure *</mat-label>
@@ -388,7 +341,12 @@
               <div class="custom-field-chip">
                 <span class="cf-label">{{ cf.label }}:</span>
                 <span class="cf-value">{{ cf.value }}</span>
-                <button mat-icon-button type="button" class="cf-remove" (click)="removeCustomField('clinicalExam', i)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="cf-remove"
+                  (click)="removeCustomField('clinicalExam', i)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -399,7 +357,11 @@
             <div class="add-field-row">
               <mat-form-field appearance="outline" class="field-label-input">
                 <mat-label>Field name</mat-label>
-                <input matInput formControlName="newLabel_clinicalExam" placeholder="e.g. O₂ Saturation" />
+                <input
+                  matInput
+                  formControlName="newLabel_clinicalExam"
+                  placeholder="e.g. O₂ Saturation"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline" class="field-value-input">
                 <mat-label>Value</mat-label>
@@ -410,13 +372,15 @@
                 type="button"
                 class="add-field-btn"
                 (click)="addCustomField('clinicalExam')"
-                [disabled]="!form.get('newLabel_clinicalExam')?.value || !form.get('newValue_clinicalExam')?.value"
+                [disabled]="
+                  !form.get('newLabel_clinicalExam')?.value ||
+                  !form.get('newValue_clinicalExam')?.value
+                "
               >
                 <mat-icon>add</mat-icon>
                 Add
               </button>
             </div>
-
           </div>
         </mat-expansion-panel>
 
@@ -435,7 +399,6 @@
           </mat-expansion-panel-header>
 
           <div class="panel-content">
-
             <mat-form-field appearance="outline" class="full">
               <mat-label>Primary diagnosis *</mat-label>
               <input
@@ -517,9 +480,9 @@
                 matInput
                 formControlName="finalNotes"
                 rows="2"
-                placeholder="e.g. Patient advised to monitor blood pressure daily"
+                placeholder="e.g. Patient informed about risks, follow-up in 4 weeks"
               ></textarea>
-              <mat-icon matSuffix>comment</mat-icon>
+              <mat-icon matSuffix>notes</mat-icon>
             </mat-form-field>
 
             @if (customDiagnosis.length > 0) {
@@ -528,7 +491,12 @@
               <div class="custom-field-chip">
                 <span class="cf-label">{{ cf.label }}:</span>
                 <span class="cf-value">{{ cf.value }}</span>
-                <button mat-icon-button type="button" class="cf-remove" (click)="removeCustomField('diagnosis', i)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="cf-remove"
+                  (click)="removeCustomField('diagnosis', i)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -550,16 +518,16 @@
                 type="button"
                 class="add-field-btn"
                 (click)="addCustomField('diagnosis')"
-                [disabled]="!form.get('newLabel_diagnosis')?.value || !form.get('newValue_diagnosis')?.value"
+                [disabled]="
+                  !form.get('newLabel_diagnosis')?.value || !form.get('newValue_diagnosis')?.value
+                "
               >
                 <mat-icon>add</mat-icon>
                 Add
               </button>
             </div>
-
           </div>
         </mat-expansion-panel>
-
       </mat-accordion>
 
       <!-- ── Submit ────────────────────────────────────────────────────────── -->
@@ -590,7 +558,6 @@
           }
         </button>
       </div>
-
     </form>
   </div>
 </div>

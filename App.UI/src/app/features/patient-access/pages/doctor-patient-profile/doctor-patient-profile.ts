@@ -189,10 +189,27 @@ export class DoctorPatientProfile implements OnInit {
     });
   }
 
-
   goToMedicalData(): void {
     this.router.navigate(['/patient', this.patientId, 'medical-data'], {
       queryParams: { patientName: this.patientName },
+    });
+  }
+
+  goToAddDiagnostic(): void {
+    this.router.navigate(['/patient', this.patientId, 'add-diagnostic'], {
+      queryParams: {
+        patientName: this.patientName,
+        patientWalletAddress: this.patientWalletAddress,
+      },
+    });
+  }
+
+  goToAddPrescription(): void {
+    this.router.navigate(['/patient', this.patientId, 'add-prescription'], {
+      queryParams: {
+        patientName: this.patientName,
+        patientWalletAddress: this.patientWalletAddress,
+      },
     });
   }
 

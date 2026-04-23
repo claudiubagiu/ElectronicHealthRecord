@@ -7,71 +7,21 @@
       </div>
       <h1>Create Prescription</h1>
       <p class="subtitle">
-        Search for a patient and add medications. The prescription is encrypted and stored on IPFS.
+        Add medications for {{ selectedPatient?.firstName }} {{ selectedPatient?.lastName }}. The
+        prescription is encrypted and stored on IPFS.
       </p>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <!-- Patient Search -->
+      <!-- ── Patient banner ────────────────────────────────────────────── -->
       <div class="section">
-        <p class="section-label">Patient *</p>
-
-        <mat-form-field
-          appearance="outline"
-          class="full"
-          [class.patient-selected]="selectedPatient"
-        >
-          @if (!selectedPatient) {
-          <mat-label>Search patient by name</mat-label>
-          } @if (selectedPatient) {
-          <div matPrefix class="patient-chip-prefix">
-            <mat-icon class="chip-icon">person</mat-icon>
-            <span class="chip-name"
-              >{{ selectedPatient.firstName }} {{ selectedPatient.lastName }}</span
-            >
-            <span class="chip-cnp">CNP: {{ selectedPatient.cnp }}</span>
-          </div>
-          }
-
-          <input
-            matInput
-            formControlName="patientSearch"
-            [placeholder]="selectedPatient ? '' : 'e.g. John Smith'"
-            [matAutocomplete]="patientAuto"
-            [style.display]="selectedPatient ? 'none' : 'block'"
-          />
-
-          @if (selectedPatient) {
-          <button matSuffix mat-icon-button type="button" (click)="clearPatient($event)">
-            <mat-icon>close</mat-icon>
-          </button>
-          } @else if (isSearching) {
-          <mat-spinner matSuffix diameter="20"></mat-spinner>
-          } @else {
-          <mat-icon matSuffix>search</mat-icon>
-          }
-
-          <mat-autocomplete
-            #patientAuto="matAutocomplete"
-            [displayWith]="displayPatient"
-            (optionSelected)="onPatientSelected($event)"
-          >
-            @for (patient of filteredPatients; track patient.id) {
-            <mat-option [value]="patient">
-              <div class="autocomplete-option">
-                <span class="option-name">{{ patient.firstName }} {{ patient.lastName }}</span>
-                <span class="option-cnp">CNP: {{ patient.cnp }}</span>
-              </div>
-            </mat-option>
-            } @if (searchPerformed && filteredPatients.length === 0 && !isSearching) {
-            <mat-option disabled>No patients found</mat-option>
-            }
-          </mat-autocomplete>
-
-          @if (form.get('patientSearch')?.hasError('invalidPatient')) {
-          <mat-error>Please select a valid patient from the list</mat-error>
-          }
-        </mat-form-field>
+        <p class="section-label">Patient</p>
+        <div class="patient-preselected-banner">
+          <mat-icon class="preselected-icon">person</mat-icon>
+          <span class="preselected-name">
+            {{ selectedPatient?.firstName }} {{ selectedPatient?.lastName }}
+          </span>
+        </div>
       </div>
 
       <mat-divider></mat-divider>
@@ -81,7 +31,11 @@
         <p class="section-label">Title *</p>
         <mat-form-field appearance="outline" class="full">
           <mat-label>Title</mat-label>
-          <input matInput formControlName="title" placeholder="e.g. Respiratory infection treatment"/>
+          <input
+            matInput
+            formControlName="title"
+            placeholder="e.g. Respiratory infection treatment"
+          />
           <mat-icon matSuffix>title</mat-icon>
           @if (form.get('title')?.hasError('required') && form.get('title')?.touched) {
           <mat-error>Title is required.</mat-error>
@@ -134,9 +88,8 @@
                 <mat-form-field appearance="outline" class="third">
                   <mat-label>Frequency</mat-label>
                   <input matInput formControlName="frequency" placeholder="e.g. 3x/day" />
-                  @if (
-                    med.get('frequency')?.hasError('required') && med.get('frequency')?.touched
-                  ) {
+                  @if (med.get('frequency')?.hasError('required') && med.get('frequency')?.touched)
+                  {
                   <mat-error>Required.</mat-error>
                   }
                 </mat-form-field>
@@ -144,9 +97,7 @@
                 <mat-form-field appearance="outline" class="third">
                   <mat-label>Duration</mat-label>
                   <input matInput formControlName="duration" placeholder="e.g. 7 days" />
-                  @if (
-                    med.get('duration')?.hasError('required') && med.get('duration')?.touched
-                  ) {
+                  @if (med.get('duration')?.hasError('required') && med.get('duration')?.touched) {
                   <mat-error>Required.</mat-error>
                   }
                 </mat-form-field>
@@ -225,7 +176,7 @@
       </p>
     </div>
 
-    <button mat-flat-button class="close-btn" (click)="closeSuccessModal()">Close</button>
+    <button mat-flat-button class="close-btn" (click)="goBack()">Done</button>
   </div>
 </div>
 }

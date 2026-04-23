@@ -1,17 +1,6 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  AbstractControl,
-  ValidationErrors,
-} from '@angular/forms';
-import { Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, of, takeUntil } from 'rxjs';
-import {
-  MatAutocompleteModule,
-  MatAutocompleteSelectedEvent,
-} from '@angular/material/autocomplete';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSelectModule } from '@angular/material/select';
 import { DiagnosticSubmissionService } from '../../services/diagnostic-submission.service';
@@ -20,7 +9,6 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { CustomField } from '../../services/diagnostic-pdf.service';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { AppError } from '../../../../core/errors/app.error';
-import { UsersService } from '../../../../core/services/users.service';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { LabAnalysis } from '../../../../core/models/blockchain.model';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
@@ -32,26 +20,21 @@ export type { CustomField };
   templateUrl: './add-diagnostic.html',
   styleUrls: ['./add-diagnostic.scss'],
   standalone: true,
-  imports: [...MAT_FORM_IMPORTS, MatAutocompleteModule, MatExpansionModule, MatSelectModule],
+  imports: [...MAT_FORM_IMPORTS, MatExpansionModule, MatSelectModule],
 })
-export class AddDiagnostic implements OnInit, OnDestroy {
-  private usersService = inject(UsersService);
+export class AddDiagnostic implements OnInit {
   private submissionService = inject(DiagnosticSubmissionService);
   private authService = inject(AuthService);
   private blockchainService = inject(BlockchainService);
   private notify = inject(NotificationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
-  private destroy$ = new Subject<void>();
 
   form!: FormGroup;
-  filteredPatients: PatientDto[] = [];
   selectedPatient: PatientDto | null = null;
   isLoading = false;
-  isSearching = false;
-  searchPerformed = false;
 
-  // Lab analyses
   labAnalyses: LabAnalysis[] = [];
   isLoadingAnalyses = false;
   labAnalysesLoaded = false;
@@ -65,19 +48,33 @@ export class AddDiagnostic implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.buildForm();
-    this.setupPatientSearch();
-  }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    const patientId = this.route.snapshot.paramMap.get('patientId') ?? '';
+    const patientName = this.route.snapshot.queryParamMap.get('patientName') ?? '';
+    const patientWalletAddress =
+      this.route.snapshot.queryParamMap.get('patientWalletAddress') ?? '';
+
+    const spaceIndex = patientName.indexOf(' ');
+    const firstName = spaceIndex > -1 ? patientName.substring(0, spaceIndex) : patientName;
+    const lastName = spaceIndex > -1 ? patientName.substring(spaceIndex + 1) : '';
+
+    this.selectedPatient = {
+      id: patientId,
+      firstName,
+      lastName,
+      walletAddress: patientWalletAddress,
+      cnp: '',
+      identityId: '',
+      dateOfBirth: '',
+    };
+
+    this.loadPatientLabAnalyses();
   }
 
   buildForm(): void {
     const today = new Date().toISOString().split('T')[0];
 
     this.form = this.fb.group({
-      patientSearch: ['', [Validators.required, this.patientSelectedValidator.bind(this)]],
       title: ['', Validators.required],
       consultationDate: [today, Validators.required],
       chiefComplaint: ['', Validators.required],
@@ -108,77 +105,8 @@ export class AddDiagnostic implements OnInit, OnDestroy {
     });
   }
 
-  patientSelectedValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) return null;
-    if (typeof control.value === 'string' && !this.selectedPatient) {
-      return { invalidPatient: true };
-    }
-    return null;
-  }
-
-  setupPatientSearch(): void {
-    this.form
-      .get('patientSearch')!
-      .valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$),
-        switchMap((value) => {
-          if (typeof value === 'string') {
-            this.selectedPatient = null;
-            this.labAnalyses = [];
-            this.labAnalysesLoaded = false;
-            this.labAccessDenied = false;
-            this.selectedAnalysis = null;
-          }
-          if (typeof value !== 'string' || value.trim().length < 2) {
-            this.filteredPatients = [];
-            this.searchPerformed = false;
-            return of([]);
-          }
-          this.isSearching = true;
-          this.searchPerformed = true;
-          return this.usersService.searchPatients(value.trim());
-        })
-      )
-      .subscribe({
-        next: (patients) => {
-          this.filteredPatients = patients;
-          this.isSearching = false;
-        },
-        error: () => {
-          this.filteredPatients = [];
-          this.isSearching = false;
-        },
-      });
-  }
-
-  displayPatient(patient: PatientDto | string): string {
-    if (!patient) return '';
-    if (typeof patient === 'string') return patient;
-    return `${patient.firstName} ${patient.lastName}`;
-  }
-
-  onPatientSelected(event: MatAutocompleteSelectedEvent): void {
-    this.selectedPatient = event.option.value as PatientDto;
-    this.form.get('patientSearch')!.updateValueAndValidity();
-    this.loadPatientLabAnalyses();
-  }
-
-  clearPatient(event: Event): void {
-    event.stopPropagation();
-    this.selectedPatient = null;
-    this.form.get('patientSearch')!.setValue('');
-    this.filteredPatients = [];
-    this.searchPerformed = false;
-    this.labAnalyses = [];
-    this.labAnalysesLoaded = false;
-    this.labAccessDenied = false;
-    this.selectedAnalysis = null;
-  }
-
   async loadPatientLabAnalyses(): Promise<void> {
-    if (!this.selectedPatient) return;
+    if (!this.selectedPatient?.walletAddress) return;
     this.isLoadingAnalyses = true;
     this.labAnalysesLoaded = false;
     this.labAccessDenied = false;
@@ -360,7 +288,12 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       });
 
       this.notify.showSuccess('Diagnosis added successfully!');
-      this.router.navigate(['/']);
+      this.router.navigate(['/patient', this.selectedPatient!.id, 'profile'], {
+        queryParams: {
+          patientName: `${this.selectedPatient!.firstName} ${this.selectedPatient!.lastName}`,
+          patientWalletAddress: this.selectedPatient!.walletAddress,
+        },
+      });
     } catch (error: unknown) {
       const message =
         error instanceof AppError ? error.message : 'Failed to add diagnosis. Please try again.';

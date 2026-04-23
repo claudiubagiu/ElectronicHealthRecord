@@ -106,9 +106,21 @@
   <!-- ===== QUICK ACTIONS ===== -->
   <div class="quick-actions-section">
     <app-quick-action-card
+      label="Add Diagnostic"
+      icon="medical_information"
+      color="blue"
+      (clicked)="goToAddDiagnostic()"
+    />
+    <app-quick-action-card
+      label="Add Prescription"
+      icon="receipt_long"
+      color="green"
+      (clicked)="goToAddPrescription()"
+    />
+    <app-quick-action-card
       label="All Diagnostics"
       icon="folder_shared"
-      color="blue"
+      color="purple"
       (clicked)="goToDiagnostics()"
     />
     <app-quick-action-card
@@ -120,7 +132,7 @@
     <app-quick-action-card
       label="Prescriptions"
       icon="receipt_long"
-      color="green"
+      color="orange"
       (clicked)="goToPrescriptions()"
     />
     <app-quick-action-card

@@ -88,15 +88,6 @@ export class E2eeKeyService {
 
   async recoverPrivateKey(): Promise<void> {
     try {
-      const cachedPrivateKey = localStorage.getItem(LS_PRIVATE_KEY);
-      const cachedPublicKey = localStorage.getItem(LS_PUBLIC_KEY);
-
-      if (cachedPrivateKey && cachedPublicKey) {
-        this.eccPrivateKey = cachedPrivateKey;
-        this.eccPublicKey = cachedPublicKey;
-        return;
-      }
-
       const { privateKey, publicKey } = await this.deriveEccKeyPairFromWallet();
       this.eccPrivateKey = privateKey;
       this.eccPublicKey = publicKey;

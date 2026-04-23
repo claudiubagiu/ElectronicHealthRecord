@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Auth.Api.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20260409180014_Auth Migration")]
+    [Migration("20260423121015_Auth Migration")]
     partial class AuthMigration
     {
         /// <inheritdoc />
@@ -180,6 +180,13 @@ namespace Auth.Api.Migrations
                             ConcurrencyStamp = "f7a3b2c1-8d4e-4f6a-9b0c-1e2d3f4a5b6c",
                             Name = "Pharmacist",
                             NormalizedName = "PHARMACIST"
+                        },
+                        new
+                        {
+                            Id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                            ConcurrencyStamp = "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                            Name = "MedicalAssistant",
+                            NormalizedName = "MEDICALASSISTANT"
                         });
                 });
 

@@ -22,6 +22,7 @@ namespace Auth.Api.Data
             var doctorRoleId = "d251e4e9-a928-48da-aa5d-720eaa10789c";
             var labTechnicianRoleId = "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b";
             var pharmacistRoleId = "f7a3b2c1-8d4e-4f6a-9b0c-1e2d3f4a5b6c";
+            var medicalAssistantRoleId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
             var roles = new List<IdentityRole>
             {
@@ -52,6 +53,13 @@ namespace Auth.Api.Data
                     ConcurrencyStamp = pharmacistRoleId,
                     Name = "Pharmacist",
                     NormalizedName = "PHARMACIST"
+                },
+                new IdentityRole
+                {
+                    Id = medicalAssistantRoleId,
+                    ConcurrencyStamp = medicalAssistantRoleId,
+                    Name = "MedicalAssistant",
+                    NormalizedName = "MEDICALASSISTANT"
                 }
             };
 

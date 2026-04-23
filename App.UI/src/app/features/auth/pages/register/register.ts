@@ -7,6 +7,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AppError } from '../../../../core/errors/app.error';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
 
+type Role = 'Patient' | 'Doctor' | 'LaboratoryTechnician' | 'Pharmacist' | 'MedicalAssistant';
+
 @Component({
   selector: 'app-register',
   templateUrl: './register.html',
@@ -20,7 +22,7 @@ export class Register implements OnInit {
   private fb = inject(FormBuilder);
 
   registerForm!: FormGroup;
-  selectedRole: 'Patient' | 'Doctor' | 'LaboratoryTechnician' | 'Pharmacist' = 'Patient';
+  selectedRole: Role = 'Patient';
   isLoading = false;
 
   ngOnInit(): void {
@@ -41,14 +43,14 @@ export class Register implements OnInit {
       licenseNumber: [''],
       // Doctor / LaboratoryTechnician fields
       specialization: [''],
-      // Doctor / LaboratoryTechnician / Pharmacist fields
+      // Doctor / LaboratoryTechnician / Pharmacist / MedicalAssistant fields
       entityAffiliation: [''],
     });
 
     this.updateValidators();
   }
 
-  selectRole(role: 'Patient' | 'Doctor' | 'LaboratoryTechnician' | 'Pharmacist'): void {
+  selectRole(role: Role): void {
     this.selectedRole = role;
     this.updateValidators();
   }
@@ -71,27 +73,28 @@ export class Register implements OnInit {
 
     if (this.selectedRole === 'Patient') {
       ['dateOfBirth', 'cnp'].forEach((field) => {
-        const control = this.registerForm.get(field);
-        control?.setValidators(Validators.required);
-        control?.updateValueAndValidity();
+        this.registerForm.get(field)?.setValidators(Validators.required);
+        this.registerForm.get(field)?.updateValueAndValidity();
       });
     } else if (this.selectedRole === 'Doctor') {
       ['specialization', 'licenseNumber', 'entityAffiliation'].forEach((field) => {
-        const control = this.registerForm.get(field);
-        control?.setValidators(Validators.required);
-        control?.updateValueAndValidity();
+        this.registerForm.get(field)?.setValidators(Validators.required);
+        this.registerForm.get(field)?.updateValueAndValidity();
       });
     } else if (this.selectedRole === 'LaboratoryTechnician') {
       ['specialization', 'entityAffiliation'].forEach((field) => {
-        const control = this.registerForm.get(field);
-        control?.setValidators(Validators.required);
-        control?.updateValueAndValidity();
+        this.registerForm.get(field)?.setValidators(Validators.required);
+        this.registerForm.get(field)?.updateValueAndValidity();
       });
     } else if (this.selectedRole === 'Pharmacist') {
       ['licenseNumber', 'entityAffiliation'].forEach((field) => {
-        const control = this.registerForm.get(field);
-        control?.setValidators(Validators.required);
-        control?.updateValueAndValidity();
+        this.registerForm.get(field)?.setValidators(Validators.required);
+        this.registerForm.get(field)?.updateValueAndValidity();
+      });
+    } else if (this.selectedRole === 'MedicalAssistant') {
+      ['entityAffiliation'].forEach((field) => {
+        this.registerForm.get(field)?.setValidators(Validators.required);
+        this.registerForm.get(field)?.updateValueAndValidity();
       });
     }
   }
@@ -106,9 +109,8 @@ export class Register implements OnInit {
         ...this.registerForm.value,
         roles: [this.selectedRole],
         walletAddress: '',
-        signature: '',
-        publicKey: '',
-        encryptedPrivateKey: '',
+        eccSignature: '',
+        eccPublicKey: '',
         dateOfBirth:
           this.selectedRole === 'Patient' ? this.registerForm.value.dateOfBirth : undefined,
         cnp: this.selectedRole === 'Patient' ? this.registerForm.value.cnp : undefined,
@@ -123,7 +125,8 @@ export class Register implements OnInit {
         entityAffiliation:
           this.selectedRole === 'Doctor' ||
           this.selectedRole === 'LaboratoryTechnician' ||
-          this.selectedRole === 'Pharmacist'
+          this.selectedRole === 'Pharmacist' ||
+          this.selectedRole === 'MedicalAssistant'
             ? this.registerForm.value.entityAffiliation
             : undefined,
       };
@@ -134,7 +137,6 @@ export class Register implements OnInit {
       this.router.navigate(['/']);
     } catch (error: unknown) {
       console.error('Register failed:', error);
-
       const message =
         error instanceof AppError ? error.message : 'Registration failed. Please try again.';
       this.notify.showError(message);

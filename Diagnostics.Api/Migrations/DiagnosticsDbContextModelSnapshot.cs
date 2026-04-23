@@ -45,6 +45,79 @@ namespace Diagnostics.Api.Migrations
                     b.ToTable("AccessRequestHistories");
                 });
 
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticDraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CompletedByDoctorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByAssistantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EncryptedData")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Iv")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LinkedMedicalRecordIds")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PatientWalletAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("DiagnosticDrafts");
+                });
+
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticDraftEnvelope", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DiagnosticDraftId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EncryptedAesKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiagnosticDraftId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("DiagnosticDraftEnvelopes");
+                });
+
             modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -116,6 +189,28 @@ namespace Diagnostics.Api.Migrations
                     b.Navigation("AccessRequest");
                 });
 
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticDraft", b =>
+                {
+                    b.HasOne("Diagnostics.Api.Models.Domain.User", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticDraftEnvelope", b =>
+                {
+                    b.HasOne("Diagnostics.Api.Models.Domain.DiagnosticDraft", "DiagnosticDraft")
+                        .WithMany("Envelopes")
+                        .HasForeignKey("DiagnosticDraftId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiagnosticDraft");
+                });
+
             modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticsAccessRequest", b =>
                 {
                     b.HasOne("Diagnostics.Api.Models.Domain.User", "Doctor")
@@ -133,6 +228,11 @@ namespace Diagnostics.Api.Migrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticDraft", b =>
+                {
+                    b.Navigation("Envelopes");
                 });
 #pragma warning restore 612, 618
         }

@@ -27,7 +27,7 @@ export const routes: Routes = [
       import('./features/diagnostics/pages/add-diagnostic/add-diagnostic').then(
         (m) => m.AddDiagnostic
       ),
-    canActivate: [roleGuard(['Doctor'])],
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
   },
   {
     path: 'diagnostics',
@@ -43,7 +43,7 @@ export const routes: Routes = [
       import('./features/patient-access/pages/patient-access/patient-access').then(
         (m) => m.PatientAccess
       ),
-    canActivate: [roleGuard(['Doctor'])],
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
   },
   {
     path: 'access-management',
@@ -54,12 +54,44 @@ export const routes: Routes = [
     canActivate: [roleGuard(['Patient'])],
   },
   {
+    path: 'patient/:patientId/profile',
+    loadComponent: () =>
+      import('./features/patient-access/pages/doctor-patient-profile/doctor-patient-profile').then(
+        (m) => m.DoctorPatientProfile
+      ),
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+  },
+  {
     path: 'patient/:patientId/diagnostics',
     loadComponent: () =>
       import('./features/patient-access/pages/patient-diagnostics/patient-diagnostics').then(
         (m) => m.PatientDiagnostics
       ),
-    canActivate: [roleGuard(['Doctor'])],
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+  },
+  {
+    path: 'patient/:patientId/lab-analyses',
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-lab-analyses/patient-lab-analyses').then(
+        (m) => m.PatientLabAnalyses
+      ),
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+  },
+  {
+    path: 'patient/:patientId/prescriptions',
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-prescriptions/patient-prescriptions').then(
+        (m) => m.PatientPrescriptions
+      ),
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+  },
+  {
+    path: 'patient/:patientId/medical-data',
+    loadComponent: () =>
+      import('./features/patient-access/pages/patient-medical-data/patient-medical-data').then(
+        (m) => m.PatientMedicalData
+      ),
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
   },
   {
     path: 'add-lab-analysis',
@@ -76,14 +108,6 @@ export const routes: Routes = [
         (m) => m.GetLabAnalyses
       ),
     canActivate: [roleGuard(['Patient'])],
-  },
-  {
-    path: 'patient/:patientId/lab-analyses',
-    loadComponent: () =>
-      import('./features/patient-access/pages/patient-lab-analyses/patient-lab-analyses').then(
-        (m) => m.PatientLabAnalyses
-      ),
-    canActivate: [roleGuard(['Doctor'])],
   },
   {
     path: 'add-prescription',
@@ -110,26 +134,6 @@ export const routes: Routes = [
     canActivate: [roleGuard(['Pharmacist'])],
   },
   {
-    path: 'patient/:patientId/profile',
-    loadComponent: () =>
-      import('./features/patient-access/pages/doctor-patient-profile/doctor-patient-profile').then(
-        (m) => m.DoctorPatientProfile
-      ),
-    canActivate: [roleGuard(['Doctor'])],
-  },
-  {
-    path: 'patient/:patientId/prescriptions',
-    loadComponent: () =>
-      import('./features/patient-access/pages/patient-prescriptions/patient-prescriptions').then(
-        (m) => m.PatientPrescriptions
-      ),
-    canActivate: [roleGuard(['Doctor'])],
-  },
-  {
-    path: '',
-    loadComponent: () => import('./features/home/pages/home/home').then((m) => m.Home),
-  },
-  {
     path: 'add-medical-data',
     loadComponent: () =>
       import('./features/medical-data/pages/add-medical-data/add-medical-data').then(
@@ -146,11 +150,7 @@ export const routes: Routes = [
     canActivate: [roleGuard(['Patient'])],
   },
   {
-    path: 'patient/:patientId/medical-data',
-    loadComponent: () =>
-      import('./features/patient-access/pages/patient-medical-data/patient-medical-data').then(
-        (m) => m.PatientMedicalData
-      ),
-    canActivate: [roleGuard(['Doctor'])],
+    path: '',
+    loadComponent: () => import('./features/home/pages/home/home').then((m) => m.Home),
   },
 ];

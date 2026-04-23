@@ -12,6 +12,8 @@ namespace Diagnostics.Api.Data
         public DbSet<User> Users { get; set; }
         public DbSet<DiagnosticsAccessRequest> AccessRequests { get; set; }
         public DbSet<AccessRequestHistory> AccessRequestHistories { get; set; }
+        public DbSet<DiagnosticDraft> DiagnosticDrafts { get; set; }
+        public DbSet<DiagnosticDraftEnvelope> DiagnosticDraftEnvelopes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +36,24 @@ namespace Diagnostics.Api.Data
                 .WithMany()
                 .HasForeignKey(h => h.AccessRequestId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DiagnosticDraft>(entity =>
+            {
+                entity.HasOne(d => d.Patient)
+                    .WithMany()
+                    .HasForeignKey(d => d.PatientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasMany(d => d.Envelopes)
+                    .WithOne(e => e.DiagnosticDraft)
+                    .HasForeignKey(e => e.DiagnosticDraftId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<DiagnosticDraftEnvelope>(entity =>
+            {
+                entity.HasIndex(e => new { e.DiagnosticDraftId, e.UserId }).IsUnique();
+            });
         }
     }
 }

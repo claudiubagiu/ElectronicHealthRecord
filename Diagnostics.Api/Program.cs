@@ -29,6 +29,8 @@ builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
 builder.Services.AddScoped<IAccessRequestHistoryRepository, AccessRequestHistoryRepository>();
 builder.Services.AddScoped<IAccessRequestService, AccessRequestService>();
+builder.Services.AddScoped<IDiagnosticDraftRepository, DiagnosticDraftRepository>();
+builder.Services.AddScoped<IDiagnosticDraftService, DiagnosticDraftService>();
 
 // HttpClient for the AccessExpirationWorker to call Medications API
 builder.Services.AddHttpClient("MedicationsApi", client =>

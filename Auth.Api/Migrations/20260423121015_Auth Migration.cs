@@ -186,6 +186,7 @@ namespace Auth.Api.Migrations
                 values: new object[,]
                 {
                     { "430f06bf-f5cd-4d94-87f5-cb9575698d74", "430f06bf-f5cd-4d94-87f5-cb9575698d74", "Patient", "PATIENT" },
+                    { "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "MedicalAssistant", "MEDICALASSISTANT" },
                     { "d251e4e9-a928-48da-aa5d-720eaa10789c", "d251e4e9-a928-48da-aa5d-720eaa10789c", "Doctor", "DOCTOR" },
                     { "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b", "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b", "LaboratoryTechnician", "LABORATORYTECHNICIAN" },
                     { "f7a3b2c1-8d4e-4f6a-9b0c-1e2d3f4a5b6c", "f7a3b2c1-8d4e-4f6a-9b0c-1e2d3f4a5b6c", "Pharmacist", "PHARMACIST" }

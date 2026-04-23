@@ -29,7 +29,7 @@ export interface RegisterRequest {
   specialization?: string;
   // Doctor / Pharmacist fields
   licenseNumber?: string;
-  // Doctor / LaboratoryTechnician / Pharmacist fields
+  // Doctor / LaboratoryTechnician / Pharmacist / MedicalAssistant fields
   entityAffiliation?: string;
 }
 

@@ -2,6 +2,7 @@
 using Users.Api.Infrastructure.RabbitMQ.Interface;
 using Users.Api.Models.Domain;
 using Users.Api.Models.Messages;
+using Users.Api.Repositories.Implementation;
 using Users.Api.Repositories.Interface;
 
 namespace Users.Api.Infrastructure.RabbitMQ.Implementation
@@ -41,6 +42,7 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                     var doctorsRepository = scope.ServiceProvider.GetRequiredService<IDoctorsRepository>();
                     var labTechniciansRepository = scope.ServiceProvider.GetRequiredService<ILaboratoryTechniciansRepository>();
                     var pharmacistsRepository = scope.ServiceProvider.GetRequiredService<IPharmacistsRepository>();
+                    var medicalAssistantsRepository = scope.ServiceProvider.GetRequiredService<IMedicalAssistantsRepository>();
 
                     IdentityCreatedEvent identityCreatedEvent = message;
 
@@ -98,6 +100,19 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                         userCreatedEvent.Role = identityCreatedEvent.Role;
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medicaldata-user-created-queue");
+                    }
+                    else if (identityCreatedEvent.Role == "MedicalAssistant")
+                    {
+                        MedicalAssistant medicalAssistant = _mapper.Map<MedicalAssistant>(identityCreatedEvent);
+                        await medicalAssistantsRepository.CreateAsync(medicalAssistant);
+
+                        UserCreatedResponseEvent userCreatedResponseEvent = _mapper.Map<UserCreatedResponseEvent>(medicalAssistant);
+                        await _genericRabbitMQService1.PublishAsync(userCreatedResponseEvent, "user-created-response-queue");
+
+                        UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(medicalAssistant);
+                        userCreatedEvent.Role = identityCreatedEvent.Role;
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medicaldata-user-created-queue");
                     }
                 });

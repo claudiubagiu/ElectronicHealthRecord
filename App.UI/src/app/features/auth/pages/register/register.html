@@ -35,6 +35,15 @@
           <button
             type="button"
             class="role-btn"
+            [class.active]="selectedRole === 'MedicalAssistant'"
+            (click)="selectRole('MedicalAssistant')"
+          >
+            <mat-icon>assignment_ind</mat-icon>
+            <span>Medical Assistant</span>
+          </button>
+          <button
+            type="button"
+            class="role-btn"
             [class.active]="selectedRole === 'LaboratoryTechnician'"
             (click)="selectRole('LaboratoryTechnician')"
           >
@@ -65,7 +74,7 @@
             <input matInput formControlName="firstName" placeholder="John" />
             <mat-icon matSuffix>person</mat-icon>
             @if (registerForm.get('firstName')?.hasError('required')) {
-              <mat-error>This field is required</mat-error>
+            <mat-error>This field is required</mat-error>
             }
           </mat-form-field>
 
@@ -74,7 +83,7 @@
             <input matInput formControlName="lastName" placeholder="Doe" />
             <mat-icon matSuffix>person</mat-icon>
             @if (registerForm.get('lastName')?.hasError('required')) {
-              <mat-error>This field is required</mat-error>
+            <mat-error>This field is required</mat-error>
             }
           </mat-form-field>
         </div>
@@ -84,7 +93,7 @@
           <input matInput formControlName="userName" placeholder="john.doe" />
           <mat-icon matSuffix>alternate_email</mat-icon>
           @if (registerForm.get('userName')?.hasError('required')) {
-            <mat-error>This field is required</mat-error>
+          <mat-error>This field is required</mat-error>
           }
         </mat-form-field>
 
@@ -93,10 +102,10 @@
           <input matInput formControlName="email" type="email" placeholder="john@example.com" />
           <mat-icon matSuffix>mail</mat-icon>
           @if (registerForm.get('email')?.hasError('required')) {
-            <mat-error>This field is required</mat-error>
+          <mat-error>This field is required</mat-error>
           }
           @if (registerForm.get('email')?.hasError('email')) {
-            <mat-error>Invalid email address</mat-error>
+          <mat-error>Invalid email address</mat-error>
           }
         </mat-form-field>
 
@@ -105,122 +114,143 @@
           <input matInput formControlName="phoneNumber" placeholder="+10000000000" />
           <mat-icon matSuffix>phone</mat-icon>
           @if (registerForm.get('phoneNumber')?.hasError('required')) {
-            <mat-error>This field is required</mat-error>
+          <mat-error>This field is required</mat-error>
           }
         </mat-form-field>
       </div>
 
       <!-- Patient fields -->
       @if (selectedRole === 'Patient') {
-        <mat-divider></mat-divider>
-        <div class="section">
-          <p class="section-label">Patient information</p>
+      <mat-divider></mat-divider>
+      <div class="section">
+        <p class="section-label">Patient information</p>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Date of birth</mat-label>
-            <input matInput formControlName="dateOfBirth" type="date" />
-            <mat-icon matSuffix>calendar_today</mat-icon>
-            @if (registerForm.get('dateOfBirth')?.hasError('required')) {
-              <mat-error>This field is required for Patients</mat-error>
-            }
-          </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Date of birth</mat-label>
+          <input matInput formControlName="dateOfBirth" type="date" />
+          <mat-icon matSuffix>calendar_today</mat-icon>
+          @if (registerForm.get('dateOfBirth')?.hasError('required')) {
+          <mat-error>This field is required for Patients</mat-error>
+          }
+        </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>CNP</mat-label>
-            <input matInput formControlName="cnp" placeholder="e.g. 1234567890123" />
-            <mat-icon matSuffix>fingerprint</mat-icon>
-            @if (registerForm.get('cnp')?.hasError('required')) {
-              <mat-error>This field is required for Patients</mat-error>
-            }
-          </mat-form-field>
-        </div>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>CNP</mat-label>
+          <input matInput formControlName="cnp" placeholder="e.g. 1234567890123" />
+          <mat-icon matSuffix>fingerprint</mat-icon>
+          @if (registerForm.get('cnp')?.hasError('required')) {
+          <mat-error>This field is required for Patients</mat-error>
+          }
+        </mat-form-field>
+      </div>
       }
 
       <!-- Doctor fields -->
       @if (selectedRole === 'Doctor') {
-        <mat-divider></mat-divider>
-        <div class="section">
-          <p class="section-label">Doctor information</p>
+      <mat-divider></mat-divider>
+      <div class="section">
+        <p class="section-label">Doctor information</p>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Specialization</mat-label>
-            <input matInput formControlName="specialization" placeholder="e.g. Cardiology" />
-            <mat-icon matSuffix>local_hospital</mat-icon>
-            @if (registerForm.get('specialization')?.hasError('required')) {
-              <mat-error>This field is required for Doctors</mat-error>
-            }
-          </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Specialization</mat-label>
+          <input matInput formControlName="specialization" placeholder="e.g. Cardiology" />
+          <mat-icon matSuffix>local_hospital</mat-icon>
+          @if (registerForm.get('specialization')?.hasError('required')) {
+          <mat-error>This field is required for Doctors</mat-error>
+          }
+        </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>License number</mat-label>
-            <input matInput formControlName="licenseNumber" placeholder="e.g. US-12345" />
-            <mat-icon matSuffix>verified</mat-icon>
-            @if (registerForm.get('licenseNumber')?.hasError('required')) {
-              <mat-error>This field is required for Doctors</mat-error>
-            }
-          </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>License number</mat-label>
+          <input matInput formControlName="licenseNumber" placeholder="e.g. US-12345" />
+          <mat-icon matSuffix>verified</mat-icon>
+          @if (registerForm.get('licenseNumber')?.hasError('required')) {
+          <mat-error>This field is required for Doctors</mat-error>
+          }
+        </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Hospital / Clinic Affiliation</mat-label>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Hospital / Clinic Affiliation</mat-label>
             <input matInput formControlName="entityAffiliation" placeholder="e.g. General County Hospital" />
-            <mat-icon matSuffix>domain</mat-icon>
-            @if (registerForm.get('entityAffiliation')?.hasError('required')) {
-              <mat-error>This field is required for Doctors</mat-error>
-            }
-          </mat-form-field>
-        </div>
+          <mat-icon matSuffix>domain</mat-icon>
+          @if (registerForm.get('entityAffiliation')?.hasError('required')) {
+          <mat-error>This field is required for Doctors</mat-error>
+          }
+        </mat-form-field>
+      </div>
+      }
+
+      <!-- Medical Assistant fields -->
+      @if (selectedRole === 'MedicalAssistant') {
+      <mat-divider></mat-divider>
+      <div class="section">
+        <p class="section-label">Medical Assistant information</p>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Hospital / Clinic Affiliation</mat-label>
+          <input
+            matInput
+            formControlName="entityAffiliation"
+            placeholder="e.g. General County Hospital"
+          />
+          <mat-icon matSuffix>domain</mat-icon>
+          @if (registerForm.get('entityAffiliation')?.hasError('required')) {
+          <mat-error>This field is required for Medical Assistants</mat-error>
+          }
+        </mat-form-field>
+      </div>
       }
 
       <!-- Laboratory Technician fields -->
       @if (selectedRole === 'LaboratoryTechnician') {
-        <mat-divider></mat-divider>
-        <div class="section">
-          <p class="section-label">Laboratory Technician information</p>
+      <mat-divider></mat-divider>
+      <div class="section">
+        <p class="section-label">Laboratory Technician information</p>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Specialization</mat-label>
-            <input matInput formControlName="specialization" placeholder="e.g. Hematology" />
-            <mat-icon matSuffix>biotech</mat-icon>
-            @if (registerForm.get('specialization')?.hasError('required')) {
-              <mat-error>This field is required</mat-error>
-            }
-          </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Specialization</mat-label>
+          <input matInput formControlName="specialization" placeholder="e.g. Hematology" />
+          <mat-icon matSuffix>biotech</mat-icon>
+          @if (registerForm.get('specialization')?.hasError('required')) {
+          <mat-error>This field is required</mat-error>
+          }
+        </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Hospital / Clinic Affiliation</mat-label>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Hospital / Clinic Affiliation</mat-label>
             <input matInput formControlName="entityAffiliation" placeholder="e.g. General County Hospital" />
-            <mat-icon matSuffix>domain</mat-icon>
-            @if (registerForm.get('entityAffiliation')?.hasError('required')) {
-              <mat-error>This field is required</mat-error>
-            }
-          </mat-form-field>
-        </div>
+          <mat-icon matSuffix>domain</mat-icon>
+          @if (registerForm.get('entityAffiliation')?.hasError('required')) {
+          <mat-error>This field is required</mat-error>
+          }
+        </mat-form-field>
+      </div>
       }
 
       <!-- Pharmacist fields -->
       @if (selectedRole === 'Pharmacist') {
-        <mat-divider></mat-divider>
-        <div class="section">
-          <p class="section-label">Pharmacist information</p>
+      <mat-divider></mat-divider>
+      <div class="section">
+        <p class="section-label">Pharmacist information</p>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>License number</mat-label>
-            <input matInput formControlName="licenseNumber" placeholder="e.g. PH-12345" />
-            <mat-icon matSuffix>verified</mat-icon>
-            @if (registerForm.get('licenseNumber')?.hasError('required')) {
-              <mat-error>License number is required</mat-error>
-            }
-          </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>License number</mat-label>
+          <input matInput formControlName="licenseNumber" placeholder="e.g. PH-12345" />
+          <mat-icon matSuffix>verified</mat-icon>
+          @if (registerForm.get('licenseNumber')?.hasError('required')) {
+          <mat-error>License number is required</mat-error>
+          }
+        </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Pharmacy Affiliation</mat-label>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Pharmacy Affiliation</mat-label>
             <input matInput formControlName="entityAffiliation" placeholder="e.g. Hospital's Pharmacy'" />
-            <mat-icon matSuffix>local_pharmacy</mat-icon>
-            @if (registerForm.get('entityAffiliation')?.hasError('required')) {
-              <mat-error>Pharmacy affiliation is required</mat-error>
-            }
-          </mat-form-field>
-        </div>
+          <mat-icon matSuffix>local_pharmacy</mat-icon>
+          @if (registerForm.get('entityAffiliation')?.hasError('required')) {
+          <mat-error>Pharmacy affiliation is required</mat-error>
+          }
+        </mat-form-field>
+      </div>
       }
 
       <mat-divider></mat-divider>
@@ -234,15 +264,15 @@
           [disabled]="registerForm.invalid || isLoading"
         >
           @if (!isLoading) {
-            <ng-container>
-              <mat-icon>how_to_reg</mat-icon>
-              Register with MetaMask
-            </ng-container>
+          <ng-container>
+            <mat-icon>how_to_reg</mat-icon>
+            Register with MetaMask
+          </ng-container>
           } @else {
-            <ng-container>
-              <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
-              Processing...
-            </ng-container>
+          <ng-container>
+            <mat-spinner diameter="22" class="button-spinner"></mat-spinner>
+            Processing...
+          </ng-container>
           }
         </button>
 

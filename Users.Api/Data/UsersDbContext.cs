@@ -14,6 +14,7 @@ namespace Users.Api.Data
         public DbSet<Patient> Patients { get; set; }
         public DbSet<LaboratoryTechnician> LaboratoryTechnicians { get; set; }
         public DbSet<Pharmacist> Pharmacists { get; set; }
+        public DbSet<MedicalAssistant> MedicalAssistants { get; set; } 
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

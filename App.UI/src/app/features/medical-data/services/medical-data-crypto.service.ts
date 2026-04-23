@@ -10,6 +10,7 @@ import {
   MedicalRecordSubmissionInput,
 } from '../models/medical-data-form.model';
 import { AccessManagementService } from '../../access-management/services/access-management.service';
+import { DecryptedMedicalRecord } from '../../../shared/components/medical-records-panel/medical-records-panel';
 
 @Injectable({ providedIn: 'root' })
 export class MedicalDataCryptoService {
@@ -57,6 +58,49 @@ export class MedicalDataCryptoService {
       iv: this.arrayBufferToBase64(iv.buffer as ArrayBuffer),
       envelopes,
     });
+  }
+
+  async updateRecord(record: DecryptedMedicalRecord, patientId: string): Promise<MedicalRecordDto> {
+    const currentUser = this.authService.getDecodedToken();
+    if (!currentUser) {
+      throw new AppError({
+        message: 'You must be logged in.',
+        status: 401,
+        title: 'Unauthorized',
+        type: 'UNAUTHORIZED',
+      });
+    }
+
+    const jsonPayload = JSON.stringify(record.data);
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(jsonPayload).buffer as ArrayBuffer;
+
+    const aesKey = await CryptoService.generateAESKey();
+    const { encrypted, iv } = await CryptoService.encryptFileWithAES(dataBuffer, aesKey);
+    const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
+
+    const authorizedUserIds = await this.getAuthorizedUserIds(patientId);
+    const publicKeys = await this.e2eeService.getPublicKeysBulk(authorizedUserIds);
+
+    const envelopes: MedicalRecordEnvelopeDto[] = [];
+    for (const pk of publicKeys) {
+      const encryptedAesKey = CryptoService.encryptAESKeyWithECIES(aesKeyRaw, pk.publicKey);
+      envelopes.push({
+        userId: pk.userId,
+        encryptedAesKey: this.arrayBufferToBase64(encryptedAesKey.buffer as ArrayBuffer),
+      });
+    }
+
+    return this.medicalDataService.update(record.id, {
+      recordType: record.data.type,
+      encryptedData: this.arrayBufferToBase64(encrypted),
+      iv: this.arrayBufferToBase64(iv.buffer as ArrayBuffer),
+      envelopes,
+    });
+  }
+
+  async deleteRecord(id: string): Promise<void> {
+    await this.medicalDataService.delete(id);
   }
 
   async decrypt(record: MedicalRecordDto): Promise<MedicalRecordFormData> {
@@ -149,14 +193,14 @@ export class MedicalDataCryptoService {
     return Array.from(ids);
   }
 
-  private arrayBufferToBase64(buffer: ArrayBuffer): string {
+  arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
     let binary = '';
     bytes.forEach((b) => (binary += String.fromCharCode(b)));
     return btoa(binary);
   }
 
-  private base64ToArrayBuffer(base64: string): ArrayBuffer {
+  base64ToArrayBuffer(base64: string): ArrayBuffer {
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);

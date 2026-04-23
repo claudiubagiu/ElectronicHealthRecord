@@ -134,14 +134,6 @@ export const routes: Routes = [
     canActivate: [roleGuard(['Pharmacist'])],
   },
   {
-    path: 'add-medical-data',
-    loadComponent: () =>
-      import('./features/medical-data/pages/add-medical-data/add-medical-data').then(
-        (m) => m.AddMedicalData
-      ),
-    canActivate: [roleGuard(['Doctor'])],
-  },
-  {
     path: 'medical-data',
     loadComponent: () =>
       import('./features/medical-data/pages/get-medical-data/get-medical-data').then(

@@ -3,7 +3,6 @@ using MedicalData.Api.Models.Domain;
 using MedicalData.Api.Models.DTOs;
 using MedicalData.Api.Repositories.Interface;
 using MedicalData.Api.Services.Interface;
-using FluentResults;
 
 namespace MedicalData.Api.Services.Implementation
 {
@@ -89,6 +88,58 @@ namespace MedicalData.Api.Services.Implementation
             }).ToList();
 
             return Result.Ok<IReadOnlyList<MedicalRecordDto>>(dtos);
+        }
+
+        public async Task<Result<MedicalRecordDto>> UpdateAsync(
+            Guid recordId, Guid requestingUserId, UpdateMedicalRecordDto dto)
+        {
+            var record = await _recordRepository.GetByIdAsync(recordId);
+            if (record == null)
+                return Result.Fail<MedicalRecordDto>(
+                    new Error("Record not found.").WithMetadata("StatusCode", 404));
+
+            record.RecordType = dto.RecordType;
+            record.EncryptedData = dto.EncryptedData;
+            record.Iv = dto.Iv;
+            record.UpdatedAt = DateTime.UtcNow;
+            record.Envelopes = dto.Envelopes.Select(e => new MedicalRecordEnvelope
+            {
+                Id = Guid.NewGuid(),
+                MedicalRecordId = record.Id,
+                UserId = e.UserId,
+                EncryptedAesKey = e.EncryptedAesKey
+            }).ToList();
+
+            var updated = await _recordRepository.UpdateAsync(record);
+
+            return Result.Ok(new MedicalRecordDto
+            {
+                Id = updated.Id,
+                PatientId = updated.PatientId,
+                RecordType = updated.RecordType,
+                EncryptedData = updated.EncryptedData,
+                Iv = updated.Iv,
+                CreatedByDoctorId = updated.CreatedByDoctorId,
+                CreatedAt = updated.CreatedAt,
+                UpdatedAt = updated.UpdatedAt,
+                EncryptedAesKey = updated.Envelopes
+                    .FirstOrDefault(e => e.UserId == requestingUserId)?.EncryptedAesKey
+            });
+        }
+
+        public async Task<Result> DeleteAsync(Guid recordId, Guid requestingUserId)
+        {
+            var record = await _recordRepository.GetByIdAsync(recordId);
+            if (record == null)
+                return Result.Fail(
+                    new Error("Record not found.").WithMetadata("StatusCode", 404));
+
+            var deleted = await _recordRepository.DeleteAsync(recordId);
+            if (!deleted)
+                return Result.Fail(
+                    new Error("Failed to delete record.").WithMetadata("StatusCode", 500));
+
+            return Result.Ok();
         }
 
         public async Task<Result> AddEnvelopesBulkAsync(Guid requestingUserId, BulkEnvelopeDto dto)

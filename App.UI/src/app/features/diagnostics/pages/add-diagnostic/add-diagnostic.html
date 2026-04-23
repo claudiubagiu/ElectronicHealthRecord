@@ -384,7 +384,32 @@
           </div>
         </mat-expansion-panel>
 
-        <!-- ═══ 4. DIAGNOSIS & TREATMENT ════════════════════════════════════ -->
+        <!-- ═══ 3. MEDICAL DATA ══════════════════════════════════════════════ -->
+        <mat-expansion-panel class="category-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="panel-title-inner">
+                <div class="panel-number">3</div>
+                <span>Medical Data</span>
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content">
+            @if (selectedPatient) {
+            <app-medical-records-panel
+              [patientId]="selectedPatient.id"
+              [selectionMode]="true"
+              (selectionChanged)="onMedicalRecordSelectionChanged($event)"
+            >
+            </app-medical-records-panel>
+            } @else {
+            <p class="empty-hint">Patient not loaded.</p>
+            }
+          </div>
+        </mat-expansion-panel>
+
+        <!-- ═══ 5. DIAGNOSIS & TREATMENT ════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>

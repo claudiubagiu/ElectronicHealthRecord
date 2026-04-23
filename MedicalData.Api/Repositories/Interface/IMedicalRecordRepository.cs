@@ -6,6 +6,9 @@ namespace MedicalData.Api.Repositories.Interface
     {
         Task<MedicalRecord> CreateAsync(MedicalRecord record);
         Task<IReadOnlyList<MedicalRecord>> GetByPatientIdAsync(Guid patientId, Guid requestingUserId);
+        Task<MedicalRecord?> GetByIdAsync(Guid id);
+        Task<MedicalRecord> UpdateAsync(MedicalRecord record);
+        Task<bool> DeleteAsync(Guid id);
         Task AddEnvelopesAsync(IEnumerable<MedicalRecordEnvelope> envelopes);
         Task DeleteEnvelopesByUserAndPatientAsync(Guid userId, Guid patientId);
     }

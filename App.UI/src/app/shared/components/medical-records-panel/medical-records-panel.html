@@ -1,0 +1,274 @@
+<div class="records-panel">
+  @if (isLoading) {
+  <div class="loading-state">
+    <mat-spinner diameter="32"></mat-spinner>
+    <span>Loading medical records…</span>
+  </div>
+  } @else { @for (group of groupedRecords; track group.type) {
+  <div class="record-group">
+    <!-- Group header -->
+    <div class="group-header">
+      <mat-icon [style.color]="recordTypeConfig[group.type].color">
+        {{ recordTypeConfig[group.type].icon }}
+      </mat-icon>
+      <span class="group-label">{{ recordTypeConfig[group.type].label }}</span>
+      <span class="group-count">{{ group.items.length }}</span>
+    </div>
+
+    @if (group.items.length === 0) {
+    <p class="empty-hint">No records yet.</p>
+    } @for (record of group.items; track record.id) {
+    <div
+      class="record-card"
+      [class.expanded]="expandedDetailId === record.id"
+      [class.selected]="isSelected(record.id)"
+    >
+      <!-- ── Main row ── -->
+      <div class="record-row" (click)="toggleDetail(record.id)">
+        @if (selectionMode) {
+        <mat-checkbox
+          [checked]="isSelected(record.id)"
+          (change)="toggleSelection(record.id)"
+          (click)="$event.stopPropagation()"
+          class="record-checkbox"
+        >
+        </mat-checkbox>
+        }
+
+        <span class="record-summary">{{ getSummary(record) }}</span>
+
+        <span class="see-details">
+          {{ expandedDetailId === record.id ? 'Hide' : 'See details' }}
+          <mat-icon class="chevron-icon" [class.rotated]="expandedDetailId === record.id">
+            expand_more
+          </mat-icon>
+        </span>
+
+        <button
+          mat-icon-button
+          class="action-btn edit-btn"
+          type="button"
+          [matTooltip]="expandedEditId === record.id ? 'Close edit' : 'Edit'"
+          (click)="toggleEdit(record); $event.stopPropagation()"
+        >
+          <mat-icon>{{ expandedEditId === record.id ? 'close' : 'edit' }}</mat-icon>
+        </button>
+
+        <button
+          mat-icon-button
+          class="action-btn delete-btn"
+          type="button"
+          matTooltip="Delete permanently"
+          [disabled]="isDeletingId === record.id"
+          (click)="onDelete(record); $event.stopPropagation()"
+        >
+          @if (isDeletingId === record.id) {
+          <mat-spinner diameter="18"></mat-spinner>
+          } @else {
+          <mat-icon>delete_outline</mat-icon>
+          }
+        </button>
+      </div>
+
+      <!-- ── Detail panel ── -->
+      @if (expandedDetailId === record.id && expandedEditId !== record.id) {
+      <div class="detail-panel">
+        @for (row of getDetailRows(record); track row.label) {
+        <div class="detail-row">
+          <mat-icon class="detail-icon" [style.color]="recordTypeConfig[record.recordType].color">
+            {{ row.icon }}
+          </mat-icon>
+          <span class="detail-label">{{ row.label }}</span>
+          <span class="detail-value">{{ row.value }}</span>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- ── Inline edit form ── -->
+      @if (expandedEditId === record.id) {
+      <div class="inline-form" [formGroup]="getForm(record.id)">
+        @if (record.recordType === 'Allergy') {
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Substance *</mat-label>
+          <input matInput formControlName="substance" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Severity *</mat-label>
+          <mat-select formControlName="severity">
+            <mat-option value="Mild">Mild</mat-option>
+            <mat-option value="Moderate">Moderate</mat-option>
+            <mat-option value="Severe">Severe</mat-option>
+            <mat-option value="Life-threatening">Life-threatening</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Reaction *</mat-label>
+          <input matInput formControlName="reaction" />
+        </mat-form-field>
+        } @if (record.recordType === 'Condition') {
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Condition Name *</mat-label>
+          <input matInput formControlName="conditionName" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Diagnosed At *</mat-label>
+          <input matInput type="date" formControlName="diagnosedAt" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Status *</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="Active">Active</mat-option>
+            <mat-option value="Resolved">Resolved</mat-option>
+            <mat-option value="Chronic">Chronic</mat-option>
+          </mat-select>
+        </mat-form-field>
+        } @if (record.recordType === 'Immunization') {
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Vaccine *</mat-label>
+          <input matInput formControlName="vaccine" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Administered At *</mat-label>
+          <input matInput type="date" formControlName="administeredAt" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Booster Due</mat-label>
+          <input matInput type="date" formControlName="boosterDue" />
+        </mat-form-field>
+        } @if (record.recordType === 'Implant') {
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Device Name *</mat-label>
+          <input matInput formControlName="implantName" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Implanted At *</mat-label>
+          <input matInput type="date" formControlName="implantedAt" />
+        </mat-form-field>
+        } @if (record.recordType === 'Note') {
+        <mat-form-field appearance="outline" class="inline-field full-width">
+          <mat-label>Note *</mat-label>
+          <textarea matInput formControlName="noteContent" rows="3"></textarea>
+        </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline" class="inline-field full-width">
+          <mat-label>Additional notes</mat-label>
+          <textarea matInput formControlName="notes" rows="2"></textarea>
+        </mat-form-field>
+
+        <div class="inline-form-actions">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="isSavingEdit"
+            (click)="saveEdit(record)"
+          >
+            @if (isSavingEdit) {
+            <mat-spinner diameter="18"></mat-spinner>
+            } @else { Save }
+          </button>
+          <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- ── Add new button & form ── -->
+    <button mat-stroked-button type="button" class="add-record-btn" (click)="toggleAdd(group.type)">
+      <mat-icon>add</mat-icon>
+      Add {{ recordTypeConfig[group.type].label.slice(0, -1) }}
+    </button>
+
+    @if (isAddExpandedForType[group.type]) {
+    <div class="inline-form add-form" [formGroup]="getAddForm(group.type)">
+      @if (group.type === 'Allergy') {
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Substance *</mat-label>
+        <input matInput formControlName="substance" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Severity *</mat-label>
+        <mat-select formControlName="severity">
+          <mat-option value="Mild">Mild</mat-option>
+          <mat-option value="Moderate">Moderate</mat-option>
+          <mat-option value="Severe">Severe</mat-option>
+          <mat-option value="Life-threatening">Life-threatening</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Reaction *</mat-label>
+        <input matInput formControlName="reaction" />
+      </mat-form-field>
+      } @if (group.type === 'Condition') {
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Condition Name *</mat-label>
+        <input matInput formControlName="conditionName" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Diagnosed At *</mat-label>
+        <input matInput type="date" formControlName="diagnosedAt" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Status *</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="Active">Active</mat-option>
+          <mat-option value="Resolved">Resolved</mat-option>
+          <mat-option value="Chronic">Chronic</mat-option>
+        </mat-select>
+      </mat-form-field>
+      } @if (group.type === 'Immunization') {
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Vaccine *</mat-label>
+        <input matInput formControlName="vaccine" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Administered At *</mat-label>
+        <input matInput type="date" formControlName="administeredAt" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Booster Due</mat-label>
+        <input matInput type="date" formControlName="boosterDue" />
+      </mat-form-field>
+      } @if (group.type === 'Implant') {
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Device Name *</mat-label>
+        <input matInput formControlName="implantName" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="inline-field">
+        <mat-label>Implanted At *</mat-label>
+        <input matInput type="date" formControlName="implantedAt" />
+      </mat-form-field>
+      } @if (group.type === 'Note') {
+      <mat-form-field appearance="outline" class="inline-field full-width">
+        <mat-label>Note *</mat-label>
+        <textarea matInput formControlName="noteContent" rows="3"></textarea>
+      </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline" class="inline-field full-width">
+        <mat-label>Additional notes</mat-label>
+        <textarea matInput formControlName="notes" rows="2"></textarea>
+      </mat-form-field>
+
+      <div class="inline-form-actions">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="isSavingAdd[group.type]"
+          (click)="saveNew(group.type)"
+        >
+          @if (isSavingAdd[group.type]) {
+          <mat-spinner diameter="18"></mat-spinner>
+          } @else { Save }
+        </button>
+        <button mat-stroked-button type="button" (click)="cancelAdd(group.type)">Cancel</button>
+      </div>
+    </div>
+    }
+  </div>
+  } }
+</div>

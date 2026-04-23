@@ -8,6 +8,11 @@ export interface CustomField {
   value: string;
 }
 
+export interface SelectedMedicalRecord {
+  recordType: string;
+  summary: string;
+}
+
 export interface DiagnosticPdfData {
   // General
   title: string;
@@ -44,18 +49,21 @@ export interface DiagnosticPdfData {
   customAnamnesis?: CustomField[];
   customClinicalExam?: CustomField[];
   customDiagnosis?: CustomField[];
+
+  // Medical Data selected for this consultation
+  selectedMedicalRecords?: SelectedMedicalRecord[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PAGE_W = 210; // A4 mm width
-const PAGE_H = 297; // A4 mm height
+const PAGE_W = 210;
+const PAGE_H = 297;
 const MARGIN_L = 18;
 const MARGIN_R = 18;
 const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
-const LINE_H = 5.5; // base line height
-const SECTION_GAP = 6; // space before a new section header
-const LABEL_W = 52; // fixed width for inline labels
+const LINE_H = 5.5;
+const SECTION_GAP = 6;
+const LABEL_W = 52;
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -68,6 +76,9 @@ export class DiagnosticPdfService {
 
     this.renderHeader(ctx, data);
     this.renderPatientInfo(ctx, data);
+    if (data.selectedMedicalRecords?.length) {
+      this.renderSection(ctx, 'RELEVANT MEDICAL DATA', () => this.renderMedicalData(ctx, data));
+    }
     this.renderSection(ctx, 'ANAMNESIS', () => this.renderAnamnesis(ctx, data));
     this.renderSection(ctx, 'CLINICAL EXAMINATION', () => this.renderClinicalExam(ctx, data));
     this.renderSection(ctx, 'DIAGNOSIS & TREATMENT', () =>
@@ -150,6 +161,27 @@ export class DiagnosticPdfService {
     }
 
     ctx.y += 23;
+  }
+
+  // ── Medical Data section ─────────────────────────────────────────────────────
+
+  private renderMedicalData(ctx: RenderContext, data: DiagnosticPdfData): void {
+    const records = data.selectedMedicalRecords!;
+
+    // Group by type
+    const groups = new Map<string, string[]>();
+    for (const rec of records) {
+      if (!groups.has(rec.recordType)) groups.set(rec.recordType, []);
+      groups.get(rec.recordType)!.push(rec.summary);
+    }
+
+    for (const [type, summaries] of groups) {
+      for (const summary of summaries) {
+        this.field(ctx, type, summary);
+      }
+    }
+
+    ctx.y += 2;
   }
 
   // ── Generic section wrapper ──────────────────────────────────────────────────

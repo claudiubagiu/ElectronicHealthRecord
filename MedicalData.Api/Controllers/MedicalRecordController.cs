@@ -1,4 +1,5 @@
-﻿using MedicalData.Api.Models.DTOs;
+﻿using FluentResults;
+using MedicalData.Api.Models.DTOs;
 using MedicalData.Api.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +40,28 @@ namespace MedicalData.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMedicalRecordDto dto)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var result = await _medicalRecordService.UpdateAsync(id, userId.Value, dto);
+            if (result.IsSuccess) return Ok(result.Value);
+            return BuildError(result.Errors.First());
+        }
+
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var result = await _medicalRecordService.DeleteAsync(id, userId.Value);
+            if (result.IsSuccess) return NoContent();
+            return BuildError(result.Errors.First());
+        }
+
         [HttpPost("envelopes/bulk")]
         public async Task<IActionResult> AddEnvelopesBulk([FromBody] BulkEnvelopeDto dto)
         {
@@ -76,12 +99,16 @@ namespace MedicalData.Api.Controllers
             return claim != null ? Guid.Parse(claim) : null;
         }
 
-        private ObjectResult BuildError(FluentResults.IError error)
+        private IActionResult BuildError(IError error)
         {
-            var statusCode = error.Metadata.ContainsKey("StatusCode")
-                ? Convert.ToInt32(error.Metadata["StatusCode"])
-                : 500;
-            return StatusCode(statusCode, new { error = error.Message });
+            var statusCode = error.Metadata.TryGetValue("StatusCode", out var sc)
+                ? (int)sc : 500;
+            return StatusCode(statusCode, new ProblemDetails
+            {
+                Title = "Error",
+                Detail = error.Message,
+                Status = statusCode
+            });
         }
     }
 }

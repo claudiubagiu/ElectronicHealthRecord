@@ -6,6 +6,13 @@ export interface CreateMedicalRecordDto {
   envelopes: MedicalRecordEnvelopeDto[];
 }
 
+export interface UpdateMedicalRecordDto {
+  recordType: string;
+  encryptedData: string;
+  iv: string;
+  envelopes: MedicalRecordEnvelopeDto[];
+}
+
 export interface MedicalRecordEnvelopeDto {
   userId: string;
   encryptedAesKey: string;

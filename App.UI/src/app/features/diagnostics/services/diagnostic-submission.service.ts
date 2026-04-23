@@ -4,13 +4,17 @@ import { BlockchainService } from '../../../core/services/blockchain.service';
 import { IpfsService } from '../../../core/services/ipfs.service';
 import { LitProtocolService } from '../../../core/services/lit-protocol.service';
 import { CryptoService } from '../../../core/services/crypto.service';
-import { DiagnosticPdfService, DiagnosticPdfData } from './diagnostic-pdf.service';
+import {
+  DiagnosticPdfService,
+  DiagnosticPdfData,
+  SelectedMedicalRecord,
+} from './diagnostic-pdf.service';
 import { EncryptedPayload } from '../../../core/models/ipfs.model';
+import { MedicalDataService } from '../../medical-data/services/medical-data.service';
+import { MedicalDataCryptoService } from '../../medical-data/services/medical-data-crypto.service';
 
 /**
  * Input data required to submit a diagnosis.
- * Combines the PDF content data with the patient's wallet address
- * and the doctor's display name.
  */
 export interface DiagnosticSubmissionInput {
   /** All the fields needed to generate the diagnostic PDF. */
@@ -21,6 +25,12 @@ export interface DiagnosticSubmissionInput {
 
   /** The doctor's full name to be recorded on-chain. */
   doctorName: string;
+
+  /** IDs of medical records selected as relevant for this consultation. */
+  linkedMedicalRecordIds?: string[];
+
+  /** The patient's user ID (GUID) — needed to fetch medical records for the PDF. */
+  patientId?: string;
 }
 
 /**
@@ -37,11 +47,11 @@ export interface DiagnosticSubmissionResult {
 /**
  * Facade service that orchestrates the full diagnostic submission pipeline:
  *
- * 1. Generate a PDF from the diagnostic data.
- * 2. Encrypt the PDF with a random AES-256-GCM key.
- * 3. Encrypt the AES key via Lit Protocol (access-controlled).
- * 4. Upload the encrypted payload to IPFS (Base64-encoded).
- * 5. Record the IPFS CID on the blockchain smart contract.
+ * 1. Resolve selected medical records and inject them into the PDF data.
+ * 2. Generate a PDF from the diagnostic data.
+ * 3. Encrypt the PDF with a random AES-256-GCM key.
+ * 4. Encrypt the AES key via Lit Protocol (access-controlled).
+ * 5. Upload the encrypted payload to IPFS (Base64-encoded).
  *
  * This service owns NO UI state — it simply accepts data and returns a result
  * or throws an error. The calling component handles loading indicators,
@@ -53,36 +63,46 @@ export class DiagnosticSubmissionService {
   private blockchainService = inject(BlockchainService);
   private ipfsService = inject(IpfsService);
   private litService = inject(LitProtocolService);
+  private medicalDataService = inject(MedicalDataService);
+  private medicalDataCryptoService = inject(MedicalDataCryptoService);
 
   /**
    * Runs the full submission pipeline.
    *
-   * @param input - The diagnostic data, patient wallet, and doctor name.
+   * @param input - The diagnostic data, patient wallet, doctor name, and optional linked records.
    * @returns The on-chain diagnosis ID and the IPFS CID.
    * @throws {AppError} If any step in the pipeline fails.
    */
   async submit(input: DiagnosticSubmissionInput): Promise<DiagnosticSubmissionResult> {
-    const { pdfData, patientWalletAddress, doctorName } = input;
+    const { pdfData, patientWalletAddress, doctorName, linkedMedicalRecordIds, patientId } = input;
 
-    // 1. Generate PDF from the diagnostic form data
+    // 1. Resolve selected medical records into human-readable summaries for the PDF
+    if (linkedMedicalRecordIds?.length && patientId) {
+      pdfData.selectedMedicalRecords = await this.resolveSelectedRecords(
+        linkedMedicalRecordIds,
+        patientId
+      );
+    }
+
+    // 2. Generate PDF from the diagnostic form data
     const pdfBlob = await this.pdfService.generateDiagnosticPdf(pdfData);
     const fileBuffer = await pdfBlob.arrayBuffer();
 
-    // 2. Encrypt the PDF with a random AES-256-GCM key
+    // 3. Encrypt the PDF with a random AES-256-GCM key
     const aesKey = await CryptoService.generateAESKey();
     const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, aesKey);
 
-    // 3. Export the AES key as a Base64 string for Lit encryption
+    // 4. Export the AES key as a Base64 string for Lit encryption
     const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
     const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyRaw)));
 
-    // 4. Encrypt the AES key via Lit Protocol with patient-bound access control
+    // 5. Encrypt the AES key via Lit Protocol with patient-bound access control
     const patientAddress = getAddress(patientWalletAddress);
     await this.litService.connect();
     const accs = this.litService.createAccsBuilder(patientAddress);
     const litResult = await this.litService.encrypt(aesKeyBase64, accs);
 
-    // 5. Build the IPFS payload with Base64-encoded binary fields
+    // 6. Build the IPFS payload with Base64-encoded binary fields
     const fileName = `diagnostic_${pdfData.title.replace(/\s+/g, '_').toLowerCase()}.pdf`;
     const payload: EncryptedPayload = {
       encryptedFile: this.arrayBufferToBase64(encrypted),
@@ -95,10 +115,10 @@ export class DiagnosticSubmissionService {
       timestamp: Date.now(),
     };
 
-    // 6. Upload encrypted payload to IPFS via the backend proxy
+    // 7. Upload encrypted payload to IPFS via the backend proxy
     const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
 
-    // 7. Store the IPFS CID on the blockchain smart contract
+    // 8. Store the IPFS CID on the blockchain smart contract
     const diagnosisId = await this.blockchainService.addDiagnosis(
       pdfData.title,
       ipfsCid,
@@ -107,6 +127,56 @@ export class DiagnosticSubmissionService {
     );
 
     return { diagnosisId, ipfsCid };
+  }
+
+  /**
+   * Fetches and decrypts the selected medical records, then converts each
+   * to a short human-readable summary for inclusion in the PDF.
+   */
+  private async resolveSelectedRecords(
+    ids: string[],
+    patientId: string
+  ): Promise<SelectedMedicalRecord[]> {
+    try {
+      const allEncrypted = await this.medicalDataService.getByPatientId(patientId);
+      const selected = allEncrypted.filter((r) => ids.includes(r.id));
+
+      const result: SelectedMedicalRecord[] = [];
+      for (const rec of selected) {
+        try {
+          const data = await this.medicalDataCryptoService.decrypt(rec);
+          let summary = '';
+          switch (rec.recordType) {
+            case 'Allergy':
+              summary = `${data.substance ?? '—'} – ${data.severity ?? ''} (${
+                data.reaction ?? ''
+              })`;
+              break;
+            case 'Condition':
+              summary = `${data.conditionName ?? '—'} – ${data.status ?? ''}`;
+              break;
+            case 'Immunization':
+              summary = `${data.vaccine ?? '—'} administered ${data.administeredAt ?? ''}`;
+              break;
+            case 'Implant':
+              summary = `${data.implantName ?? '—'} implanted ${data.implantedAt ?? ''}`;
+              break;
+            case 'Note':
+              summary = (data.noteContent ?? '').substring(0, 80);
+              break;
+            default:
+              summary = '';
+          }
+          result.push({ recordType: rec.recordType, summary });
+        } catch (err) {
+          console.error(`Could not decrypt record ${rec.id} for PDF:`, err);
+        }
+      }
+      return result;
+    } catch (err) {
+      console.error('Could not resolve selected medical records for PDF:', err);
+      return [];
+    }
   }
 
   /**

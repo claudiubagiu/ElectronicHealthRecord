@@ -32,6 +32,30 @@ namespace MedicalData.Api.Repositories.Implementation
                 .ToListAsync();
         }
 
+        public async Task<MedicalRecord?> GetByIdAsync(Guid id)
+        {
+            return await _dbContext.MedicalRecords
+                .Include(m => m.Envelopes)
+                .FirstOrDefaultAsync(m => m.Id == id);
+        }
+
+        public async Task<MedicalRecord> UpdateAsync(MedicalRecord record)
+        {
+            _dbContext.MedicalRecords.Update(record);
+            await _dbContext.SaveChangesAsync();
+            return record;
+        }
+
+        public async Task<bool> DeleteAsync(Guid id)
+        {
+            var record = await _dbContext.MedicalRecords.FindAsync(id);
+            if (record == null) return false;
+
+            _dbContext.MedicalRecords.Remove(record);
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
         public async Task AddEnvelopesAsync(IEnumerable<MedicalRecordEnvelope> envelopes)
         {
             await _dbContext.MedicalRecordEnvelopes.AddRangeAsync(envelopes);

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
   CreateMedicalRecordDto,
+  UpdateMedicalRecordDto,
   MedicalRecordDto,
   BulkMedicalRecordEnvelopeDto,
 } from '../models/medical-data.model';
@@ -19,6 +20,14 @@ export class MedicalDataService {
 
   getByPatientId(patientId: string): Promise<MedicalRecordDto[]> {
     return firstValueFrom(this.http.get<MedicalRecordDto[]>(`${this.API}/patient/${patientId}`));
+  }
+
+  update(id: string, dto: UpdateMedicalRecordDto): Promise<MedicalRecordDto> {
+    return firstValueFrom(this.http.put<MedicalRecordDto>(`${this.API}/${id}`, dto));
+  }
+
+  delete(id: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.API}/${id}`));
   }
 
   addEnvelopesBulk(dto: BulkMedicalRecordEnvelopeDto): Promise<void> {

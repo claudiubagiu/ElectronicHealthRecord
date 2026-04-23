@@ -12,6 +12,7 @@ import { AppError } from '../../../../core/errors/app.error';
 import { BlockchainService } from '../../../../core/services/blockchain.service';
 import { LabAnalysis } from '../../../../core/models/blockchain.model';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
+import { MedicalRecordsPanelComponent } from '../../../../shared/components/medical-records-panel/medical-records-panel';
 
 export type { CustomField };
 
@@ -20,7 +21,7 @@ export type { CustomField };
   templateUrl: './add-diagnostic.html',
   styleUrls: ['./add-diagnostic.scss'],
   standalone: true,
-  imports: [...MAT_FORM_IMPORTS, MatExpansionModule, MatSelectModule],
+  imports: [...MAT_FORM_IMPORTS, MatExpansionModule, MatSelectModule, MedicalRecordsPanelComponent],
 })
 export class AddDiagnostic implements OnInit {
   private submissionService = inject(DiagnosticSubmissionService);
@@ -40,6 +41,8 @@ export class AddDiagnostic implements OnInit {
   labAnalysesLoaded = false;
   labAccessDenied = false;
   selectedAnalysis: LabAnalysis | null = null;
+
+  linkedMedicalRecordIds: string[] = [];
 
   customGeneralInfo: CustomField[] = [];
   customAnamnesis: CustomField[] = [];
@@ -105,6 +108,10 @@ export class AddDiagnostic implements OnInit {
     });
   }
 
+  onMedicalRecordSelectionChanged(ids: string[]): void {
+    this.linkedMedicalRecordIds = ids;
+  }
+
   async loadPatientLabAnalyses(): Promise<void> {
     if (!this.selectedPatient?.walletAddress) return;
     this.isLoadingAnalyses = true;
@@ -147,7 +154,7 @@ export class AddDiagnostic implements OnInit {
     });
   }
 
-  // ── Custom fields ─────────────────────────────────────────────────
+  // ── Custom fields ─────────────────────────────────────────────────────────
 
   addCustomField(category: 'generalInfo' | 'anamnesis' | 'clinicalExam' | 'diagnosis'): void {
     const labelKey = `newLabel_${category}` as const;
@@ -199,7 +206,7 @@ export class AddDiagnostic implements OnInit {
     }
   }
 
-  // ── Validation ────────────────────────────────────────────────────
+  // ── Validation ────────────────────────────────────────────────────────────
 
   get isCategoryGeneralInfoValid(): boolean {
     return !!this.form.get('title')?.valid && !!this.form.get('consultationDate')?.valid;
@@ -227,7 +234,7 @@ export class AddDiagnostic implements OnInit {
     );
   }
 
-  // ── Submit ────────────────────────────────────────────────────────
+  // ── Submit ────────────────────────────────────────────────────────────────
 
   async onSubmit(): Promise<void> {
     if (!this.isFormReady) {
@@ -285,6 +292,8 @@ export class AddDiagnostic implements OnInit {
         },
         patientWalletAddress: this.selectedPatient!.walletAddress,
         doctorName,
+        linkedMedicalRecordIds: this.linkedMedicalRecordIds,
+        patientId: this.selectedPatient!.id,
       });
 
       this.notify.showSuccess('Diagnosis added successfully!');

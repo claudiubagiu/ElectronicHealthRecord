@@ -1,3 +1,5 @@
+// ── Page & card ───────────────────────────────────────────────────────────────
+
 .add-diagnostic-page {
   display: flex;
   align-items: flex-start;
@@ -99,6 +101,8 @@ h1 {
   }
 }
 
+// ── Layout helpers ────────────────────────────────────────────────────────────
+
 .full {
   width: 100%;
   margin-bottom: 4px;
@@ -182,7 +186,17 @@ h1 {
   margin-left: 4px;
 }
 
-// ── Panel content ──────────────────────────────────────────────────────────────
+.optional-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 1px 7px;
+  margin-left: 6px;
+}
+
+// ── Panel content ─────────────────────────────────────────────────────────────
 
 .panel-content {
   display: flex;
@@ -241,7 +255,7 @@ h1 {
   }
 }
 
-// ── Custom fields ──────────────────────────────────────────────────────────────
+// ── Custom fields ─────────────────────────────────────────────────────────────
 
 .custom-fields-list {
   display: flex;
@@ -299,7 +313,7 @@ h1 {
   }
 }
 
-// ── Add field row ──────────────────────────────────────────────────────────────
+// ── Add field row ─────────────────────────────────────────────────────────────
 
 .add-field-row {
   display: flex;
@@ -349,53 +363,7 @@ h1 {
   }
 }
 
-// ── Lab analysis reference ────────────────────────────────────────────────────
-
-.lab-analysis-ref {
-  margin-bottom: 16px;
-  padding: 14px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(2, 136, 209, 0.2);
-  background: rgba(2, 136, 209, 0.03);
-
-  .lab-ref-label {
-    margin: 0 0 10px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .optional-tag {
-    font-size: 0.68rem;
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0;
-    color: #0288d1;
-    background: rgba(2, 136, 209, 0.1);
-    padding: 1px 6px;
-    border-radius: 4px;
-  }
-}
-
-.lab-ref-hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.83rem;
-  color: rgba(0, 0, 0, 0.45);
-
-  mat-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    color: rgba(0, 0, 0, 0.3);
-  }
-}
+// ── Selected lab analysis ─────────────────────────────────────────────────────
 
 .selected-analysis {
   display: flex;
@@ -405,6 +373,7 @@ h1 {
   border-radius: 8px;
   background: rgba(2, 136, 209, 0.08);
   border: 1px solid rgba(2, 136, 209, 0.2);
+  margin-bottom: 8px;
 
   .analysis-icon {
     color: #0288d1;
@@ -433,7 +402,156 @@ h1 {
   }
 }
 
-// ── Submit section ─────────────────────────────────────────────────────────────
+// ── Lab option ────────────────────────────────────────────────────────────────
+
+.lab-option {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  .lab-option-title {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #212121;
+  }
+
+  .lab-option-date {
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+// ── Past diagnoses section ────────────────────────────────────────────────────
+
+.past-diagnoses-section {
+  margin-bottom: 12px;
+
+  .field-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0 0 8px;
+  }
+}
+
+.past-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.83rem;
+  color: rgba(0, 0, 0, 0.45);
+  padding: 8px 0 12px;
+}
+
+.past-empty {
+  font-size: 0.83rem;
+  color: rgba(0, 0, 0, 0.35);
+  font-style: italic;
+  margin: 6px 0 0;
+}
+
+.past-selected-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.past-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 6px 8px 12px;
+  border-radius: 8px;
+  background: rgba(21, 101, 192, 0.06);
+  border: 1px solid rgba(21, 101, 192, 0.2);
+
+  .past-chip-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+
+    .past-chip-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #212121;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .past-chip-date {
+      font-size: 0.74rem;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+
+  .chip-remove {
+    width: 28px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+    flex-shrink: 0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    color: rgba(0, 0, 0, 0.35);
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &:hover {
+      color: #c62828;
+    }
+  }
+}
+
+.open-history-btn {
+  border-color: rgba(21, 101, 192, 0.35) !important;
+  color: #1565c0 !important;
+  border-radius: 8px;
+  font-size: 0.85rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover:not([disabled]) {
+    background: rgba(21, 101, 192, 0.05) !important;
+  }
+
+  &[disabled] {
+    opacity: 0.4;
+  }
+}
+
+// ── ICD-10 ────────────────────────────────────────────────────────────────────
+
+.icd-code {
+  font-weight: 700;
+  color: #1565c0;
+  margin-right: 8px;
+  font-size: 0.88rem;
+}
+
+.icd-desc {
+  font-size: 0.85rem;
+  color: #212121;
+}
+
+// ── Submit section ────────────────────────────────────────────────────────────
 
 .submit-section {
   margin-top: 24px;
@@ -490,7 +608,7 @@ h1 {
   }
 }
 
-// ── Responsive ──────────────────────────────────────────────────────────────────
+// ── Responsive ────────────────────────────────────────────────────────────────
 
 @media (max-width: 600px) {
   .add-diagnostic-card {

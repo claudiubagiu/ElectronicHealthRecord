@@ -1,6 +1,5 @@
 <div class="add-diagnostic-page">
   <div class="add-diagnostic-card">
-    <!-- ── Header ─────────────────────────────────────────────────────────── -->
     <div class="card-header">
       <div class="icon-wrapper">
         <mat-icon>medical_information</mat-icon>
@@ -10,7 +9,7 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <!-- ── Patient banner ────────────────────────────────────────────── -->
+      <!-- Patient banner -->
       <div class="patient-section">
         <p class="section-label">Patient</p>
         <div class="patient-preselected-banner">
@@ -21,9 +20,8 @@
         </div>
       </div>
 
-      <!-- ── Categories accordion ───────────────────────────────────────── -->
       <mat-accordion class="categories-accordion" multi>
-        <!-- ═══ 1. GENERAL INFORMATION ═════════════════════════════════════ -->
+        <!-- ═══ 1. GENERAL INFORMATION ══════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel" [expanded]="true">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -40,7 +38,11 @@
           <div class="panel-content">
             <mat-form-field appearance="outline" class="full">
               <mat-label>Diagnosis title *</mat-label>
-              <input matInput formControlName="title" placeholder="e.g. Cardiology Consultation" />
+              <input
+                matInput
+                formControlName="title"
+                placeholder="e.g. Cardiology consultation – April 2026"
+              />
               <mat-icon matSuffix>title</mat-icon>
               @if (form.get('title')?.hasError('required')) {
               <mat-error>This field is required</mat-error>
@@ -51,66 +53,39 @@
               <mat-label>Consultation date *</mat-label>
               <input matInput type="date" formControlName="consultationDate" />
               <mat-icon matSuffix>calendar_today</mat-icon>
-              @if (form.get('consultationDate')?.hasError('required')) {
-              <mat-error>This field is required</mat-error>
-              }
             </mat-form-field>
 
-            <!-- ── Based on Lab Analysis ──────────────────────────────── -->
-            <div class="lab-analysis-ref">
-              <p class="lab-ref-label">
-                Based on lab analysis
-                <span class="optional-tag">optional</span>
-              </p>
+            <!-- Lab analysis -->
+            @if (labAnalysesLoaded && !labAccessDenied && labAnalyses.length > 0) {
+            <div class="optional-label">Link to lab analysis</div>
 
-              @if (isLoadingAnalyses) {
-              <div class="lab-ref-hint">
-                <mat-spinner diameter="16"></mat-spinner>
-                <span>Loading analyses...</span>
-              </div>
-              } @if (!isLoadingAnalyses && labAnalysesLoaded && labAnalyses.length === 0) {
-              <div class="lab-ref-hint">
-                @if (labAccessDenied) {
-                <mat-icon>lock</mat-icon>
-                <span>You don't have access to this patient's data.</span>
-                } @else {
-                <mat-icon>science</mat-icon>
-                <span>No lab analyses found for this patient.</span>
+            @if (!selectedAnalysis) {
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>Select lab analysis</mat-label>
+              <mat-select (selectionChange)="selectAnalysis($event.value)">
+                @for (a of labAnalyses; track a.id) {
+                <mat-option [value]="a">
+                  <div class="lab-option">
+                    <span class="lab-option-title">{{ a.title }}</span>
+                    <span class="lab-option-date">{{ formatTimestamp(a.timestamp) }}</span>
+                  </div>
+                </mat-option>
                 }
+              </mat-select>
+              <mat-icon matSuffix>biotech</mat-icon>
+            </mat-form-field>
+            } @else {
+            <div class="selected-analysis">
+              <mat-icon class="analysis-icon">biotech</mat-icon>
+              <div class="analysis-info">
+                <span class="analysis-title">{{ selectedAnalysis.title }}</span>
+                <span class="analysis-date">{{ formatTimestamp(selectedAnalysis.timestamp) }}</span>
               </div>
-              } @if (!isLoadingAnalyses && labAnalysesLoaded && labAnalyses.length > 0) { @if
-              (!selectedAnalysis) {
-              <mat-form-field appearance="outline" class="full">
-                <mat-label>Select a lab analysis</mat-label>
-                <mat-select
-                  #analysisSelect
-                  (selectionChange)="selectAnalysis(analysisSelect.value)"
-                >
-                  @for (a of labAnalyses; track a.id) {
-                  <mat-option [value]="a">
-                    {{ a.title }} — {{ formatTimestamp(a.timestamp) }}
-                  </mat-option>
-                  }
-                </mat-select>
-                <mat-icon matSuffix>biotech</mat-icon>
-              </mat-form-field>
-              } @else {
-              <div class="selected-analysis">
-                <mat-icon class="analysis-icon">biotech</mat-icon>
-                <div class="analysis-info">
-                  <span class="analysis-title">{{ selectedAnalysis.title }}</span>
-                  <span class="analysis-date">{{
-                    formatTimestamp(selectedAnalysis.timestamp)
-                  }}</span>
-                </div>
-                <button mat-icon-button type="button" (click)="clearAnalysis()">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </div>
-              } }
+              <button mat-icon-button type="button" (click)="clearAnalysis()">
+                <mat-icon>close</mat-icon>
+              </button>
             </div>
-
-            @if (customGeneralInfo.length > 0) {
+            } } @if (customGeneralInfo.length > 0) {
             <div class="custom-fields-list">
               @for (cf of customGeneralInfo; track $index; let i = $index) {
               <div class="custom-field-chip">
@@ -135,7 +110,7 @@
                 <input
                   matInput
                   formControlName="newLabel_generalInfo"
-                  placeholder="e.g. Department"
+                  placeholder="e.g. Referral"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline" class="field-value-input">
@@ -143,7 +118,7 @@
                 <input
                   matInput
                   formControlName="newValue_generalInfo"
-                  placeholder="e.g. Cardiology"
+                  placeholder="e.g. Dr. Popescu"
                 />
               </mat-form-field>
               <button
@@ -185,29 +160,64 @@
                 formControlName="chiefComplaint"
                 rows="3"
                 placeholder="e.g. Chest pain during physical activity, onset 2 weeks ago"
-              ></textarea>
+              >
+              </textarea>
               <mat-icon matSuffix>help_outline</mat-icon>
               @if (form.get('chiefComplaint')?.hasError('required')) {
               <mat-error>This field is required</mat-error>
               }
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="full">
-              <mat-label>Personal medical history *</mat-label>
-              <textarea
-                matInput
-                formControlName="personalHistory"
-                rows="3"
-                placeholder="e.g. Hypertension diagnosed in 2020, type 2 diabetes"
-              ></textarea>
-              <mat-icon matSuffix>history</mat-icon>
-              @if (form.get('personalHistory')?.hasError('required')) {
-              <mat-error>This field is required</mat-error>
-              }
-            </mat-form-field>
-
             <div class="optional-label">Optional fields</div>
 
+            <!-- Personal history — modal -->
+            <div class="past-diagnoses-section">
+              <p class="field-label">Personal medical history</p>
+
+              @if (isLoadingPastDiagnoses) {
+              <div class="past-loading">
+                <mat-spinner diameter="20"></mat-spinner>
+                <span>Loading past diagnoses…</span>
+              </div>
+              } @else { @if (selectedPastDiagnoses.length > 0) {
+              <div class="past-selected-chips">
+                @for (d of selectedPastDiagnoses; track d.id) {
+                <div class="past-chip">
+                  <div class="past-chip-info">
+                    <span class="past-chip-title">{{ d.title }}</span>
+                    <span class="past-chip-date">{{ formatTimestampFull(d.timestamp) }}</span>
+                  </div>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="chip-remove"
+                    (click)="removePastDiagnosis(d)"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                }
+              </div>
+              }
+
+              <button
+                mat-stroked-button
+                type="button"
+                class="open-history-btn"
+                [disabled]="pastDiagnoses.length === 0"
+                (click)="openPastDiagnosesModal()"
+              >
+                <mat-icon>history</mat-icon>
+                @if (selectedPastDiagnoses.length === 0) { Select from past diagnoses } @else { Edit
+                selection ({{ selectedPastDiagnoses.length }}) }
+              </button>
+
+              @if (pastDiagnoses.length === 0) {
+              <p class="past-empty">No past diagnoses found for this patient.</p>
+              } }
+            </div>
+
+            <!-- Family history -->
             <mat-form-field appearance="outline" class="full optional-field">
               <mat-label>Family history</mat-label>
               <textarea
@@ -215,14 +225,9 @@
                 formControlName="familyHistory"
                 rows="2"
                 placeholder="e.g. Father deceased from myocardial infarction"
-              ></textarea>
+              >
+              </textarea>
               <mat-icon matSuffix>family_restroom</mat-icon>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="full optional-field">
-              <mat-label>Known allergies</mat-label>
-              <input matInput formControlName="allergies" placeholder="e.g. Penicillin, latex" />
-              <mat-icon matSuffix>warning_amber</mat-icon>
             </mat-form-field>
 
             @if (customAnamnesis.length > 0) {
@@ -251,11 +256,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="field-value-input">
                 <mat-label>Value</mat-label>
-                <input
-                  matInput
-                  formControlName="newValue_anamnesis"
-                  placeholder="e.g. Smoker, sedentary"
-                />
+                <input matInput formControlName="newValue_anamnesis" placeholder="e.g. Smoker" />
               </mat-form-field>
               <button
                 mat-stroked-button
@@ -273,15 +274,43 @@
           </div>
         </mat-expansion-panel>
 
-        <!-- ═══ 3. CLINICAL EXAMINATION ════════════════════════════════════ -->
+        <!-- ═══ 3. MEDICAL DATA ══════════════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>
               <div class="panel-title-inner">
-                <div class="panel-number" [class.valid]="isCategoryClinicalExamValid">3</div>
+                <div class="panel-number" [class.valid]="isCategoryMedicalDataValid">3</div>
+                <span>Medical Data</span>
+                @if (isCategoryMedicalDataValid) {
+                <mat-icon class="check-icon">check_circle</mat-icon>
+                }
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content">
+            @if (selectedPatient) {
+            <app-medical-records-panel
+              [patientId]="selectedPatient.id"
+              [selectionMode]="true"
+              (selectionChanged)="onMedicalRecordSelectionChanged($event)"
+            >
+            </app-medical-records-panel>
+            }
+          </div>
+        </mat-expansion-panel>
+
+        <!-- ═══ 4. CLINICAL EXAMINATION ══════════════════════════════════════ -->
+        <mat-expansion-panel class="category-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="panel-title-inner">
+                <div class="panel-number" [class.valid]="isCategoryClinicalExamValid">4</div>
                 <span>Clinical Examination</span>
                 @if (isCategoryClinicalExamValid) {
                 <mat-icon class="check-icon">check_circle</mat-icon>
+                } @else {
+                <span class="optional-badge">optional</span>
                 }
               </div>
             </mat-panel-title>
@@ -290,49 +319,42 @@
           <div class="panel-content">
             <div class="row-fields">
               <mat-form-field appearance="outline" class="half">
-                <mat-label>Blood pressure *</mat-label>
+                <mat-label>Blood pressure</mat-label>
                 <input matInput formControlName="bloodPressure" placeholder="e.g. 140/90 mmHg" />
                 <mat-icon matSuffix>monitor_heart</mat-icon>
-                @if (form.get('bloodPressure')?.hasError('required')) {
-                <mat-error>This field is required</mat-error>
-                }
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="half">
-                <mat-label>Pulse *</mat-label>
+                <mat-label>Pulse</mat-label>
                 <input matInput formControlName="pulse" placeholder="e.g. 78 bpm" />
                 <mat-icon matSuffix>favorite</mat-icon>
-                @if (form.get('pulse')?.hasError('required')) {
-                <mat-error>This field is required</mat-error>
-                }
               </mat-form-field>
             </div>
 
-            <div class="optional-label">Optional fields</div>
-
             <div class="row-fields">
-              <mat-form-field appearance="outline" class="half optional-field">
+              <mat-form-field appearance="outline" class="half">
                 <mat-label>Temperature</mat-label>
                 <input matInput formControlName="temperature" placeholder="e.g. 36.6°C" />
                 <mat-icon matSuffix>thermostat</mat-icon>
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="half optional-field">
+              <mat-form-field appearance="outline" class="half">
                 <mat-label>Weight / Height</mat-label>
-                <input matInput formControlName="weightHeight" placeholder="e.g. 80kg / 175cm" />
+                <input matInput formControlName="weightHeight" placeholder="e.g. 80 kg / 175 cm" />
                 <mat-icon matSuffix>straighten</mat-icon>
               </mat-form-field>
             </div>
 
-            <mat-form-field appearance="outline" class="full optional-field">
+            <mat-form-field appearance="outline" class="full">
               <mat-label>Clinical notes</mat-label>
               <textarea
                 matInput
                 formControlName="clinicalNotes"
-                rows="2"
-                placeholder="e.g. Heart sounds regular, no murmurs"
-              ></textarea>
-              <mat-icon matSuffix>description</mat-icon>
+                rows="3"
+                placeholder="e.g. Auscultation normal, no peripheral edema"
+              >
+              </textarea>
+              <mat-icon matSuffix>notes</mat-icon>
             </mat-form-field>
 
             @if (customClinicalExam.length > 0) {
@@ -365,7 +387,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="field-value-input">
                 <mat-label>Value</mat-label>
-                <input matInput formControlName="newValue_clinicalExam" placeholder="e.g. 97%" />
+                <input matInput formControlName="newValue_clinicalExam" placeholder="e.g. 98%" />
               </mat-form-field>
               <button
                 mat-stroked-button
@@ -384,38 +406,13 @@
           </div>
         </mat-expansion-panel>
 
-        <!-- ═══ 3. MEDICAL DATA ══════════════════════════════════════════════ -->
+        <!-- ═══ 5. DIAGNOSIS & TREATMENT ══════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>
               <div class="panel-title-inner">
-                <div class="panel-number">3</div>
-                <span>Medical Data</span>
-              </div>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <div class="panel-content">
-            @if (selectedPatient) {
-            <app-medical-records-panel
-              [patientId]="selectedPatient.id"
-              [selectionMode]="true"
-              (selectionChanged)="onMedicalRecordSelectionChanged($event)"
-            >
-            </app-medical-records-panel>
-            } @else {
-            <p class="empty-hint">Patient not loaded.</p>
-            }
-          </div>
-        </mat-expansion-panel>
-
-        <!-- ═══ 5. DIAGNOSIS & TREATMENT ════════════════════════════════════ -->
-        <mat-expansion-panel class="category-panel">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <div class="panel-title-inner">
-                <div class="panel-number" [class.valid]="isCategoryDiagnosisValid">4</div>
-                <span>Diagnosis & Treatment</span>
+                <div class="panel-number" [class.valid]="isCategoryDiagnosisValid">5</div>
+                <span>Diagnosis &amp; Treatment</span>
                 @if (isCategoryDiagnosisValid) {
                 <mat-icon class="check-icon">check_circle</mat-icon>
                 }
@@ -444,7 +441,8 @@
                 formControlName="treatment"
                 rows="3"
                 placeholder="e.g. Metoprolol 50mg – 1 tablet in the morning&#10;Aspirin 75mg – 1 tablet in the evening"
-              ></textarea>
+              >
+              </textarea>
               <mat-icon matSuffix>medication</mat-icon>
               @if (form.get('treatment')?.hasError('required')) {
               <mat-error>This field is required</mat-error>
@@ -453,29 +451,52 @@
 
             <div class="optional-label">Optional fields</div>
 
-            <div class="row-fields">
-              <mat-form-field appearance="outline" class="half optional-field">
-                <mat-label>ICD-10 code</mat-label>
-                <input matInput formControlName="icdCode" placeholder="e.g. I20.9" />
-                <mat-icon matSuffix>tag</mat-icon>
-              </mat-form-field>
+            <!-- ICD-10 -->
+            <mat-form-field appearance="outline" class="full optional-field">
+              <mat-label>ICD-10 code</mat-label>
+              <input
+                matInput
+                formControlName="icdSearch"
+                [attr.readonly]="selectedIcdCode ? true : null"
+                placeholder="Search by code or description…"
+                [matAutocomplete]="icdAuto"
+              />
+              @if (isSearchingIcd) {
+              <mat-spinner matSuffix diameter="18"></mat-spinner>
+              } @else if (selectedIcdCode) {
+              <button matSuffix mat-icon-button type="button" (click)="clearIcd()">
+                <mat-icon>close</mat-icon>
+              </button>
+              } @else {
+              <mat-icon matSuffix>search</mat-icon>
+              }
+              <mat-autocomplete #icdAuto="matAutocomplete" [displayWith]="displayIcd">
+                @for (s of icdSuggestions; track s.code) {
+                <mat-option [value]="s.code + ' – ' + s.description" (click)="onIcdSelected(s)">
+                  <span class="icd-code">{{ s.code }}</span>
+                  <span class="icd-desc">{{ s.description }}</span>
+                </mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
 
+            <div class="row-fields">
               <mat-form-field appearance="outline" class="half optional-field">
                 <mat-label>Follow-up date</mat-label>
                 <input matInput type="date" formControlName="followUpDate" />
                 <mat-icon matSuffix>event</mat-icon>
               </mat-form-field>
-            </div>
 
-            <mat-form-field appearance="outline" class="full optional-field">
-              <mat-label>Secondary diagnosis</mat-label>
-              <input
-                matInput
-                formControlName="secondaryDiagnosis"
-                placeholder="e.g. Grade II Arterial Hypertension"
-              />
-              <mat-icon matSuffix>local_hospital</mat-icon>
-            </mat-form-field>
+              <mat-form-field appearance="outline" class="half optional-field">
+                <mat-label>Secondary diagnosis</mat-label>
+                <input
+                  matInput
+                  formControlName="secondaryDiagnosis"
+                  placeholder="e.g. Grade II Arterial Hypertension"
+                />
+                <mat-icon matSuffix>local_hospital</mat-icon>
+              </mat-form-field>
+            </div>
 
             <mat-form-field appearance="outline" class="full optional-field">
               <mat-label>Recommended investigations</mat-label>
@@ -484,7 +505,8 @@
                 formControlName="recommendedInvestigations"
                 rows="2"
                 placeholder="e.g. Resting ECG, Echocardiography, Lipid panel"
-              ></textarea>
+              >
+              </textarea>
               <mat-icon matSuffix>biotech</mat-icon>
             </mat-form-field>
 
@@ -495,7 +517,8 @@
                 formControlName="generalRecommendations"
                 rows="2"
                 placeholder="e.g. Avoid intense physical activity, low-sodium diet"
-              ></textarea>
+              >
+              </textarea>
               <mat-icon matSuffix>tips_and_updates</mat-icon>
             </mat-form-field>
 
@@ -505,8 +528,9 @@
                 matInput
                 formControlName="finalNotes"
                 rows="2"
-                placeholder="e.g. Patient informed about risks, follow-up in 4 weeks"
-              ></textarea>
+                placeholder="e.g. Patient informed about treatment plan"
+              >
+              </textarea>
               <mat-icon matSuffix>notes</mat-icon>
             </mat-form-field>
 
@@ -555,7 +579,7 @@
         </mat-expansion-panel>
       </mat-accordion>
 
-      <!-- ── Submit ────────────────────────────────────────────────────────── -->
+      <!-- Submit -->
       <div class="submit-section">
         @if (!isFormReady && form.touched) {
         <div class="form-status">
@@ -573,7 +597,7 @@
           @if (!isLoading) {
           <ng-container>
             <mat-icon>cloud_upload</mat-icon>
-            Generate PDF & publish to blockchain
+            Generate PDF &amp; publish to blockchain
           </ng-container>
           } @else {
           <ng-container>

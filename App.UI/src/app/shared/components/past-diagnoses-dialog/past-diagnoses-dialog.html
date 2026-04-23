@@ -1,0 +1,65 @@
+<div class="dialog-container">
+
+  <!-- Header -->
+  <div class="dialog-header">
+    <div class="dialog-header-left">
+      <mat-icon class="header-icon">history</mat-icon>
+      <h2 class="dialog-title">Personal Medical History</h2>
+    </div>
+    <button mat-icon-button type="button" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="dialog-search">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search diagnoses</mat-label>
+      <input matInput [formControl]="searchControl" placeholder="Type to filter…" />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <!-- List -->
+  <div class="dialog-list">
+    @if (filteredDiagnoses.length === 0) {
+      <div class="empty-state">
+        <mat-icon>search_off</mat-icon>
+        <span>No diagnoses found</span>
+      </div>
+    }
+
+    @for (d of filteredDiagnoses; track d.id) {
+      <div class="diagnosis-row" [class.selected]="isSelected(d)" (click)="toggle(d)">
+        <mat-checkbox
+          [checked]="isSelected(d)"
+          (change)="toggle(d)"
+          (click)="$event.stopPropagation()"
+          color="primary">
+        </mat-checkbox>
+        <div class="diagnosis-info">
+          <span class="diagnosis-title">{{ d.title }}</span>
+          <span class="diagnosis-date">{{ formatDate(d.timestamp) }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="dialog-footer">
+    <span class="selected-count">
+      @if (selectedCount > 0) {
+        {{ selectedCount }} selected
+      }
+    </span>
+    <div class="dialog-actions">
+      <button mat-stroked-button type="button" (click)="onCancel()">Cancel</button>
+      <button mat-flat-button color="primary" type="button"
+        (click)="onAdd()" [disabled]="selectedCount === 0">
+        <mat-icon>add</mat-icon>
+        Add selected
+      </button>
+    </div>
+  </div>
+
+</div>

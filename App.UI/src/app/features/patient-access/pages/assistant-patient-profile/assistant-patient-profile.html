@@ -1,4 +1,4 @@
-<div class="doctor-patient-profile-page">
+<div class="assistant-patient-profile-page">
   <!-- ===== PROFILE CARD ===== -->
   <app-profile-card
     [name]="patientName"
@@ -19,15 +19,14 @@
       <mat-icon>edit_note</mat-icon>
     </div>
     <div class="draft-banner-info">
-      <span class="draft-banner-title">A draft is ready for you to finalize</span>
+      <span class="draft-banner-title">An active draft exists for this patient</span>
       <span class="draft-banner-subtitle">
-        Prepared by the Medical Assistant · Last updated
-        {{ activeDraft.updatedAt | date : 'dd MMM yyyy, HH:mm' }}
+        Last updated {{ activeDraft.updatedAt | date : 'dd MMM yyyy, HH:mm' }}
       </span>
     </div>
-    <button mat-flat-button class="draft-banner-btn" (click)="goToFinalizeDraft()">
-      <mat-icon>task_alt</mat-icon>
-      Finalize draft
+    <button mat-flat-button class="draft-banner-btn" (click)="goToDraft()">
+      <mat-icon>arrow_forward</mat-icon>
+      Continue editing
     </button>
   </div>
   }
@@ -125,25 +124,11 @@
 
   <!-- ===== QUICK ACTIONS ===== -->
   <div class="quick-actions-section">
-    @if (activeDraft) {
     <app-quick-action-card
-      label="Finalize Draft"
-      icon="task_alt"
-      color="green"
-      (clicked)="goToFinalizeDraft()"
-    />
-    }
-    <app-quick-action-card
-      label="Add Diagnostic"
-      icon="medical_information"
+      [label]="activeDraft ? 'Continue Draft' : 'Create Draft Diagnosis'"
+      icon="edit_note"
       color="blue"
-      (clicked)="goToAddDiagnostic()"
-    />
-    <app-quick-action-card
-      label="Add Prescription"
-      icon="receipt_long"
-      color="green"
-      (clicked)="goToAddPrescription()"
+      (clicked)="goToDraft()"
     />
     <app-quick-action-card
       label="All Diagnostics"

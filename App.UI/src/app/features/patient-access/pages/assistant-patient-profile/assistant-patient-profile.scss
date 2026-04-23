@@ -1,4 +1,4 @@
-.doctor-patient-profile-page {
+.assistant-patient-profile-page {
   max-width: 960px;
   margin: 0 auto;
   padding: 24px 16px;
@@ -15,21 +15,21 @@
   gap: 16px;
   padding: 16px 20px;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.08), rgba(102, 187, 106, 0.08));
-  border: 1px solid rgba(46, 125, 50, 0.25);
+  background: linear-gradient(135deg, rgba(21, 101, 192, 0.08), rgba(66, 165, 245, 0.08));
+  border: 1px solid rgba(21, 101, 192, 0.25);
 
   .draft-banner-icon {
     flex-shrink: 0;
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: rgba(46, 125, 50, 0.12);
+    background: rgba(21, 101, 192, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
 
     mat-icon {
-      color: #2e7d32;
+      color: #1565c0;
       font-size: 24px;
       width: 24px;
       height: 24px;
@@ -57,7 +57,7 @@
 
   .draft-banner-btn {
     flex-shrink: 0;
-    background-color: #2e7d32 !important;
+    background-color: #1565c0 !important;
     color: white !important;
     border-radius: 10px;
     font-size: 0.85rem;
@@ -75,7 +75,7 @@
     }
 
     &:hover {
-      background-color: #1b5e20 !important;
+      background-color: #0d47a1 !important;
     }
   }
 }
@@ -110,7 +110,7 @@
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 600px) {
-  .doctor-patient-profile-page {
+  .assistant-patient-profile-page {
     padding: 16px 12px;
   }
 

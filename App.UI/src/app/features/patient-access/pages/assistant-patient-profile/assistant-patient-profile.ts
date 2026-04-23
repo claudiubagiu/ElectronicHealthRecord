@@ -20,9 +20,9 @@ import { DiagnosticDraftService } from '../../../diagnostics/services/diagnostic
 import { DiagnosticDraftDto } from '../../../diagnostics/models/diagnostic-draft.model';
 
 @Component({
-  selector: 'app-doctor-patient-profile',
-  templateUrl: './doctor-patient-profile.html',
-  styleUrls: ['./doctor-patient-profile.scss'],
+  selector: 'app-assistant-patient-profile',
+  templateUrl: './assistant-patient-profile.html',
+  styleUrls: ['./assistant-patient-profile.scss'],
   standalone: true,
   imports: [
     ...MAT_COMMON_IMPORTS,
@@ -34,7 +34,7 @@ import { DiagnosticDraftDto } from '../../../diagnostics/models/diagnostic-draft
     QuickActionCard,
   ],
 })
-export class DoctorPatientProfile implements OnInit {
+export class AssistantPatientProfile implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private blockchain = inject(BlockchainService);
@@ -214,26 +214,8 @@ export class DoctorPatientProfile implements OnInit {
     });
   }
 
-  goToAddDiagnostic(): void {
-    this.router.navigate(['/patient', this.patientId, 'add-diagnostic'], {
-      queryParams: {
-        patientName: this.patientName,
-        patientWalletAddress: this.patientWalletAddress,
-      },
-    });
-  }
-
-  goToAddPrescription(): void {
-    this.router.navigate(['/patient', this.patientId, 'add-prescription'], {
-      queryParams: {
-        patientName: this.patientName,
-        patientWalletAddress: this.patientWalletAddress,
-      },
-    });
-  }
-
-  goToFinalizeDraft(): void {
-    this.router.navigate(['/patient', this.patientId, 'finalize-diagnostic-draft'], {
+  goToDraft(): void {
+    this.router.navigate(['/patient', this.patientId, 'create-diagnostic-draft'], {
       queryParams: {
         patientName: this.patientName,
         patientWalletAddress: this.patientWalletAddress,

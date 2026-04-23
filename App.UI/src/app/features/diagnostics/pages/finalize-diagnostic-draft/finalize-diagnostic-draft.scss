@@ -1,0 +1,720 @@
+// ── Page wrapper ─────────────────────────────────────────────────────────────
+
+.finalize-diagnostic-draft-page {
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px 64px;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.finalize-diagnostic-draft-card {
+  width: 100%;
+  max-width: 720px;
+  background: white;
+  border-radius: 20px;
+  padding: 40px 40px 48px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+
+.card-header {
+  text-align: center;
+  margin-bottom: 32px;
+  position: relative;
+
+  .back-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2e7d32, #66bb6a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 8px;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+  }
+}
+
+// ── Initial loading / missing states ─────────────────────────────────────────
+
+.initial-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 0.9rem;
+}
+
+.draft-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 48px 16px;
+
+  mat-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    color: rgba(198, 40, 40, 0.6);
+  }
+
+  h2 {
+    margin: 6px 0 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, 0.55);
+    max-width: 440px;
+  }
+
+  .draft-missing-btn {
+    margin-top: 12px;
+    background-color: #1565c0 !important;
+    color: white !important;
+    border-radius: 10px;
+
+    ::ng-deep .mdc-button__label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: white;
+    }
+  }
+}
+
+// ── Patient banner ───────────────────────────────────────────────────────────
+
+.patient-section {
+  padding-bottom: 20px;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin: 0 0 12px;
+}
+
+.patient-preselected-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(21, 101, 192, 0.06);
+  border: 1px solid rgba(21, 101, 192, 0.2);
+
+  .preselected-icon {
+    color: #1565c0;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .preselected-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+  }
+
+  .draft-chip {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: rgba(245, 124, 0, 0.1);
+    color: #e65100;
+    font-size: 0.76rem;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+// ── Accordion panels ─────────────────────────────────────────────────────────
+
+.categories-accordion {
+  display: block;
+}
+
+.category-panel {
+  margin-bottom: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: none !important;
+
+  ::ng-deep .mat-expansion-panel-header {
+    padding: 14px 20px;
+    height: auto !important;
+  }
+}
+
+.doctor-only-panel {
+  border-color: rgba(46, 125, 50, 0.3) !important;
+  background: linear-gradient(180deg, rgba(46, 125, 50, 0.03), transparent 60%);
+}
+
+.panel-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.8);
+  width: 100%;
+
+  .panel-number {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    flex-shrink: 0;
+
+    &.valid {
+      background: rgba(46, 125, 50, 0.12);
+      color: #2e7d32;
+    }
+  }
+
+  .check-icon {
+    color: #2e7d32;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .optional-badge {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.5);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .doctor-only-badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: rgba(46, 125, 50, 0.12);
+    color: #2e7d32;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+.panel-content {
+  padding: 8px 4px 4px;
+}
+
+// ── Form fields ──────────────────────────────────────────────────────────────
+
+.full {
+  width: 100%;
+}
+
+.row-fields {
+  display: flex;
+  gap: 12px;
+}
+
+.half {
+  flex: 1;
+}
+
+.optional-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.4);
+  margin: 4px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.optional-field {
+  ::ng-deep {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: rgba(0, 0, 0, 0.25) !important;
+    }
+  }
+}
+
+// ── Selected lab analysis / lab option ───────────────────────────────────────
+
+.selected-analysis {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(2, 136, 209, 0.08);
+  border: 1px solid rgba(2, 136, 209, 0.2);
+  margin-bottom: 8px;
+
+  .analysis-icon {
+    color: #0288d1;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .analysis-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .analysis-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    .analysis-date {
+      font-size: 0.76rem;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+}
+
+.lab-option {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  .lab-option-title {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #212121;
+  }
+
+  .lab-option-date {
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+// ── Past diagnoses section ───────────────────────────────────────────────────
+
+.past-diagnoses-section {
+  margin-bottom: 12px;
+
+  .field-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0 0 8px;
+  }
+}
+
+.past-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.83rem;
+  color: rgba(0, 0, 0, 0.45);
+  padding: 8px 0 12px;
+}
+
+.past-empty {
+  font-size: 0.83rem;
+  color: rgba(0, 0, 0, 0.35);
+  font-style: italic;
+  margin: 6px 0 0;
+}
+
+.past-selected-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.past-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 6px 8px 12px;
+  border-radius: 8px;
+  background: rgba(21, 101, 192, 0.06);
+  border: 1px solid rgba(21, 101, 192, 0.2);
+
+  .past-chip-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+
+    .past-chip-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #212121;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .past-chip-date {
+      font-size: 0.74rem;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+
+  .chip-remove {
+    width: 28px !important;
+    height: 28px !important;
+    flex-shrink: 0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    color: rgba(0, 0, 0, 0.35);
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      color: #c62828;
+    }
+  }
+}
+
+.open-history-btn {
+  border-color: rgba(21, 101, 192, 0.35) !important;
+  color: #1565c0 !important;
+  border-radius: 8px;
+  font-size: 0.85rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover:not([disabled]) {
+    background: rgba(21, 101, 192, 0.05) !important;
+  }
+
+  &[disabled] {
+    opacity: 0.4;
+  }
+}
+
+// ── ICD-10 ───────────────────────────────────────────────────────────────────
+
+.icd-code {
+  font-weight: 700;
+  color: #1565c0;
+  margin-right: 8px;
+  font-size: 0.88rem;
+}
+
+.icd-desc {
+  font-size: 0.85rem;
+  color: #212121;
+}
+
+// ── Custom fields ────────────────────────────────────────────────────────────
+
+.custom-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.custom-field-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+
+  .cf-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.55);
+    white-space: nowrap;
+  }
+
+  .cf-value {
+    font-size: 0.88rem;
+    color: #212121;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cf-remove {
+    width: 28px !important;
+    height: 28px !important;
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: rgba(0, 0, 0, 0.35);
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      color: #c62828;
+    }
+  }
+}
+
+// ── Add field row ────────────────────────────────────────────────────────────
+
+.add-field-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.field-label-input {
+  flex: 0 0 200px;
+}
+
+.field-value-input {
+  flex: 1;
+}
+
+.add-field-btn {
+  flex-shrink: 0;
+  height: 56px;
+  border-color: rgba(21, 101, 192, 0.4) !important;
+  color: #1565c0 !important;
+  border-radius: 8px;
+  font-size: 0.82rem;
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover:not([disabled]) {
+    background: rgba(21, 101, 192, 0.06) !important;
+  }
+
+  &[disabled] {
+    opacity: 0.4;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+    color: rgba(0, 0, 0, 0.38) !important;
+  }
+}
+
+// ── Submit section ───────────────────────────────────────────────────────────
+
+.submit-section {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(21, 101, 192, 0.08);
+  border: 1px solid rgba(21, 101, 192, 0.25);
+  font-size: 0.83rem;
+  color: #1565c0;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #1565c0;
+    flex-shrink: 0;
+  }
+}
+
+.submit-btn {
+  width: 100%;
+  height: 52px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  background-color: #2e7d32 !important;
+  color: white !important;
+  letter-spacing: 0.3px;
+
+  &[disabled] {
+    opacity: 0.55;
+  }
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .button-spinner {
+    ::ng-deep circle {
+      stroke: white;
+    }
+  }
+
+  &:hover:not([disabled]) {
+    background-color: #1b5e20 !important;
+  }
+}
+
+.discard-btn {
+  width: 100%;
+  height: 44px;
+  color: #c62828 !important;
+  border-color: rgba(198, 40, 40, 0.3) !important;
+  border-radius: 10px;
+  font-size: 0.9rem;
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover:not([disabled]) {
+    background: rgba(198, 40, 40, 0.05) !important;
+  }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: 600px) {
+  .finalize-diagnostic-draft-card {
+    padding: 24px 16px 32px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .row-fields {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .add-field-row {
+    flex-direction: column;
+
+    .field-label-input,
+    .field-value-input {
+      flex: none;
+      width: 100%;
+    }
+
+    .add-field-btn {
+      width: 100%;
+    }
+  }
+}

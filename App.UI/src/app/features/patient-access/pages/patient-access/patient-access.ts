@@ -14,6 +14,7 @@ import {
 import { AccessRequestHistoryDto } from '../../../../core/models/access-request-history.model';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { UsersService } from '../../../../core/services/users.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
 import { AccessHistoryListComponent } from '../../../../shared/components/access-history-list/access-history-list';
 
@@ -34,6 +35,7 @@ export class PatientAccess implements OnInit, OnDestroy {
   private usersService = inject(UsersService);
   private accessRequestService = inject(AccessRequestService);
   private notify = inject(NotificationService);
+  private authService = inject(AuthService);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
 
@@ -141,7 +143,13 @@ export class PatientAccess implements OnInit, OnDestroy {
   }
 
   viewPatientProfile(req: AccessRequestDto): void {
-    this.router.navigate(['/patient', req.patientId, 'profile'], {
+    const user = this.authService.getDecodedToken();
+    const roles = user ? (Array.isArray(user.role) ? user.role : [user.role]) : [];
+    const isAssistant = roles.includes('MedicalAssistant');
+
+    const targetPath = isAssistant ? 'assistant-profile' : 'profile';
+
+    this.router.navigate(['/patient', req.patientId, targetPath], {
       queryParams: {
         patientName: req.patientName,
         patientWalletAddress: req.patientWalletAddress,
@@ -169,8 +177,7 @@ export class PatientAccess implements OnInit, OnDestroy {
 
   formatDate(date?: string): string {
     if (!date) return '';
-    const normalized = date.endsWith('Z') ? date : date + 'Z';
-    return new Date(normalized).toLocaleDateString('en-GB', {
+    return new Date(date).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',

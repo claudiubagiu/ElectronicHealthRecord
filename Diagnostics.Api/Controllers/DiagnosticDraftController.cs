@@ -1,11 +1,13 @@
 ﻿using Diagnostics.Api.Models.DTOs;
 using Diagnostics.Api.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Diagnostics.Api.Controllers
 {
     [Route("api/diagnostic-drafts")]
     [ApiController]
+    [Authorize]
     public class DiagnosticDraftController : ControllerBase
     {
         private readonly IDiagnosticDraftService _draftService;
@@ -19,6 +21,7 @@ namespace Diagnostics.Api.Controllers
         /// Creates a new diagnostic draft. Called by MedicalAssistant or Doctor.
         /// </summary>
         [HttpPost]
+        [Authorize(Roles = "MedicalAssistant,Doctor")]
         public async Task<IActionResult> Create([FromBody] CreateDiagnosticDraftDto dto)
         {
             var callerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
@@ -33,6 +36,7 @@ namespace Diagnostics.Api.Controllers
         /// Returns the active draft for a given patient, if any.
         /// </summary>
         [HttpGet("patient/{patientId:guid}")]
+        [Authorize(Roles = "MedicalAssistant,Doctor,Patient")]
         public async Task<IActionResult> GetActiveByPatient(Guid patientId)
         {
             var callerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
@@ -47,6 +51,7 @@ namespace Diagnostics.Api.Controllers
         /// Updates an existing draft (assistant saves progress or doctor completes it).
         /// </summary>
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "MedicalAssistant,Doctor")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDiagnosticDraftDto dto)
         {
             var callerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
@@ -61,6 +66,7 @@ namespace Diagnostics.Api.Controllers
         /// Deletes a draft. Called after Sign & Submit, or manually to cancel a consultation.
         /// </summary>
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "MedicalAssistant,Doctor")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var callerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;

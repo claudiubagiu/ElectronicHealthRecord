@@ -51,7 +51,15 @@ export const routes: Routes = [
       import('./features/patient-access/pages/doctor-patient-profile/doctor-patient-profile').then(
         (m) => m.DoctorPatientProfile
       ),
-    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+    canActivate: [roleGuard(['Doctor'])],
+  },
+  {
+    path: 'patient/:patientId/assistant-profile',
+    loadComponent: () =>
+      import(
+        './features/patient-access/pages/assistant-patient-profile/assistant-patient-profile'
+      ).then((m) => m.AssistantPatientProfile),
+    canActivate: [roleGuard(['MedicalAssistant'])],
   },
   {
     path: 'patient/:patientId/add-diagnostic',
@@ -59,7 +67,23 @@ export const routes: Routes = [
       import('./features/diagnostics/pages/add-diagnostic/add-diagnostic').then(
         (m) => m.AddDiagnostic
       ),
-    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+    canActivate: [roleGuard(['Doctor'])],
+  },
+  {
+    path: 'patient/:patientId/create-diagnostic-draft',
+    loadComponent: () =>
+      import('./features/diagnostics/pages/create-diagnostic-draft/create-diagnostic-draft').then(
+        (m) => m.CreateDiagnosticDraft
+      ),
+    canActivate: [roleGuard(['MedicalAssistant'])],
+  },
+  {
+    path: 'patient/:patientId/finalize-diagnostic-draft',
+    loadComponent: () =>
+      import(
+        './features/diagnostics/pages/finalize-diagnostic-draft/finalize-diagnostic-draft'
+      ).then((m) => m.FinalizeDiagnosticDraft),
+    canActivate: [roleGuard(['Doctor'])],
   },
   {
     path: 'patient/:patientId/add-prescription',
@@ -67,7 +91,7 @@ export const routes: Routes = [
       import('./features/prescriptions/pages/create-prescription/create-prescription').then(
         (m) => m.CreatePrescription
       ),
-    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+    canActivate: [roleGuard(['Doctor'])],
   },
   {
     path: 'patient/:patientId/diagnostics',

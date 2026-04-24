@@ -39,16 +39,41 @@ namespace Diagnostics.Api.Repositories.Implementation
 
         public async Task<DiagnosticDraft> UpdateAsync(DiagnosticDraft draft)
         {
-            // Replace envelopes — remove old ones, add new ones
-            var existingEnvelopes = await _dbContext.DiagnosticDraftEnvelopes
+            var existing = await _dbContext.DiagnosticDrafts.FindAsync(draft.Id);
+            if (existing == null)
+                throw new InvalidOperationException($"DiagnosticDraft {draft.Id} not found.");
+
+            existing.EncryptedData = draft.EncryptedData;
+            existing.Iv = draft.Iv;
+            existing.LinkedMedicalRecordIds = draft.LinkedMedicalRecordIds;
+            existing.UpdatedAt = draft.UpdatedAt;
+
+            if (!string.IsNullOrWhiteSpace(draft.Status))
+                existing.Status = draft.Status;
+
+            if (draft.CompletedByDoctorId.HasValue)
+                existing.CompletedByDoctorId = draft.CompletedByDoctorId;
+
+            var oldEnvelopes = await _dbContext.DiagnosticDraftEnvelopes
                 .Where(e => e.DiagnosticDraftId == draft.Id)
                 .ToListAsync();
 
-            _dbContext.DiagnosticDraftEnvelopes.RemoveRange(existingEnvelopes);
+            _dbContext.DiagnosticDraftEnvelopes.RemoveRange(oldEnvelopes);
 
-            _dbContext.DiagnosticDrafts.Update(draft);
+            var newEnvelopes = draft.Envelopes.Select(e => new DiagnosticDraftEnvelope
+            {
+                Id = Guid.NewGuid(),
+                DiagnosticDraftId = draft.Id,
+                UserId = e.UserId,
+                EncryptedAesKey = e.EncryptedAesKey
+            }).ToList();
+
+            await _dbContext.DiagnosticDraftEnvelopes.AddRangeAsync(newEnvelopes);
+
             await _dbContext.SaveChangesAsync();
-            return draft;
+
+            existing.Envelopes = newEnvelopes;
+            return existing;
         }
 
         public async Task<bool> DeleteAsync(Guid id)

@@ -84,7 +84,8 @@ namespace MedicalData.Api.Services.Implementation
                 CreatedByDoctorId = m.CreatedByDoctorId,
                 CreatedAt = m.CreatedAt,
                 UpdatedAt = m.UpdatedAt,
-                EncryptedAesKey = m.Envelopes.FirstOrDefault()?.EncryptedAesKey
+                EncryptedAesKey = m.Envelopes
+                    .FirstOrDefault(e => e.UserId == requestingUserId)?.EncryptedAesKey
             }).ToList();
 
             return Result.Ok<IReadOnlyList<MedicalRecordDto>>(dtos);

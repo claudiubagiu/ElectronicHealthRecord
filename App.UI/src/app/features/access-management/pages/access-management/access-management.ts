@@ -90,9 +90,9 @@ export class AccessManagement implements OnInit {
       const user = this.authService.getDecodedToken();
       if (user) {
         try {
-          await this.medicalDataCryptoService.grantEnvelopesToDoctor(request.doctorId, user.userId);
+          await this.medicalDataCryptoService.grantEnvelopesToUser(request.doctorId, user.userId);
         } catch (e) {
-          console.warn('Failed to create medical data envelopes for doctor:', e);
+          console.warn('Failed to create medical data envelopes for user:', e);
         }
       }
 

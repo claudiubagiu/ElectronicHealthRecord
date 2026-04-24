@@ -9,15 +9,18 @@ namespace Users.Api.Services.Implementation
     {
         private readonly IPatientsRepository _patientsRepository;
         private readonly IDoctorsRepository _doctorsRepository;
+        private readonly IMedicalAssistantsRepository _medicalAssistantsRepository;
         private readonly IMapper _mapper;
 
         public UsersService(
             IPatientsRepository patientsRepository,
             IDoctorsRepository doctorsRepository,
+            IMedicalAssistantsRepository medicalAssistantsRepository,
             IMapper mapper)
         {
             _patientsRepository = patientsRepository;
             _doctorsRepository = doctorsRepository;
+            _medicalAssistantsRepository = medicalAssistantsRepository;
             _mapper = mapper;
         }
 
@@ -31,15 +34,15 @@ namespace Users.Api.Services.Implementation
         {
             var patient = await _patientsRepository.GetByIdAsync(userId);
             if (patient?.PublicKey != null)
-            {
                 return new PublicKeyDto { UserId = patient.Id, PublicKey = patient.PublicKey };
-            }
 
             var doctor = await _doctorsRepository.GetByIdAsync(userId);
             if (doctor?.PublicKey != null)
-            {
                 return new PublicKeyDto { UserId = doctor.Id, PublicKey = doctor.PublicKey };
-            }
+
+            var assistant = await _medicalAssistantsRepository.GetByIdAsync(userId);
+            if (assistant?.PublicKey != null)
+                return new PublicKeyDto { UserId = assistant.Id, PublicKey = assistant.PublicKey };
 
             return null;
         }
@@ -52,9 +55,7 @@ namespace Users.Api.Services.Implementation
             {
                 var pk = await GetPublicKeyAsync(userId);
                 if (pk != null)
-                {
                     result.Add(pk);
-                }
             }
 
             return result;

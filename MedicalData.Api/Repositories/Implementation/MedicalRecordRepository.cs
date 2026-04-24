@@ -36,14 +36,41 @@ namespace MedicalData.Api.Repositories.Implementation
         {
             return await _dbContext.MedicalRecords
                 .Include(m => m.Envelopes)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
 
         public async Task<MedicalRecord> UpdateAsync(MedicalRecord record)
         {
-            _dbContext.MedicalRecords.Update(record);
+            var existingRecord = await _dbContext.MedicalRecords.FindAsync(record.Id);
+            if (existingRecord == null)
+                throw new InvalidOperationException($"MedicalRecord {record.Id} not found.");
+
+            existingRecord.RecordType = record.RecordType;
+            existingRecord.EncryptedData = record.EncryptedData;
+            existingRecord.Iv = record.Iv;
+            existingRecord.UpdatedAt = record.UpdatedAt;
+
+            var oldEnvelopes = await _dbContext.MedicalRecordEnvelopes
+                .Where(e => e.MedicalRecordId == record.Id)
+                .ToListAsync();
+
+            _dbContext.MedicalRecordEnvelopes.RemoveRange(oldEnvelopes);
+
+            var newEnvelopes = record.Envelopes.Select(e => new MedicalRecordEnvelope
+            {
+                Id = Guid.NewGuid(),
+                MedicalRecordId = record.Id,
+                UserId = e.UserId,
+                EncryptedAesKey = e.EncryptedAesKey
+            }).ToList();
+
+            await _dbContext.MedicalRecordEnvelopes.AddRangeAsync(newEnvelopes);
+
             await _dbContext.SaveChangesAsync();
-            return record;
+
+            existingRecord.Envelopes = newEnvelopes;
+            return existingRecord;
         }
 
         public async Task<bool> DeleteAsync(Guid id)

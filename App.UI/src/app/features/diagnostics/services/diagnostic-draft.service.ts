@@ -221,7 +221,7 @@ export class DiagnosticDraftService {
     ids.add(callerUserId);
 
     try {
-      const approvedDoctorIds = await this.accessService.getApprovedDoctorIds(patientId);
+      const approvedDoctorIds = await this.accessService.getApprovedUserIds(patientId);
       approvedDoctorIds.forEach((id) => ids.add(id));
     } catch {
       // If the call fails we still proceed — worst case the doctor will have

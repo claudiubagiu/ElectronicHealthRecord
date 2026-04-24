@@ -135,13 +135,13 @@ export class MedicalDataCryptoService {
     return JSON.parse(jsonString) as MedicalRecordFormData;
   }
 
-  async grantEnvelopesToDoctor(doctorId: string, patientId: string): Promise<void> {
+  async grantEnvelopesToUser(userId: string, patientId: string): Promise<void> {
     const privateKey = this.requirePrivateKey();
 
     const records = await this.medicalDataService.getByPatientId(patientId);
     if (records.length === 0) return;
 
-    const doctorPkResponse = await this.e2eeService.getPublicKey_remote(doctorId);
+    const userPkResponse = await this.e2eeService.getPublicKey_remote(userId);
 
     const envelopes: { medicalRecordId: string; userId: string; encryptedAesKey: string }[] = [];
 
@@ -151,15 +151,15 @@ export class MedicalDataCryptoService {
       const encryptedAesKeyBuffer = this.base64ToArrayBuffer(rec.encryptedAesKey);
       const aesKeyRaw = CryptoService.decryptAESKeyWithECIES(encryptedAesKeyBuffer, privateKey);
 
-      const encryptedForDoctor = CryptoService.encryptAESKeyWithECIES(
+      const encryptedForUser = CryptoService.encryptAESKeyWithECIES(
         aesKeyRaw.buffer as ArrayBuffer,
-        doctorPkResponse.publicKey
+        userPkResponse.publicKey
       );
 
       envelopes.push({
         medicalRecordId: rec.id,
-        userId: doctorId,
-        encryptedAesKey: this.arrayBufferToBase64(encryptedForDoctor.buffer as ArrayBuffer),
+        userId: userId,
+        encryptedAesKey: this.arrayBufferToBase64(encryptedForUser.buffer as ArrayBuffer),
       });
     }
 
@@ -185,10 +185,10 @@ export class MedicalDataCryptoService {
     const ids = new Set<string>();
     ids.add(patientId);
     try {
-      const response = await this.accessService.getApprovedDoctorIds(patientId);
+      const response = await this.accessService.getApprovedUserIds(patientId);
       response.forEach((id) => ids.add(id));
     } catch {
-      console.warn('Could not fetch approved doctors, proceeding with patient only.');
+      console.warn('Could not fetch approved users, proceeding with patient only.');
     }
     return Array.from(ids);
   }

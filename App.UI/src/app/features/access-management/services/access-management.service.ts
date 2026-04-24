@@ -35,10 +35,10 @@ export class AccessManagementService {
   }
 
   /**
-   * Fetches the IDs of all doctors with approved access to a patient.
+   * Fetches the IDs of all users (doctors, assistants, etc.) with approved access to a patient.
    * Used when creating envelopes.
    */
-  async getApprovedDoctorIds(patientId: string): Promise<string[]> {
+  async getApprovedUserIds(patientId: string): Promise<string[]> {
     const requests = await this.getMyRequests(patientId);
     return requests.filter((r) => r.status === 'Approved').map((r) => r.doctorId);
   }

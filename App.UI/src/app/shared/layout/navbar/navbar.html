@@ -13,28 +13,6 @@
         <mat-icon matListItemIcon>home</mat-icon>
         <span matListItemTitle>Home</span>
       </a>
-      <a mat-list-item routerLink="/about" routerLinkActive="active-link" (click)="sidenav.close()">
-        <mat-icon matListItemIcon>info</mat-icon>
-        <span matListItemTitle>About</span>
-      </a>
-      <a
-        mat-list-item
-        routerLink="/services"
-        routerLinkActive="active-link"
-        (click)="sidenav.close()"
-      >
-        <mat-icon matListItemIcon>build</mat-icon>
-        <span matListItemTitle>Services</span>
-      </a>
-      <a
-        mat-list-item
-        routerLink="/contact"
-        routerLinkActive="active-link"
-        (click)="sidenav.close()"
-      >
-        <mat-icon matListItemIcon>mail</mat-icon>
-        <span matListItemTitle>Contact</span>
-      </a>
 
       <mat-divider></mat-divider>
 
@@ -110,18 +88,7 @@
       <span class="spacer"></span>
 
       <!-- Navigation links (desktop) -->
-      <nav class="nav-links">
-        <a
-          mat-button
-          routerLink="/"
-          routerLinkActive="active-link"
-          [routerLinkActiveOptions]="{ exact: true }"
-          >Home</a
-        >
-        <a mat-button routerLink="/about" routerLinkActive="active-link">About</a>
-        <a mat-button routerLink="/services" routerLinkActive="active-link">Services</a>
-        <a mat-button routerLink="/contact" routerLinkActive="active-link">Contact</a>
-      </nav>
+      <nav class="nav-links"></nav>
 
       <!-- ===== Desktop: Authenticated => Profile with menu ===== -->
       @if (isAuthenticated$ | async) {
@@ -145,10 +112,6 @@
         <button mat-menu-item routerLink="/profile">
           <mat-icon>person</mat-icon>
           <span>Profile</span>
-        </button>
-        <button mat-menu-item routerLink="/settings">
-          <mat-icon>settings</mat-icon>
-          <span>Settings</span>
         </button>
 
         <!-- Role-based menu items (data-driven) -->

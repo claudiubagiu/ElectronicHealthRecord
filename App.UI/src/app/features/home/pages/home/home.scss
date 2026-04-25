@@ -3,6 +3,7 @@ $blue: #1565c0;
 $teal: #00897b;
 $purple: #7b1fa2;
 $cyan: #0288d1;
+$orange: #e65100;
 $text: #212121;
 $muted: rgba(0, 0, 0, 0.55);
 
@@ -242,6 +243,12 @@ $muted: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(21, 101, 192, 0.12);
+    transform: translateY(-4px);
+  }
 
   h3 {
     font-size: 1rem;
@@ -286,6 +293,9 @@ $muted: rgba(0, 0, 0, 0.55);
 }
 .step-cyan {
   background: $cyan;
+}
+.step-orange {
+  background: $orange;
 }
 
 // ── Features ──────────────────────────────────────────────────────────────────

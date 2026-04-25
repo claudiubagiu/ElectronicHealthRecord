@@ -80,7 +80,9 @@ h1 {
   line-height: 16px;
   color: white;
 
-  &.success { background: #2e7d32; }
+  &.success {
+    background: #2e7d32;
+  }
 }
 
 .tab-content {
@@ -89,6 +91,12 @@ h1 {
 
 .full {
   width: 100%;
+}
+
+::ng-deep .mat-mdc-form-field-icon-suffix {
+  mat-spinner {
+    margin-right: 8px;
+  }
 }
 
 .results-list,
@@ -227,9 +235,18 @@ h1 {
     height: 14px;
   }
 
-  &.pending  { background: rgba(245, 124, 0, 0.1); color: #e65100; }
-  &.approved { background: rgba(46, 125, 50, 0.1);  color: #2e7d32; }
-  &.rejected { background: rgba(198, 40, 40, 0.1);  color: #c62828; }
+  &.pending {
+    background: rgba(245, 124, 0, 0.1);
+    color: #e65100;
+  }
+  &.approved {
+    background: rgba(46, 125, 50, 0.1);
+    color: #2e7d32;
+  }
+  &.rejected {
+    background: rgba(198, 40, 40, 0.1);
+    color: #c62828;
+  }
 }
 
 .row-buttons {
@@ -279,10 +296,22 @@ h1 {
     height: 14px;
   }
 
-  &.badge-approved  { background: rgba(46, 125, 50, 0.1);  color: #2e7d32; }
-  &.badge-rejected  { background: rgba(198, 40, 40, 0.1);  color: #c62828; }
-  &.badge-revoked   { background: rgba(0, 0, 0, 0.07);     color: rgba(0,0,0,0.5); }
-  &.badge-requested { background: rgba(21, 101, 192, 0.1); color: #1565c0; }
+  &.badge-approved {
+    background: rgba(46, 125, 50, 0.1);
+    color: #2e7d32;
+  }
+  &.badge-rejected {
+    background: rgba(198, 40, 40, 0.1);
+    color: #c62828;
+  }
+  &.badge-revoked {
+    background: rgba(0, 0, 0, 0.07);
+    color: rgba(0, 0, 0, 0.5);
+  }
+  &.badge-requested {
+    background: rgba(21, 101, 192, 0.1);
+    color: #1565c0;
+  }
 }
 
 .empty-state {

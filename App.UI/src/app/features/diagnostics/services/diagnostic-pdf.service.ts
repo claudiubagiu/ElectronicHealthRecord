@@ -18,6 +18,7 @@ export interface DiagnosticPdfData {
   patient: string;
   patientCNP: string;
   doctor: string;
+  draftWrittenBy?: string;
 
   // Anamnesis
   chiefComplaint: string;
@@ -264,7 +265,10 @@ export class DiagnosticPdfService {
       doc.setFontSize(7);
       doc.setTextColor(140, 140, 140);
 
-      doc.text(`Doctor: ${data.doctor}`, MARGIN_L, PAGE_H - 10);
+      const doctorLine = `Doctor: ${data.doctor}${
+        data.draftWrittenBy ? `  |  Draft written by: ${data.draftWrittenBy}` : ''
+      }`;
+      doc.text(doctorLine, MARGIN_L, PAGE_H - 10);
       doc.text(`Page ${i} of ${pageCount}`, PAGE_W / 2, PAGE_H - 10, { align: 'center' });
       doc.text('Confidential medical document', PAGE_W - MARGIN_R, PAGE_H - 10, { align: 'right' });
 

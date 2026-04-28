@@ -524,6 +524,7 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
           patient: `${this.selectedPatient.firstName} ${this.selectedPatient.lastName}`,
           patientCNP: this.selectedPatient.cnp,
           doctor: doctorName,
+          draftWrittenBy: this.existingDraft?.createdByAssistantName ?? undefined,
           chiefComplaint: v.chiefComplaint,
           personalHistory: this.personalHistorySummary || undefined,
           familyHistory: v.familyHistory || undefined,
@@ -585,7 +586,7 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
     if (!this.existingDraft || !this.selectedPatient) return;
 
     const confirmed = window.confirm(
-      'Discard this draft? All data prepared by the assistant will be lost and cannot be recovered.'
+      'Discard this draft? All data written by the assistant will be lost and cannot be recovered.'
     );
     if (!confirmed) return;
 

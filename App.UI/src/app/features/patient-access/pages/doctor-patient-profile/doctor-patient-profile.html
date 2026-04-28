@@ -21,7 +21,7 @@
     <div class="draft-banner-info">
       <span class="draft-banner-title">A draft is ready for you to finalize</span>
       <span class="draft-banner-subtitle">
-        Prepared by the Medical Assistant · Last updated
+        Draft written by {{ activeDraft.createdByAssistantName || 'Medical Assistant' }} · Last updated
         {{ activeDraft.updatedAt | date : 'dd MMM yyyy, HH:mm' }}
       </span>
     </div>

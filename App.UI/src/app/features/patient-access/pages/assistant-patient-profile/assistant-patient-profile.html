@@ -21,7 +21,8 @@
     <div class="draft-banner-info">
       <span class="draft-banner-title">An active draft exists for this patient</span>
       <span class="draft-banner-subtitle">
-        Last updated {{ activeDraft.updatedAt | date : 'dd MMM yyyy, HH:mm' }}
+        Created by {{ activeDraft.createdByAssistantName || 'you' }} · Last updated
+        {{ activeDraft.updatedAt | date : 'dd MMM yyyy, HH:mm' }}
       </span>
     </div>
     <button mat-flat-button class="draft-banner-btn" (click)="goToDraft()">

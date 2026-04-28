@@ -54,6 +54,7 @@ export interface DiagnosticDraftDto {
   patientId: string;
   patientWalletAddress: string;
   createdByAssistantId?: string;
+  createdByAssistantName?: string;
   completedByDoctorId?: string;
   createdAt: string;
   updatedAt: string;

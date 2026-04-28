@@ -61,7 +61,9 @@ namespace Diagnostics.Api.Services.Implementation
             };
 
             var created = await _draftRepository.CreateAsync(draft);
-            return Result.Ok(MapToDto(created));
+
+            var assistantName = await ResolveAssistantNameAsync(created.CreatedByAssistantId);
+            return Result.Ok(MapToDto(created, assistantName));
         }
 
         public async Task<Result<DiagnosticDraftDto>> GetActiveByPatientIdAsync(Guid patientId, Guid callerId)
@@ -75,7 +77,8 @@ namespace Diagnostics.Api.Services.Implementation
                 return Result.Fail<DiagnosticDraftDto>(
                     new Error("No active draft found for this patient.").WithMetadata("StatusCode", 404));
 
-            return Result.Ok(MapToDto(draft));
+            var assistantName = await ResolveAssistantNameAsync(draft.CreatedByAssistantId);
+            return Result.Ok(MapToDto(draft, assistantName));
         }
 
         public async Task<Result<DiagnosticDraftDto>> UpdateAsync(Guid draftId, Guid callerId, UpdateDiagnosticDraftDto dto)
@@ -110,7 +113,8 @@ namespace Diagnostics.Api.Services.Implementation
             draft.Envelopes = updatedEnvelopes;
 
             var updated = await _draftRepository.UpdateAsync(draft);
-            return Result.Ok(MapToDto(updated));
+            var assistantName = await ResolveAssistantNameAsync(updated.CreatedByAssistantId);
+            return Result.Ok(MapToDto(updated, assistantName));
         }
 
         public async Task<Result> DeleteAsync(Guid draftId, Guid callerId)
@@ -128,13 +132,22 @@ namespace Diagnostics.Api.Services.Implementation
             return Result.Ok();
         }
 
-        private static DiagnosticDraftDto MapToDto(DiagnosticDraft draft) => new()
+        private async Task<string?> ResolveAssistantNameAsync(Guid? assistantId)
+        {
+            if (assistantId == null) return null;
+            var user = await _usersRepository.GetByIdAsync(assistantId.Value);
+            if (user == null) return null;
+            return $"{user.FirstName} {user.LastName}";
+        }
+
+        private static DiagnosticDraftDto MapToDto(DiagnosticDraft draft, string? assistantName) => new()
         {
             Id = draft.Id,
             Status = draft.Status,
             PatientId = draft.PatientId,
             PatientWalletAddress = draft.PatientWalletAddress,
             CreatedByAssistantId = draft.CreatedByAssistantId,
+            CreatedByAssistantName = assistantName,
             CompletedByDoctorId = draft.CompletedByDoctorId,
             CreatedAt = draft.CreatedAt,
             UpdatedAt = draft.UpdatedAt,

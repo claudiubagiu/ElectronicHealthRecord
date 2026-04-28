@@ -7,6 +7,7 @@
         public required Guid PatientId { get; set; }
         public required string PatientWalletAddress { get; set; }
         public Guid? CreatedByAssistantId { get; set; }
+        public string? CreatedByAssistantName { get; set; }
         public Guid? CompletedByDoctorId { get; set; }
         public required DateTime CreatedAt { get; set; }
         public required DateTime UpdatedAt { get; set; }

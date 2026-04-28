@@ -155,7 +155,7 @@ export class AuthService implements OnDestroy {
    * Logout: clear token, clear ECC private key from memory, and disconnect wallet.
    */
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.clear();
     this.authStateSubject.next({
       token: null,
       isAuthenticated: false,

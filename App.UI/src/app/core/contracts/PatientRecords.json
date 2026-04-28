@@ -1,5 +1,5 @@
 {
-  "address": "0xb16f69B4Abece84bF05286750e8aed4d73421E2B",
+  "address": "0xb8cB0f03b0b4dD2d3b809E0Ab80E3D5c303e04d6",
   "abi": [
     {
       "anonymous": false,
@@ -393,6 +393,51 @@
     },
     {
       "inputs": [],
+      "name": "getDoctorDiagnosesSummary",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "patientAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "doctorAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "doctorName",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct EHRAccess.DiagnosisSummary[]",
+          "name": "summaries",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getDoctorDiagnosisIds",
       "outputs": [
         {
@@ -412,6 +457,66 @@
           "internalType": "uint256[]",
           "name": "",
           "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getDoctorPrescriptionsSummary",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "patientAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "doctorAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "doctorName",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "dispensed",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dispensedTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "dispensedBy",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct EHRAccess.PrescriptionSummary[]",
+          "name": "summaries",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -473,6 +578,51 @@
           "internalType": "struct EHRAccess.LabAnalysis",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getLabTechAnalysesSummary",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "patientAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "labTechAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "labTechName",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct EHRAccess.LabAnalysisSummary[]",
+          "name": "summaries",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -543,6 +693,66 @@
           "internalType": "uint256[]",
           "name": "",
           "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPharmacistDispensedSummary",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "patientAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "doctorAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "doctorName",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "dispensed",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dispensedTimestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "dispensedBy",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct EHRAccess.PrescriptionSummary[]",
+          "name": "summaries",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",

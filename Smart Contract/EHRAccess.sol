@@ -43,6 +43,36 @@ contract EHRAccess {
         bool    exists;
     }
 
+    struct DiagnosisSummary {
+        uint256 id;
+        string  title;
+        uint256 timestamp;
+        address patientAddr;
+        address doctorAddr;
+        string  doctorName;
+    }
+
+    struct LabAnalysisSummary {
+        uint256 id;
+        string  title;
+        uint256 timestamp;
+        address patientAddr;
+        address labTechAddr;
+        string  labTechName;
+    }
+
+    struct PrescriptionSummary {
+        uint256 id;
+        string  title;
+        uint256 timestamp;
+        address patientAddr;
+        address doctorAddr;
+        string  doctorName;
+        bool    dispensed;
+        uint256 dispensedTimestamp;
+        address dispensedBy;
+    }
+
     // ── Storage ──────────────────────────────────────────────────────────────
 
     mapping(uint256 => Diagnosis)   private _diagnoses;
@@ -57,6 +87,7 @@ contract EHRAccess {
     mapping(bytes32 => uint256)       private _codeHashToPrescriptionId;
     mapping(address => uint256[])     private _patientPrescriptions;
     mapping(address => uint256[])     private _doctorPrescriptions;
+    mapping(address => uint256[])     private _dispensedBy;
 
     mapping(address => mapping(address => uint256)) private _accessExpiry;
     mapping(address => uint256[]) private _patientDiagnoses;
@@ -145,6 +176,10 @@ contract EHRAccess {
         require(bytes(ipfsCid).length > 0, "EHRAccess: empty CID");
         require(patientAddr != address(0),  "EHRAccess: zero patient address");
         require(patientAddr != msg.sender,  "EHRAccess: doctor must differ from patient");
+        require(
+            _accessExpiry[patientAddr][msg.sender] > block.timestamp,
+            "EHRAccess: no access to patient profile"
+        );
 
         id = _nextDiagnosisId++;
 
@@ -199,6 +234,27 @@ contract EHRAccess {
 
     function totalDiagnoses() external view returns (uint256) {
         return _nextDiagnosisId;
+    }
+
+    /// @notice Doctor fetches summaries of all diagnoses they have written.
+    function getDoctorDiagnosesSummary()
+        external
+        view
+        returns (DiagnosisSummary[] memory summaries)
+    {
+        uint256[] storage ids = _doctorDiagnoses[msg.sender];
+        summaries = new DiagnosisSummary[](ids.length);
+        for (uint256 i = 0; i < ids.length; i++) {
+            Diagnosis storage d = _diagnoses[ids[i]];
+            summaries[i] = DiagnosisSummary({
+                id:          d.id,
+                title:       d.title,
+                timestamp:   d.timestamp,
+                patientAddr: d.patientAddr,
+                doctorAddr:  d.doctorAddr,
+                doctorName:  d.doctorName
+            });
+        }
     }
 
     // ── Lab Analyses ─────────────────────────────────────────────────────────
@@ -278,6 +334,27 @@ contract EHRAccess {
         return _nextLabAnalysisId;
     }
 
+    /// @notice Lab tech fetches summaries of all analyses they have uploaded.
+    function getLabTechAnalysesSummary()
+        external
+        view
+        returns (LabAnalysisSummary[] memory summaries)
+    {
+        uint256[] storage ids = _labTechAnalyses[msg.sender];
+        summaries = new LabAnalysisSummary[](ids.length);
+        for (uint256 i = 0; i < ids.length; i++) {
+            LabAnalysis storage l = _labAnalyses[ids[i]];
+            summaries[i] = LabAnalysisSummary({
+                id:          l.id,
+                title:       l.title,
+                timestamp:   l.timestamp,
+                patientAddr: l.patientAddr,
+                labTechAddr: l.labTechAddr,
+                labTechName: l.labTechName
+            });
+        }
+    }
+
     // ── Prescriptions ─────────────────────────────────────────────────────────
 
     function addPrescription(
@@ -295,6 +372,10 @@ contract EHRAccess {
         require(bytes(ipfsCid).length > 0, "EHRAccess: empty CID");
         require(patientAddr != address(0),  "EHRAccess: zero patient address");
         require(patientAddr != msg.sender,  "EHRAccess: doctor must differ from patient");
+        require(
+            _accessExpiry[patientAddr][msg.sender] > block.timestamp,
+            "EHRAccess: no access to patient profile"
+        );
         require(
             _codeHashToPrescriptionId[codeHash] == 0,
             "EHRAccess: code hash collision"
@@ -346,6 +427,8 @@ contract EHRAccess {
         p.dispensedBy        = msg.sender;
         p.dispensedTimestamp = block.timestamp;
 
+        _dispensedBy[msg.sender].push(id);
+
         emit PrescriptionDispensed(id, msg.sender, block.timestamp);
     }
 
@@ -379,5 +462,53 @@ contract EHRAccess {
 
     function getDoctorPrescriptionIds() external view returns (uint256[] memory) {
         return _doctorPrescriptions[msg.sender];
+    }
+
+    /// @notice Doctor fetches summaries of all prescriptions they have written.
+    function getDoctorPrescriptionsSummary()
+        external
+        view
+        returns (PrescriptionSummary[] memory summaries)
+    {
+        uint256[] storage ids = _doctorPrescriptions[msg.sender];
+        summaries = new PrescriptionSummary[](ids.length);
+        for (uint256 i = 0; i < ids.length; i++) {
+            Prescription storage p = _prescriptions[ids[i]];
+            summaries[i] = PrescriptionSummary({
+                id:                 p.id,
+                title:              p.title,
+                timestamp:          p.timestamp,
+                patientAddr:        p.patientAddr,
+                doctorAddr:         p.doctorAddr,
+                doctorName:         p.doctorName,
+                dispensed:          p.dispensed,
+                dispensedTimestamp: p.dispensedTimestamp,
+                dispensedBy:        p.dispensedBy
+            });
+        }
+    }
+
+    /// @notice Pharmacist fetches summaries of all prescriptions they have dispensed.
+    function getPharmacistDispensedSummary()
+        external
+        view
+        returns (PrescriptionSummary[] memory summaries)
+    {
+        uint256[] storage ids = _dispensedBy[msg.sender];
+        summaries = new PrescriptionSummary[](ids.length);
+        for (uint256 i = 0; i < ids.length; i++) {
+            Prescription storage p = _prescriptions[ids[i]];
+            summaries[i] = PrescriptionSummary({
+                id:                 p.id,
+                title:              p.title,
+                timestamp:          p.timestamp,
+                patientAddr:        p.patientAddr,
+                doctorAddr:         p.doctorAddr,
+                doctorName:         p.doctorName,
+                dispensed:          p.dispensed,
+                dispensedTimestamp: p.dispensedTimestamp,
+                dispensedBy:        p.dispensedBy
+            });
+        }
     }
 }

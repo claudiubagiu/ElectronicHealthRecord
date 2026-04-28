@@ -308,6 +308,7 @@
             <app-medical-records-panel
               [patientId]="selectedPatient.id"
               [selectionMode]="true"
+              [initialSelection]="linkedMedicalRecordIds"
               (selectionChanged)="onMedicalRecordSelectionChanged($event)"
             >
             </app-medical-records-panel>

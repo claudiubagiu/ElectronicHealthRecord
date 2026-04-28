@@ -1,4 +1,13 @@
-import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
+  inject,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -29,9 +38,10 @@ export interface DecryptedMedicalRecord {
   standalone: true,
   imports: [...MAT_FORM_IMPORTS, MatSelectModule, MatCheckboxModule, MatDialogModule],
 })
-export class MedicalRecordsPanelComponent implements OnInit {
+export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
   @Input() patientId!: string;
   @Input() selectionMode = false;
+  @Input() initialSelection: string[] = [];
   @Output() selectionChanged = new EventEmitter<string[]>();
 
   private medicalDataService = inject(MedicalDataService);
@@ -84,6 +94,13 @@ export class MedicalRecordsPanelComponent implements OnInit {
     this.loadRecords();
   }
 
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialSelection'] && this.records.length > 0) {
+      this.applyInitialSelection();
+    }
+  }
+
   // ── Load ──────────────────────────────────────────────────────────────────
 
   async loadRecords(): Promise<void> {
@@ -110,11 +127,25 @@ export class MedicalRecordsPanelComponent implements OnInit {
         }
       }
       this.records = decrypted;
+
+      this.applyInitialSelection();
     } catch {
       this.notify.showError('Failed to load medical records.');
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private applyInitialSelection(): void {
+    if (!this.selectionMode || this.initialSelection.length === 0) return;
+
+    if (this.selectedIds.size > 0) return;
+
+    const validIds = this.initialSelection.filter((id) => this.records.some((r) => r.id === id));
+    if (validIds.length === 0) return;
+
+    validIds.forEach((id) => this.selectedIds.add(id));
+    this.selectionChanged.emit(Array.from(this.selectedIds));
   }
 
   // ── Detail expand ─────────────────────────────────────────────────────────

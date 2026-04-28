@@ -1,7 +1,12 @@
 <div class="finalize-diagnostic-draft-page">
   <div class="finalize-diagnostic-draft-card">
     <div class="card-header">
-      <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Back to patient profile">
+      <button
+        mat-icon-button
+        class="back-btn"
+        (click)="goBack()"
+        matTooltip="Back to patient profile"
+      >
         <mat-icon>arrow_back</mat-icon>
       </button>
       <div class="icon-wrapper">
@@ -9,8 +14,8 @@
       </div>
       <h1>Finalize Diagnosis Draft</h1>
       <p class="subtitle">
-        Review the data prepared by the Medical Assistant, add your diagnosis and treatment,
-        then publish on the blockchain.
+        Review the data prepared by the Medical Assistant, add your diagnosis and treatment, then
+        publish on the blockchain.
       </p>
     </div>
 
@@ -67,7 +72,11 @@
           <div class="panel-content">
             <mat-form-field appearance="outline" class="full">
               <mat-label>Diagnosis title *</mat-label>
-              <input matInput formControlName="title" placeholder="e.g. Cardiology consultation – April 2026" />
+              <input
+                matInput
+                formControlName="title"
+                placeholder="e.g. Cardiology consultation – April 2026"
+              />
               <mat-icon matSuffix>title</mat-icon>
               @if (form.get('title')?.hasError('required')) {
               <mat-error>This field is required</mat-error>
@@ -115,7 +124,12 @@
               <div class="custom-field-chip">
                 <span class="cf-label">{{ cf.label }}:</span>
                 <span class="cf-value">{{ cf.value }}</span>
-                <button mat-icon-button type="button" class="cf-remove" (click)="removeCustomField('generalInfo', i)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="cf-remove"
+                  (click)="removeCustomField('generalInfo', i)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -126,11 +140,19 @@
             <div class="add-field-row">
               <mat-form-field appearance="outline" class="field-label-input">
                 <mat-label>Field name</mat-label>
-                <input matInput formControlName="newLabel_generalInfo" placeholder="e.g. Referral" />
+                <input
+                  matInput
+                  formControlName="newLabel_generalInfo"
+                  placeholder="e.g. Referral"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline" class="field-value-input">
                 <mat-label>Value</mat-label>
-                <input matInput formControlName="newValue_generalInfo" placeholder="e.g. Dr. Popescu" />
+                <input
+                  matInput
+                  formControlName="newValue_generalInfo"
+                  placeholder="e.g. Dr. Popescu"
+                />
               </mat-form-field>
               <button
                 mat-stroked-button
@@ -180,6 +202,7 @@
 
             <div class="optional-label">Optional fields</div>
 
+            <!-- Personal history — modal -->
             <div class="past-diagnoses-section">
               <p class="field-label">Personal medical history</p>
 
@@ -196,7 +219,12 @@
                     <span class="past-chip-title">{{ d.title }}</span>
                     <span class="past-chip-date">{{ formatTimestampFull(d.timestamp) }}</span>
                   </div>
-                  <button mat-icon-button type="button" class="chip-remove" (click)="removePastDiagnosis(d)">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="chip-remove"
+                    (click)="removePastDiagnosis(d)"
+                  >
                     <mat-icon>close</mat-icon>
                   </button>
                 </div>
@@ -221,6 +249,7 @@
               } }
             </div>
 
+            <!-- Family history -->
             <mat-form-field appearance="outline" class="full optional-field">
               <mat-label>Family history</mat-label>
               <textarea
@@ -238,7 +267,12 @@
               <div class="custom-field-chip">
                 <span class="cf-label">{{ cf.label }}:</span>
                 <span class="cf-value">{{ cf.value }}</span>
-                <button mat-icon-button type="button" class="cf-remove" (click)="removeCustomField('anamnesis', i)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="cf-remove"
+                  (click)="removeCustomField('anamnesis', i)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -290,6 +324,7 @@
             <app-medical-records-panel
               [patientId]="selectedPatient.id"
               [selectionMode]="true"
+              [initialSelection]="linkedMedicalRecordIds"
               (selectionChanged)="onMedicalRecordSelectionChanged($event)"
             >
             </app-medical-records-panel>
@@ -359,7 +394,12 @@
               <div class="custom-field-chip">
                 <span class="cf-label">{{ cf.label }}:</span>
                 <span class="cf-value">{{ cf.value }}</span>
-                <button mat-icon-button type="button" class="cf-remove" (click)="removeCustomField('clinicalExam', i)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="cf-remove"
+                  (click)="removeCustomField('clinicalExam', i)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -370,7 +410,11 @@
             <div class="add-field-row">
               <mat-form-field appearance="outline" class="field-label-input">
                 <mat-label>Field name</mat-label>
-                <input matInput formControlName="newLabel_clinicalExam" placeholder="e.g. O₂ Saturation" />
+                <input
+                  matInput
+                  formControlName="newLabel_clinicalExam"
+                  placeholder="e.g. O₂ Saturation"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline" class="field-value-input">
                 <mat-label>Value</mat-label>
@@ -414,7 +458,11 @@
           <div class="panel-content">
             <mat-form-field appearance="outline" class="full">
               <mat-label>Primary diagnosis *</mat-label>
-              <input matInput formControlName="primaryDiagnosis" placeholder="e.g. Stable Angina Pectoris" />
+              <input
+                matInput
+                formControlName="primaryDiagnosis"
+                placeholder="e.g. Stable Angina Pectoris"
+              />
               <mat-icon matSuffix>local_hospital</mat-icon>
               @if (form.get('primaryDiagnosis')?.hasError('required')) {
               <mat-error>This field is required</mat-error>
@@ -474,7 +522,11 @@
 
               <mat-form-field appearance="outline" class="half optional-field">
                 <mat-label>Secondary diagnosis</mat-label>
-                <input matInput formControlName="secondaryDiagnosis" placeholder="e.g. Grade II Arterial Hypertension" />
+                <input
+                  matInput
+                  formControlName="secondaryDiagnosis"
+                  placeholder="e.g. Grade II Arterial Hypertension"
+                />
                 <mat-icon matSuffix>local_hospital</mat-icon>
               </mat-form-field>
             </div>
@@ -507,7 +559,7 @@
                 matInput
                 formControlName="finalNotes"
                 rows="2"
-                placeholder="e.g. Patient informed about treatment plan"
+                placeholder="e.g. Patient informed of diagnosis and treatment plan"
               ></textarea>
               <mat-icon matSuffix>notes</mat-icon>
             </mat-form-field>
@@ -518,7 +570,12 @@
               <div class="custom-field-chip">
                 <span class="cf-label">{{ cf.label }}:</span>
                 <span class="cf-value">{{ cf.value }}</span>
-                <button mat-icon-button type="button" class="cf-remove" (click)="removeCustomField('diagnosis', i)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="cf-remove"
+                  (click)="removeCustomField('diagnosis', i)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -561,7 +618,12 @@
         </div>
         }
 
-        <button mat-flat-button type="submit" class="submit-btn" [disabled]="!isFormReady || isLoading">
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit-btn"
+          [disabled]="!isFormReady || isLoading"
+        >
           @if (!isLoading) {
           <ng-container>
             <mat-icon>cloud_upload</mat-icon>

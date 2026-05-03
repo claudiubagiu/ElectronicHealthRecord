@@ -21,9 +21,25 @@ namespace Auth.Api.Services.Implementation
     /// The user signs a server-issued challenge with a secp256k1 private key
     /// derived from their MetaMask wallet, and the backend verifies the
     /// signature using the stored ECC public key and Nethereum's EthECKey.
+    ///
+    /// Medical staff roles (Doctor, LaboratoryTechnician, Pharmacist) are created
+    /// with IsApproved = false and cannot log in until an Administrator approves them.
+    /// Patients and Medical Assistants are approved automatically on registration.
     /// </summary>
     public class AuthService : IAuthService
     {
+        /// <summary>
+        /// Roles that require explicit administrator approval before the user
+        /// is permitted to log in. All other roles are auto-approved.
+        /// </summary>
+        private static readonly HashSet<string> RolesThatRequireApproval = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Doctor",
+            "LaboratoryTechnician",
+            "Pharmacist",
+            "MedicalAssistant"
+        };
+
         private readonly UserManager<ApplicationUser> userManager;
         private readonly ITokenRepository tokenRepository;
         private readonly IMapper mapper;
@@ -48,6 +64,9 @@ namespace Auth.Api.Services.Implementation
         /// Registers a new user by verifying the ECC signature of the challenge,
         /// storing the ECC public key, creating the identity record, publishing
         /// a domain event via RabbitMQ, and returning a JWT token.
+        ///
+        /// Medical staff roles are created with IsApproved = false.
+        /// Patients and Medical Assistants are created with IsApproved = true.
         /// </summary>
         public async Task<Result<LoginResponseDto>> Register([FromBody] RegisterRequestDto registerRequestDto)
         {
@@ -83,14 +102,20 @@ namespace Auth.Api.Services.Implementation
 
             cache.Remove($"register_challenge_{walletAddress}");
 
+            // Determine whether this user needs administrator approval.
+            // A user is auto-approved only if ALL their requested roles are non-medical.
+            var requiresApproval = registerRequestDto.Roles
+                .Any(r => RolesThatRequireApproval.Contains(r));
+
             var user = mapper.Map<ApplicationUser>(registerRequestDto);
             user.Challenge = GenerateSecureChallenge();
+            user.IsApproved = !requiresApproval;
+
             var result = await userManager.CreateAsync(user);
 
             if (result.Succeeded)
             {
-                var roles = new List<string>();
-                registerRequestDto.Roles.ForEach(role => roles.Add(role));
+                var roles = new List<string>(registerRequestDto.Roles);
                 result = await userManager.AddToRolesAsync(user, roles);
 
                 var userCreated = await userManager.FindByEmailAsync(registerRequestDto.Email);
@@ -114,6 +139,7 @@ namespace Auth.Api.Services.Implementation
                         LicenseNumber = registerRequestDto.LicenseNumber,
                         EntityAffiliation = registerRequestDto.EntityAffiliation,
                     };
+
                     await genericRabbitMQService.PublishAsync(userData, "identity-created-queue");
                     return Result.Ok(response);
                 }
@@ -158,6 +184,8 @@ namespace Auth.Api.Services.Implementation
         /// Uses the stored ECC public key to recover the signer address from the
         /// secp256k1 signature and compares it with the claimed wallet address.
         /// On success, rotates the challenge and issues a JWT token.
+        ///
+        /// Returns 403 Forbidden if the user has not yet been approved by an Administrator.
         /// </summary>
         public async Task<Result<LoginResponseDto>> VerifyEccSignatureAsync(
             string walletAddress, string eccSignature, string challenge)
@@ -189,6 +217,12 @@ namespace Auth.Api.Services.Implementation
             if (recoveredAddress != expectedAddress)
                 return Result.Fail<LoginResponseDto>(
                     new Error("Invalid ECC signature").WithMetadata("StatusCode", 401));
+
+            // Block login for medical staff that have not been approved yet
+            if (!user.IsApproved)
+                return Result.Fail<LoginResponseDto>(
+                    new Error("Your account is pending administrator approval. Please try again later.")
+                        .WithMetadata("StatusCode", 403));
 
             // Rotate the challenge after successful verification
             user.Challenge = GenerateSecureChallenge();

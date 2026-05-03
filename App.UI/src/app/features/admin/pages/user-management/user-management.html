@@ -1,0 +1,141 @@
+<div class="user-management-page">
+  <div class="user-management-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="icon-wrapper">
+        <mat-icon>manage_accounts</mat-icon>
+      </div>
+      <h1>User Management</h1>
+      <p class="subtitle">Approve or revoke medical staff access to the platform</p>
+    </div>
+
+    <mat-tab-group animationDuration="200ms" class="access-tabs">
+      <!-- ===== TAB 1: Pending ===== -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">schedule</mat-icon>
+          Pending Approval @if (pendingMedics.length > 0) {
+          <span class="tab-badge warning">{{ pendingMedics.length }}</span>
+          }
+        </ng-template>
+
+        <div class="tab-content">
+          @if (isLoadingPending) {
+          <div class="loading-state">
+            <mat-spinner diameter="36"></mat-spinner>
+          </div>
+          } @if (!isLoadingPending && pendingMedics.length === 0) {
+          <div class="empty-state">
+            <mat-icon>inbox</mat-icon>
+            <p>No pending approvals</p>
+          </div>
+          } @if (!isLoadingPending && pendingMedics.length > 0) {
+          <div class="rows-list">
+            @for (medic of pendingMedics; track medic.id) {
+            <div class="medic-row">
+              <div class="medic-info">
+                <div class="medic-avatar">
+                  <mat-icon>{{ getRoleIcon(medic.roles[0]) }}</mat-icon>
+                </div>
+                <div class="medic-details">
+                  <span class="medic-name">{{ medic.firstName }} {{ medic.lastName }}</span>
+                  <span class="medic-email">{{ medic.email }}</span>
+                  <div class="medic-meta">
+                    <span class="role-chip">{{ getRoleLabel(medic.roles[0]) }}</span>
+                    <span class="wallet-text" [matTooltip]="medic.walletAddress">
+                      <mat-icon class="wallet-icon">account_balance_wallet</mat-icon>
+                      {{ shortWallet(medic.walletAddress) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row-actions">
+                <button
+                  mat-flat-button
+                  class="approve-btn"
+                  [disabled]="actioningId === medic.id"
+                  (click)="onApprove(medic)"
+                >
+                  @if (actioningId === medic.id) {
+                  <mat-spinner diameter="16"></mat-spinner>
+                  } @else {
+                  <mat-icon>check</mat-icon>
+                  }
+                  {{ actioningId === medic.id ? 'Approving...' : 'Approve' }}
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- ===== TAB 2: Approved ===== -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">verified_user</mat-icon>
+          Approved @if (approvedMedics.length > 0) {
+          <span class="tab-badge success">{{ approvedMedics.length }}</span>
+          }
+        </ng-template>
+
+        <div class="tab-content">
+          @if (isLoadingApproved) {
+          <div class="loading-state">
+            <mat-spinner diameter="36"></mat-spinner>
+          </div>
+          } @if (!isLoadingApproved && approvedMedics.length === 0) {
+          <div class="empty-state">
+            <mat-icon>groups</mat-icon>
+            <p>No approved medical staff yet</p>
+          </div>
+          } @if (!isLoadingApproved && approvedMedics.length > 0) {
+          <div class="rows-list">
+            @for (medic of approvedMedics; track medic.id) {
+            <div class="medic-row">
+              <div class="medic-info">
+                <div class="medic-avatar approved">
+                  <mat-icon>{{ getRoleIcon(medic.roles[0]) }}</mat-icon>
+                </div>
+                <div class="medic-details">
+                  <span class="medic-name">{{ medic.firstName }} {{ medic.lastName }}</span>
+                  <span class="medic-email">{{ medic.email }}</span>
+                  <div class="medic-meta">
+                    <span class="role-chip">{{ getRoleLabel(medic.roles[0]) }}</span>
+                    <span class="wallet-text" [matTooltip]="medic.walletAddress">
+                      <mat-icon class="wallet-icon">account_balance_wallet</mat-icon>
+                      {{ shortWallet(medic.walletAddress) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row-actions">
+                <span class="status-badge approved">
+                  <mat-icon>check_circle</mat-icon> Active
+                </span>
+                <button
+                  mat-stroked-button
+                  class="revoke-btn"
+                  [disabled]="actioningId === medic.id"
+                  (click)="onRevoke(medic)"
+                >
+                  @if (actioningId === medic.id) {
+                  <mat-spinner diameter="16"></mat-spinner>
+                  } @else {
+                  <mat-icon>block</mat-icon>
+                  }
+                  {{ actioningId === medic.id ? 'Revoking...' : 'Revoke' }}
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

@@ -48,6 +48,9 @@ namespace Auth.Api.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -96,6 +99,27 @@ namespace Auth.Api.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "c1d2e3f4-a5b6-7890-cdef-012345678901",
+                            AccessFailedCount = 0,
+                            Challenge = "INITIAL_PLACEHOLDER_CHALLENGE",
+                            ConcurrencyStamp = "ADMIN_CONCURRENCY_STAMP_RAUL_ADRIAN",
+                            EccPublicKey = "0x045b30b66a15f636fa41b17afb8c585a70500ce48622e12fc26756e26537112eb4486e0b4263db46ff8c6ea62d39f39fdd6562fe4a115bdb41a2a08a524f1d1d48",
+                            Email = "raul.adrian@medchain.admin",
+                            EmailConfirmed = true,
+                            IsApproved = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "RAUL.ADRIAN@MEDCHAIN.ADMIN",
+                            NormalizedUserName = "RAUL.ADRIAN",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "ADMIN_SECURITY_STAMP_RAUL_ADRIAN",
+                            TwoFactorEnabled = false,
+                            UserName = "raul.adrian",
+                            WalletAddress = "0x2e0acdeda1a679941b39695d290972c74ab87dd0"
+                        });
                 });
 
             modelBuilder.Entity("Auth.Api.Models.Domain.User", b =>
@@ -184,6 +208,13 @@ namespace Auth.Api.Migrations
                             ConcurrencyStamp = "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                             Name = "MedicalAssistant",
                             NormalizedName = "MEDICALASSISTANT"
+                        },
+                        new
+                        {
+                            Id = "b3c4d5e6-f7a8-9012-bcde-f01234567891",
+                            ConcurrencyStamp = "b3c4d5e6-f7a8-9012-bcde-f01234567891",
+                            Name = "Administrator",
+                            NormalizedName = "ADMINISTRATOR"
                         });
                 });
 
@@ -272,6 +303,13 @@ namespace Auth.Api.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "c1d2e3f4-a5b6-7890-cdef-012345678901",
+                            RoleId = "b3c4d5e6-f7a8-9012-bcde-f01234567891"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>

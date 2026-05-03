@@ -75,6 +75,9 @@ contract EHRAccess {
 
     // ── Storage ──────────────────────────────────────────────────────────────
 
+    address public owner;
+    mapping(address => bool) public approvedMedics;
+
     mapping(uint256 => Diagnosis)   private _diagnoses;
     uint256 private _nextDiagnosisId;
 
@@ -97,6 +100,10 @@ contract EHRAccess {
     mapping(address => uint256[]) private _labTechAnalyses;
 
     // ── Events ───────────────────────────────────────────────────────────────
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event MedicApproved(address indexed medic);
+    event MedicRevoked(address indexed medic);
 
     event AccessGranted(address indexed patient, address indexed doctor, uint256 expiresAt);
     event AccessRevoked(address indexed patient, address indexed doctor);
@@ -130,6 +137,57 @@ contract EHRAccess {
         address indexed dispensedBy,
         uint256 timestamp
     );
+
+    // ── Modifiers ────────────────────────────────────────────────────────────
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "EHRAccess: not owner");
+        _;
+    }
+
+    modifier onlyApproved() {
+        require(approvedMedics[msg.sender], "EHRAccess: not an approved medic");
+        _;
+    }
+
+    // ── Constructor ──────────────────────────────────────────────────────────
+
+    constructor() {
+        owner = msg.sender;
+        emit OwnershipTransferred(address(0), msg.sender);
+    }
+
+    // ── Admin ────────────────────────────────────────────────────────────────
+
+    /// @notice Approves a medic (doctor, lab technician, or pharmacist) to write on-chain.
+    /// @param medic The wallet address of the medic to approve.
+    function approveMedic(address medic) external onlyOwner {
+        require(medic != address(0), "EHRAccess: zero address");
+        require(!approvedMedics[medic], "EHRAccess: already approved");
+        approvedMedics[medic] = true;
+        emit MedicApproved(medic);
+    }
+
+    /// @notice Revokes write access from a previously approved medic.
+    /// @param medic The wallet address of the medic to revoke.
+    function revokeMedic(address medic) external onlyOwner {
+        require(approvedMedics[medic], "EHRAccess: not approved");
+        approvedMedics[medic] = false;
+        emit MedicRevoked(medic);
+    }
+
+    /// @notice Transfers contract ownership to a new address.
+    /// @param newOwner The wallet address of the new owner.
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "EHRAccess: zero address");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    /// @notice Returns whether a given address is an approved medic.
+    function isApprovedMedic(address medic) external view returns (bool) {
+        return approvedMedics[medic];
+    }
 
     // ── Access Control ───────────────────────────────────────────────────────
 
@@ -170,6 +228,7 @@ contract EHRAccess {
         string  calldata doctorName
     )
         external
+        onlyApproved
         returns (uint256 id)
     {
         require(bytes(title).length   > 0, "EHRAccess: empty title");
@@ -271,6 +330,7 @@ contract EHRAccess {
         string  calldata labTechName
     )
         external
+        onlyApproved
         returns (uint256 id)
     {
         require(bytes(title).length   > 0, "EHRAccess: empty title");
@@ -366,6 +426,7 @@ contract EHRAccess {
         bytes32          salt
     )
         external
+        onlyApproved
         returns (uint256 id)
     {
         require(bytes(title).length   > 0, "EHRAccess: empty title");
@@ -416,7 +477,7 @@ contract EHRAccess {
         return _prescriptions[id];
     }
 
-    function dispensePrescription(bytes32 codeHash) external {
+    function dispensePrescription(bytes32 codeHash) external onlyApproved {
         uint256 id = _codeHashToPrescriptionId[codeHash];
         require(id != 0, "EHRAccess: prescription not found");
 

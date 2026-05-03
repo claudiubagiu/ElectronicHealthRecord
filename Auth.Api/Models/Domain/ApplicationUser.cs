@@ -3,11 +3,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Auth.Api.Domain.Models
 {
-    /// <summary>
-    /// Extends the ASP.NET Identity user with blockchain wallet fields.
-    /// The EccPublicKey is stored at registration time and used to verify
-    /// ECC challenge-response signatures during login.
-    /// </summary>
     public class ApplicationUser : IdentityUser
     {
         public required string WalletAddress { get; set; }
@@ -23,6 +18,14 @@ namespace Auth.Api.Domain.Models
         /// Set during registration and used to verify ECC signatures on login.
         /// </summary>
         public string? EccPublicKey { get; set; }
+
+        /// <summary>
+        /// Indicates whether this user is allowed to log in.
+        /// Patients and Medical Assistants are approved automatically on registration.
+        /// Doctors, Laboratory Technicians, and Pharmacists must be approved
+        /// by an Administrator before they can authenticate.
+        /// </summary>
+        public bool IsApproved { get; set; } = false;
 
         public User? User { get; set; }
     }

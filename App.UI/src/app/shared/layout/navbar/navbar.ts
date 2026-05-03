@@ -69,6 +69,12 @@ const ROLE_NAV_ITEMS: NavItem[] = [
     icon: 'health_and_safety',
     roles: ['Patient'],
   },
+  {
+    label: 'User Management',
+    route: '/user-management',
+    icon: 'manage_accounts',
+    roles: ['Administrator'],
+  },
 ];
 
 @Component({

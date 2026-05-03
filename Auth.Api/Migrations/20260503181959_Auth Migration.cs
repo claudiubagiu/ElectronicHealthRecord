@@ -35,6 +35,7 @@ namespace Auth.Api.Migrations
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Challenge = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     EccPublicKey = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsApproved = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -187,10 +188,21 @@ namespace Auth.Api.Migrations
                 {
                     { "430f06bf-f5cd-4d94-87f5-cb9575698d74", "430f06bf-f5cd-4d94-87f5-cb9575698d74", "Patient", "PATIENT" },
                     { "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "MedicalAssistant", "MEDICALASSISTANT" },
+                    { "b3c4d5e6-f7a8-9012-bcde-f01234567891", "b3c4d5e6-f7a8-9012-bcde-f01234567891", "Administrator", "ADMINISTRATOR" },
                     { "d251e4e9-a928-48da-aa5d-720eaa10789c", "d251e4e9-a928-48da-aa5d-720eaa10789c", "Doctor", "DOCTOR" },
                     { "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b", "e5c9a8b9-3f1d-4e5c-9c9b-2a7a5e6c8f1b", "LaboratoryTechnician", "LABORATORYTECHNICIAN" },
                     { "f7a3b2c1-8d4e-4f6a-9b0c-1e2d3f4a5b6c", "f7a3b2c1-8d4e-4f6a-9b0c-1e2d3f4a5b6c", "Pharmacist", "PHARMACIST" }
                 });
+
+            migrationBuilder.InsertData(
+                table: "AspNetUsers",
+                columns: new[] { "Id", "AccessFailedCount", "Challenge", "ConcurrencyStamp", "EccPublicKey", "Email", "EmailConfirmed", "IsApproved", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName", "WalletAddress" },
+                values: new object[] { "c1d2e3f4-a5b6-7890-cdef-012345678901", 0, "INITIAL_PLACEHOLDER_CHALLENGE", "ADMIN_CONCURRENCY_STAMP_RAUL_ADRIAN", "0x045b30b66a15f636fa41b17afb8c585a70500ce48622e12fc26756e26537112eb4486e0b4263db46ff8c6ea62d39f39fdd6562fe4a115bdb41a2a08a524f1d1d48", "raul.adrian@medchain.admin", true, true, false, null, "RAUL.ADRIAN@MEDCHAIN.ADMIN", "RAUL.ADRIAN", null, null, false, "ADMIN_SECURITY_STAMP_RAUL_ADRIAN", false, "raul.adrian", "0x2e0acdeda1a679941b39695d290972c74ab87dd0" });
+
+            migrationBuilder.InsertData(
+                table: "AspNetUserRoles",
+                columns: new[] { "RoleId", "UserId" },
+                values: new object[] { "b3c4d5e6-f7a8-9012-bcde-f01234567891", "c1d2e3f4-a5b6-7890-cdef-012345678901" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",

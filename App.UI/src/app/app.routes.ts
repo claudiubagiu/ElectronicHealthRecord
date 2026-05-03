@@ -199,4 +199,12 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(['MedicalAssistant'])],
   },
+  {
+    path: 'user-management',
+    loadComponent: () =>
+      import('./features/admin/pages/user-management/user-management').then(
+        (m) => m.UserManagement
+      ),
+    canActivate: [roleGuard(['Administrator'])],
+  },
 ];

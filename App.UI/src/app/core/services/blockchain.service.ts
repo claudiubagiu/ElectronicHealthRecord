@@ -192,6 +192,72 @@ export class BlockchainService {
     }
   }
 
+  /**
+   * Admin approves a medic on the smart contract, allowing them to write on-chain.
+   * Only the contract owner (admin wallet) can call this successfully.
+   *
+   * @param medicAddress - The Ethereum wallet address of the medic to approve.
+   * @throws {AppError} If the transaction is rejected or the caller is not the owner.
+   */
+  async approveMedic(medicAddress: string): Promise<void> {
+    try {
+      const signed = await this.getSigned();
+      const tx = await signed['approveMedic'](medicAddress);
+      await tx.wait();
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        throw new AppError({
+          message: 'You rejected the transaction to approve the medic.',
+          status: 403,
+          title: 'Transaction Rejected',
+          type: 'TX_REJECTED',
+        });
+      }
+
+      throw new AppError({
+        message: 'Failed to approve the medic on the blockchain. Please try again.',
+        status: 500,
+        title: 'Approve Medic Failed',
+        type: 'APPROVE_MEDIC_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Admin revokes a medic on the smart contract, preventing them from writing on-chain.
+   * Only the contract owner (admin wallet) can call this successfully.
+   *
+   * @param medicAddress - The Ethereum wallet address of the medic to revoke.
+   * @throws {AppError} If the transaction is rejected or the caller is not the owner.
+   */
+  async revokeMedic(medicAddress: string): Promise<void> {
+    try {
+      const signed = await this.getSigned();
+      const tx = await signed['revokeMedic'](medicAddress);
+      await tx.wait();
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        throw new AppError({
+          message: 'You rejected the transaction to revoke the medic.',
+          status: 403,
+          title: 'Transaction Rejected',
+          type: 'TX_REJECTED',
+        });
+      }
+
+      throw new AppError({
+        message: 'Failed to revoke the medic on the blockchain. Please try again.',
+        status: 500,
+        title: 'Revoke Medic Failed',
+        type: 'REVOKE_MEDIC_FAILED',
+      });
+    }
+  }
+
   // ── Diagnosis Registry ─────────────────────────────────────────────────────
 
   /**

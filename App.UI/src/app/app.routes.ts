@@ -169,4 +169,34 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./features/home/pages/home/home').then((m) => m.Home),
   },
+  {
+    path: 'doctor-profile',
+    loadComponent: () =>
+      import('./features/profile/pages/doctor-profile/doctor-profile').then((m) => m.DoctorProfile),
+    canActivate: [roleGuard(['Doctor'])],
+  },
+  {
+    path: 'lab-tech-profile',
+    loadComponent: () =>
+      import('./features/profile/pages/lab-tech-profile/lab-tech-profile').then(
+        (m) => m.LabTechProfile
+      ),
+    canActivate: [roleGuard(['LaboratoryTechnician'])],
+  },
+  {
+    path: 'pharmacist-profile',
+    loadComponent: () =>
+      import('./features/profile/pages/pharmacist-profile/pharmacist-profile').then(
+        (m) => m.PharmacistProfile
+      ),
+    canActivate: [roleGuard(['Pharmacist'])],
+  },
+  {
+    path: 'medical-assistant-profile',
+    loadComponent: () =>
+      import('./features/profile/pages/medical-assistant-profile/medical-assistant-profile').then(
+        (m) => m.MedicalAssistantProfile
+      ),
+    canActivate: [roleGuard(['MedicalAssistant'])],
+  },
 ];

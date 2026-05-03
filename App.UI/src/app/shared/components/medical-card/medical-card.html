@@ -6,8 +6,7 @@
     <mat-icon class="meta-icon">{{ m.icon }}</mat-icon>
     <span>{{ m.text ?? '' }}</span>
   </div>
-  }
-
+  } @if (showAction) {
   <button mat-stroked-button class="action-btn" [disabled]="isLoading" (click)="actionClick.emit()">
     @if (isLoading) {
     <mat-spinner diameter="16"></mat-spinner>
@@ -19,4 +18,5 @@
     </ng-container>
     }
   </button>
+  }
 </div>

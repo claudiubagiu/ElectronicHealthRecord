@@ -29,6 +29,7 @@ export class MedicalCard {
   @Input() loadingText = 'Decrypting...';
   @Input() actionLabel = 'View report';
   @Input() actionIcon = 'lock_open';
+  @Input() showAction = true;
 
   @Output() actionClick = new EventEmitter<void>();
 

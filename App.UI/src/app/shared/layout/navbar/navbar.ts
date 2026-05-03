@@ -132,6 +132,15 @@ export class Navbar {
     );
   }
 
+  getProfileRoute(): string {
+    const roles = this.authService.getRoles();
+    if (roles.includes('Doctor')) return '/doctor-profile';
+    if (roles.includes('LaboratoryTechnician')) return '/lab-tech-profile';
+    if (roles.includes('Pharmacist')) return '/pharmacist-profile';
+    if (roles.includes('MedicalAssistant')) return '/medical-assistant-profile';
+    return '/profile';
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/']);

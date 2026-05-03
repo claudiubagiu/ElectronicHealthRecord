@@ -27,5 +27,12 @@ namespace Users.Api.Repositories.Implementation
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
+
+        public async Task<MedicalAssistant?> GetByIdentityIdAsync(string identityId) // NOU
+        {
+            return await _dbContext.MedicalAssistants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.IdentityId == identityId);
+        }
     }
 }

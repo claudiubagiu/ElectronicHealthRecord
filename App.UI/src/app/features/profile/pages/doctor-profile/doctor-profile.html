@@ -1,0 +1,66 @@
+<div class="doctor-profile-page">
+  <!-- ===== PROFILE CARD ===== -->
+  <div class="profile-section">
+    @if (isLoadingProfile) {
+    <div class="state-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+    } @if (!isLoadingProfile && doctor) {
+    <app-profile-card
+      [name]="doctor.firstName + ' ' + doctor.lastName"
+      role="Doctor"
+      roleIcon="medical_services"
+      avatarColor="blue"
+      [details]="profileDetails"
+    ></app-profile-card>
+    }
+  </div>
+
+  <!-- ===== DIAGNOSES SUMMARY ===== -->
+  <app-carousel-section
+    title="Diagnoses Issued"
+    icon="folder_shared"
+    [isLoading]="isLoadingDiagnoses"
+    [isEmpty]="diagnosisSummaries.length === 0"
+    emptyIcon="inventory_2"
+    emptyMessage="You haven't issued any diagnoses yet."
+  >
+    @for (d of diagnosisSummaries; track d.id) {
+    <app-medical-card
+      type="diagnosis"
+      [title]="d.title"
+      [showAction]="false"
+      [meta]="[
+        { icon: 'person', text: shortenAddress(d.patientAddr) },
+        { icon: 'event', text: (formatTimestamp(d.timestamp) | date : 'dd MMM yyyy') }
+      ]"
+    ></app-medical-card>
+    }
+  </app-carousel-section>
+
+  <!-- ===== PRESCRIPTIONS SUMMARY ===== -->
+  <app-carousel-section
+    title="Prescriptions Issued"
+    icon="receipt_long"
+    [isLoading]="isLoadingPrescriptions"
+    [isEmpty]="prescriptionSummaries.length === 0"
+    emptyIcon="receipt_long"
+    emptyMessage="You haven't issued any prescriptions yet."
+  >
+    @for (p of prescriptionSummaries; track p.id) {
+    <app-medical-card
+      type="prescription"
+      [title]="p.title"
+      [showAction]="false"
+      [meta]="[
+        { icon: 'person', text: shortenAddress(p.patientAddr) },
+        { icon: 'event', text: (formatTimestamp(p.timestamp) | date : 'dd MMM yyyy') },
+        {
+          icon: p.dispensed ? 'check_circle' : 'hourglass_empty',
+          text: p.dispensed ? 'Dispensed' : 'Pending'
+        }
+      ]"
+    ></app-medical-card>
+    }
+  </app-carousel-section>
+</div>

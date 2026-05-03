@@ -1,0 +1,43 @@
+<div class="lab-tech-profile-page">
+
+  <!-- ===== PROFILE CARD ===== -->
+  <div class="profile-section">
+    @if (isLoadingProfile) {
+      <div class="state-container">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+    @if (!isLoadingProfile && labTech) {
+      <app-profile-card
+        [name]="labTech.firstName + ' ' + labTech.lastName"
+        role="Laboratory Technician"
+        roleIcon="biotech"
+        avatarColor="blue"
+        [details]="profileDetails"
+      ></app-profile-card>
+    }
+  </div>
+
+  <!-- ===== LAB ANALYSES SUMMARY ===== -->
+  <app-carousel-section
+    title="Lab Analyses Uploaded"
+    icon="biotech"
+    [isLoading]="isLoadingAnalyses"
+    [isEmpty]="labAnalysisSummaries.length === 0"
+    emptyIcon="biotech"
+    emptyMessage="You haven't uploaded any lab analyses yet."
+  >
+    @for (a of labAnalysisSummaries; track a.id) {
+      <app-medical-card
+        type="lab-analysis"
+        [title]="a.title"
+        [showAction]="false"
+        [meta]="[
+          { icon: 'person', text: shortenAddress(a.patientAddr) },
+          { icon: 'event', text: (formatTimestamp(a.timestamp) | date : 'dd MMM yyyy') }
+        ]"
+      ></app-medical-card>
+    }
+  </app-carousel-section>
+
+</div>

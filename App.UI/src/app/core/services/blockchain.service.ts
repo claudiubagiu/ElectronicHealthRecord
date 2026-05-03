@@ -8,7 +8,14 @@ import {
 } from 'ethers';
 import { Web3Service } from './web3.service';
 import PatientRecords from '../contracts/PatientRecords.json';
-import { Diagnosis, LabAnalysis, Prescription } from '../models/blockchain.model';
+import {
+  Diagnosis,
+  DiagnosisSummary,
+  LabAnalysis,
+  LabAnalysisSummary,
+  Prescription,
+  PrescriptionSummary,
+} from '../models/blockchain.model';
 import { AppError } from '../errors/app.error';
 
 declare let window: any;
@@ -680,6 +687,120 @@ export class BlockchainService {
    */
   hashShortCode(shortCode: string): string {
     return keccak256(toUtf8Bytes(shortCode));
+  }
+
+  /**
+   * Fetches lightweight summaries of all diagnoses issued by the calling doctor.
+   * Uses getDoctorDiagnosesSummary — no IPFS CID, no decryption needed.
+   */
+  async getDoctorDiagnosesSummary(): Promise<DiagnosisSummary[]> {
+    try {
+      const signed = await this.getSigned();
+      const raws = await signed['getDoctorDiagnosesSummary']();
+      return raws.map((r: any) => ({
+        id: r.id as bigint,
+        title: r.title as string,
+        timestamp: r.timestamp as bigint,
+        patientAddr: r.patientAddr as string,
+        doctorAddr: r.doctorAddr as string,
+        doctorName: r.doctorName as string,
+      }));
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError({
+        message: 'Failed to retrieve your diagnosis summary from the blockchain.',
+        status: 500,
+        title: 'Get Doctor Diagnoses Summary Failed',
+        type: 'GET_DOCTOR_DIAGNOSES_SUMMARY_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Fetches lightweight summaries of all prescriptions issued by the calling doctor.
+   * Uses getDoctorPrescriptionsSummary — no IPFS CID, no decryption needed.
+   */
+  async getDoctorPrescriptionsSummary(): Promise<PrescriptionSummary[]> {
+    try {
+      const signed = await this.getSigned();
+      const raws = await signed['getDoctorPrescriptionsSummary']();
+      return raws.map((r: any) => ({
+        id: r.id as bigint,
+        title: r.title as string,
+        timestamp: r.timestamp as bigint,
+        patientAddr: r.patientAddr as string,
+        doctorAddr: r.doctorAddr as string,
+        doctorName: r.doctorName as string,
+        dispensed: r.dispensed as boolean,
+        dispensedTimestamp: r.dispensedTimestamp as bigint,
+        dispensedBy: r.dispensedBy as string,
+      }));
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError({
+        message: 'Failed to retrieve your prescription summary from the blockchain.',
+        status: 500,
+        title: 'Get Doctor Prescriptions Summary Failed',
+        type: 'GET_DOCTOR_PRESCRIPTIONS_SUMMARY_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Fetches lightweight summaries of all lab analyses uploaded by the calling lab technician.
+   * Uses getLabTechAnalysesSummary — no IPFS CID, no decryption needed.
+   */
+  async getLabTechAnalysesSummary(): Promise<LabAnalysisSummary[]> {
+    try {
+      const signed = await this.getSigned();
+      const raws = await signed['getLabTechAnalysesSummary']();
+      return raws.map((r: any) => ({
+        id: r.id as bigint,
+        title: r.title as string,
+        timestamp: r.timestamp as bigint,
+        patientAddr: r.patientAddr as string,
+        labTechAddr: r.labTechAddr as string,
+        labTechName: r.labTechName as string,
+      }));
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError({
+        message: 'Failed to retrieve your lab analysis summary from the blockchain.',
+        status: 500,
+        title: 'Get Lab Tech Analyses Summary Failed',
+        type: 'GET_LAB_TECH_ANALYSES_SUMMARY_FAILED',
+      });
+    }
+  }
+
+  /**
+   * Fetches lightweight summaries of all prescriptions dispensed by the calling pharmacist.
+   * Uses getPharmacistDispensedSummary — no IPFS CID, no decryption needed.
+   */
+  async getPharmacistDispensedSummary(): Promise<PrescriptionSummary[]> {
+    try {
+      const signed = await this.getSigned();
+      const raws = await signed['getPharmacistDispensedSummary']();
+      return raws.map((r: any) => ({
+        id: r.id as bigint,
+        title: r.title as string,
+        timestamp: r.timestamp as bigint,
+        patientAddr: r.patientAddr as string,
+        doctorAddr: r.doctorAddr as string,
+        doctorName: r.doctorName as string,
+        dispensed: r.dispensed as boolean,
+        dispensedTimestamp: r.dispensedTimestamp as bigint,
+        dispensedBy: r.dispensedBy as string,
+      }));
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError({
+        message: 'Failed to retrieve your dispensed prescriptions from the blockchain.',
+        status: 500,
+        title: 'Get Pharmacist Dispensed Summary Failed',
+        type: 'GET_PHARMACIST_DISPENSED_SUMMARY_FAILED',
+      });
+    }
   }
 
   // ── Mappers ────────────────────────────────────────────────────────────────

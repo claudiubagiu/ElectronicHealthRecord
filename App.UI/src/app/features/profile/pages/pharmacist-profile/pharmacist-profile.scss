@@ -1,0 +1,21 @@
+.pharmacist-profile-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.state-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+@media (max-width: 600px) {
+  .pharmacist-profile-page {
+    padding: 16px 12px;
+  }
+}

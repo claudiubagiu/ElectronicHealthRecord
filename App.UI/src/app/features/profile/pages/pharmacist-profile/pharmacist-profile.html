@@ -1,0 +1,45 @@
+<div class="pharmacist-profile-page">
+
+  <!-- ===== PROFILE CARD ===== -->
+  <div class="profile-section">
+    @if (isLoadingProfile) {
+      <div class="state-container">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+    @if (!isLoadingProfile && pharmacist) {
+      <app-profile-card
+        [name]="pharmacist.firstName + ' ' + pharmacist.lastName"
+        role="Pharmacist"
+        roleIcon="local_pharmacy"
+        avatarColor="blue"
+        [details]="profileDetails"
+      ></app-profile-card>
+    }
+  </div>
+
+  <!-- ===== DISPENSED PRESCRIPTIONS ===== -->
+  <app-carousel-section
+    title="Prescriptions Dispensed"
+    icon="receipt_long"
+    [isLoading]="isLoadingDispensed"
+    [isEmpty]="dispensedSummaries.length === 0"
+    emptyIcon="receipt_long"
+    emptyMessage="You haven't dispensed any prescriptions yet."
+  >
+    @for (p of dispensedSummaries; track p.id) {
+      <app-medical-card
+        type="prescription"
+        [title]="p.title"
+        [showAction]="false"
+        [meta]="[
+          { icon: 'person', text: shortenAddress(p.patientAddr) },
+          { icon: 'medical_services', text: 'Dr. ' + p.doctorName },
+          { icon: 'event', text: (formatTimestamp(p.timestamp) | date : 'dd MMM yyyy') },
+          { icon: 'check_circle', text: 'Dispensed on ' + (formatDispensedDate(p.dispensedTimestamp) | date : 'dd MMM yyyy') }
+        ]"
+      ></app-medical-card>
+    }
+  </app-carousel-section>
+
+</div>

@@ -28,6 +28,7 @@ namespace Users.Api.Mappings
             CreateMap<MedicalAssistant, UserCreatedResponseEvent>().ReverseMap();
 
             CreateMap<Patient, PatientDto>().ReverseMap();
+            CreateMap<Doctor, DoctorDto>().ReverseMap();
             CreateMap<LaboratoryTechnician, LaboratoryTechnicianDto>().ReverseMap();
             CreateMap<Pharmacist, PharmacistDto>().ReverseMap();
             CreateMap<MedicalAssistant, MedicalAssistantDto>().ReverseMap();

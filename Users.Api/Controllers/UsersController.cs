@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Users.Api.Models.DTOs;
 using Users.Api.Services.Interface;
@@ -17,10 +16,6 @@ namespace Users.Api.Controllers
             this.usersService = usersService;
         }
 
-        /// <summary>
-        /// Returns the full patient profile for the currently authenticated user.
-        /// Reads the "identityId" claim from the JWT to look up the patient record.
-        /// </summary>
         [HttpGet("me")]
         [Authorize]
         public async Task<IActionResult> GetMyProfile()
@@ -34,6 +29,58 @@ namespace Users.Api.Controllers
             return Ok(patient);
         }
 
+        [HttpGet("me/doctor")]
+        [Authorize]
+        public async Task<IActionResult> GetMyDoctorProfile()
+        {
+            var identityId = User.Claims.FirstOrDefault(c => c.Type == "identityId")?.Value;
+            if (identityId == null) return Unauthorized();
+
+            var doctor = await usersService.GetDoctorByIdentityIdAsync(identityId);
+            if (doctor == null) return NotFound("Doctor profile not found.");
+
+            return Ok(doctor);
+        }
+
+        [HttpGet("me/lab-tech")]
+        [Authorize]
+        public async Task<IActionResult> GetMyLabTechProfile()
+        {
+            var identityId = User.Claims.FirstOrDefault(c => c.Type == "identityId")?.Value;
+            if (identityId == null) return Unauthorized();
+
+            var labTech = await usersService.GetLabTechByIdentityIdAsync(identityId);
+            if (labTech == null) return NotFound("Laboratory technician profile not found.");
+
+            return Ok(labTech);
+        }
+
+        [HttpGet("me/pharmacist")]
+        [Authorize]
+        public async Task<IActionResult> GetMyPharmacistProfile()
+        {
+            var identityId = User.Claims.FirstOrDefault(c => c.Type == "identityId")?.Value;
+            if (identityId == null) return Unauthorized();
+
+            var pharmacist = await usersService.GetPharmacistByIdentityIdAsync(identityId);
+            if (pharmacist == null) return NotFound("Pharmacist profile not found.");
+
+            return Ok(pharmacist);
+        }
+
+        [HttpGet("me/medical-assistant")]
+        [Authorize]
+        public async Task<IActionResult> GetMyMedicalAssistantProfile()
+        {
+            var identityId = User.Claims.FirstOrDefault(c => c.Type == "identityId")?.Value;
+            if (identityId == null) return Unauthorized();
+
+            var assistant = await usersService.GetMedicalAssistantByIdentityIdAsync(identityId);
+            if (assistant == null) return NotFound("Medical assistant profile not found.");
+
+            return Ok(assistant);
+        }
+
         [HttpGet("search")]
         public async Task<IActionResult> SearchPatients([FromQuery] string search)
         {
@@ -41,24 +88,16 @@ namespace Users.Api.Controllers
             return Ok(patients);
         }
 
-        /// <summary>
-        /// Get the public key for a specific user (used when encrypting medication envelopes).
-        /// </summary>
         [HttpGet("keys/public/{userId}")]
         [Authorize]
         public async Task<IActionResult> GetPublicKey(Guid userId)
         {
             var publicKey = await usersService.GetPublicKeyAsync(userId);
-
             if (publicKey == null)
                 return NotFound("No public key found for this user.");
-
             return Ok(publicKey);
         }
 
-        /// <summary>
-        /// Get public keys for multiple users at once (used when creating medication envelopes).
-        /// </summary>
         [HttpPost("keys/public/bulk")]
         [Authorize]
         public async Task<IActionResult> GetPublicKeysBulk([FromBody] List<Guid> userIds)

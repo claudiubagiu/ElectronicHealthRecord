@@ -35,3 +35,33 @@ export interface Prescription {
   dispensedBy: string;
   exists: boolean;
 }
+
+export interface DiagnosisSummary {
+  id: bigint;
+  title: string;
+  timestamp: bigint;
+  patientAddr: string;
+  doctorAddr: string;
+  doctorName: string;
+}
+
+export interface PrescriptionSummary {
+  id: bigint;
+  title: string;
+  timestamp: bigint;
+  patientAddr: string;
+  doctorAddr: string;
+  doctorName: string;
+  dispensed: boolean;
+  dispensedTimestamp: bigint;
+  dispensedBy: string;
+}
+
+export interface LabAnalysisSummary {
+  id: bigint;
+  title: string;
+  timestamp: bigint;
+  patientAddr: string;
+  labTechAddr: string;
+  labTechName: string;
+}

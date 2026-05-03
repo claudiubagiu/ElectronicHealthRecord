@@ -1,0 +1,16 @@
+<div class="medical-assistant-profile-page">
+  @if (isLoadingProfile) {
+    <div class="state-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+  @if (!isLoadingProfile && assistant) {
+    <app-profile-card
+      [name]="assistant.firstName + ' ' + assistant.lastName"
+      role="Medical Assistant"
+      roleIcon="support_agent"
+      avatarColor="blue"
+      [details]="profileDetails"
+    ></app-profile-card>
+  }
+</div>

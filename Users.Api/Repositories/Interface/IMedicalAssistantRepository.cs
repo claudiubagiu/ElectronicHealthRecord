@@ -6,5 +6,6 @@ namespace Users.Api.Repositories.Interface
     {
         Task<MedicalAssistant> CreateAsync(MedicalAssistant medicalAssistant);
         Task<MedicalAssistant?> GetByIdAsync(Guid id);
+        Task<MedicalAssistant?> GetByIdentityIdAsync(string identityId);
     }
 }

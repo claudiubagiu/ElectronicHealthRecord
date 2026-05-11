@@ -66,8 +66,6 @@ export class UserManagement implements OnInit {
   async onApprove(medic: MedicDto): Promise<void> {
     this.actioningId = medic.id;
     try {
-      // Passes the full medic object so the service can call both
-      // approveMedic(walletAddress) on-chain and the HTTP endpoint.
       await this.adminService.approveMedic(medic);
       this.notify.showSuccess(`${medic.firstName} ${medic.lastName} has been approved.`);
       this.pendingMedics = this.pendingMedics.filter((m) => m.id !== medic.id);
@@ -75,21 +73,6 @@ export class UserManagement implements OnInit {
       this.approvedMedics = [medic, ...this.approvedMedics];
     } catch {
       this.notify.showError('Failed to approve medic. Please try again.');
-    } finally {
-      this.actioningId = null;
-    }
-  }
-
-  async onRevoke(medic: MedicDto): Promise<void> {
-    this.actioningId = medic.id;
-    try {
-      await this.adminService.revokeMedic(medic);
-      this.notify.showSuccess(`${medic.firstName} ${medic.lastName}'s access has been revoked.`);
-      this.approvedMedics = this.approvedMedics.filter((m) => m.id !== medic.id);
-      medic.isApproved = false;
-      this.pendingMedics = [medic, ...this.pendingMedics];
-    } catch {
-      this.notify.showError('Failed to revoke medic. Please try again.');
     } finally {
       this.actioningId = null;
     }

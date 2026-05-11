@@ -6,7 +6,7 @@
         <mat-icon>manage_accounts</mat-icon>
       </div>
       <h1>User Management</h1>
-      <p class="subtitle">Approve or revoke medical staff access to the platform</p>
+      <p class="subtitle">Approve medical staff access to the platform</p>
     </div>
 
     <mat-tab-group animationDuration="200ms" class="access-tabs">
@@ -116,19 +116,6 @@
                 <span class="status-badge approved">
                   <mat-icon>check_circle</mat-icon> Active
                 </span>
-                <button
-                  mat-stroked-button
-                  class="revoke-btn"
-                  [disabled]="actioningId === medic.id"
-                  (click)="onRevoke(medic)"
-                >
-                  @if (actioningId === medic.id) {
-                  <mat-spinner diameter="16"></mat-spinner>
-                  } @else {
-                  <mat-icon>block</mat-icon>
-                  }
-                  {{ actioningId === medic.id ? 'Revoking...' : 'Revoke' }}
-                </button>
               </div>
             </div>
             }

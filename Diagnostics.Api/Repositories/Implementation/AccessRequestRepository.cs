@@ -78,5 +78,15 @@ namespace Diagnostics.Api.Repositories.Implementation
                             r.ExpiresAt <= now)
                 .ToListAsync();
         }
+
+        public async Task<IReadOnlyList<DiagnosticsAccessRequest>> GetApprovedByPatientIdAsync(Guid patientId)
+        {
+            return await _dbContext.AccessRequests
+                .Include(r => r.Doctor)
+                .Include(r => r.Patient)
+                .AsNoTracking()
+                .Where(r => r.PatientId == patientId && r.Status == AccessRequestStatus.Approved)
+                .ToListAsync();
+        }
     }
 }

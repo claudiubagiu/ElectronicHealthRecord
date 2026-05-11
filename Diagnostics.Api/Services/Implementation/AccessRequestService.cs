@@ -229,6 +229,12 @@ namespace Diagnostics.Api.Services.Implementation
             return expired.Count;
         }
 
+        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetApprovedByPatientIdAsync(Guid patientId)
+        {
+            var requests = await _accessRequestRepository.GetApprovedByPatientIdAsync(patientId);
+            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
+        }
+
         private static AccessRequestDto MapToDto(DiagnosticsAccessRequest r) => new()
         {
             Id = r.Id,

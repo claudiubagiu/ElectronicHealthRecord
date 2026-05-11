@@ -55,12 +55,8 @@ export class DiagnosticDraftService {
 
   getActiveByPatient(patientId: string): Promise<DiagnosticDraftDto | null> {
     return firstValueFrom(
-      this.http.get<DiagnosticDraftDto>(`${this.API}/patient/${patientId}`)
-    ).catch((err: any) => {
-      // 404 → no active draft for this patient. That's a normal state, not an error.
-      if (err?.status === 404) return null;
-      throw err;
-    });
+      this.http.get<DiagnosticDraftDto | null>(`${this.API}/patient/${patientId}`)
+    );
   }
 
   createRaw(dto: CreateDiagnosticDraftDto): Promise<DiagnosticDraftDto> {

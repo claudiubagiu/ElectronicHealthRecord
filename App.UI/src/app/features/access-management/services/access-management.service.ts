@@ -34,6 +34,12 @@ export class AccessManagementService {
     );
   }
 
+  getApprovedDoctors(patientId: string): Promise<AccessRequestDto[]> {
+    return firstValueFrom(
+      this.http.get<AccessRequestDto[]>(`${this.API}/patient/${patientId}/approved`)
+    );
+  }
+
   /**
    * Fetches the IDs of all users (doctors, assistants, etc.) with approved access to a patient.
    * Used when creating envelopes.

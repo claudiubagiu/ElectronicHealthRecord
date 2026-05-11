@@ -14,5 +14,6 @@ namespace Diagnostics.Api.Services.Interface
         Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByPatientIdAsync(Guid patientId);
         Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByDoctorIdAsync(Guid doctorId);
         Task<int> ExpireOverdueRequestsAsync();
+        Task<Result<IReadOnlyList<AccessRequestDto>>> GetApprovedByPatientIdAsync(Guid patientId);
     }
 }

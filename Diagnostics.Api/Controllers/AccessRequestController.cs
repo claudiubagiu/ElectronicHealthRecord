@@ -98,6 +98,14 @@ namespace Diagnostics.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
+        [HttpGet("patient/{patientId}/approved")]
+        public async Task<IActionResult> GetApprovedByPatientId(Guid patientId)
+        {
+            var result = await _accessRequestService.GetApprovedByPatientIdAsync(patientId);
+            if (result.IsSuccess) return Ok(result.Value);
+            return BuildError(result.Errors.First());
+        }
+
         private ObjectResult BuildError(FluentResults.IError error)
         {
             var statusCode = error.Metadata.ContainsKey("StatusCode")

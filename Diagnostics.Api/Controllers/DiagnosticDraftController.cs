@@ -44,6 +44,10 @@ namespace Diagnostics.Api.Controllers
 
             var result = await _draftService.GetActiveByPatientIdAsync(patientId, Guid.Parse(callerIdClaim));
             if (result.IsSuccess) return Ok(result.Value);
+
+            var statusCode = result.Errors.First().Metadata.TryGetValue("StatusCode", out var sc) ? (int)sc : 500;
+            if (statusCode == 404) return Ok((object?)null);
+
             return BuildError(result.Errors.First());
         }
 

@@ -116,8 +116,7 @@ export class PatientProfile implements OnInit {
     if (!user) return;
     this.isLoadingAccess = true;
     try {
-      const all = await this.accessService.getMyRequests(user.userId);
-      this.approvedDoctors = all.filter((r) => r.status === 'Approved');
+      this.approvedDoctors = await this.accessService.getApprovedDoctors(user.userId);
     } catch {
       this.notify.showError('Failed to load access requests.');
     } finally {

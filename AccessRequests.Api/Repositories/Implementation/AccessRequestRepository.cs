@@ -1,27 +1,27 @@
-﻿using Diagnostics.Api.Data;
-using Diagnostics.Api.Models.Domain;
-using Diagnostics.Api.Repositories.Interface;
+﻿using AccessRequests.Api.Data;
+using AccessRequests.Api.Models.Domain;
+using AccessRequests.Api.Repositories.Interface;
 using Microsoft.EntityFrameworkCore;
 
-namespace Diagnostics.Api.Repositories.Implementation
+namespace AccessRequests.Api.Repositories.Implementation
 {
     public class AccessRequestRepository : IAccessRequestRepository
     {
-        private readonly DiagnosticsDbContext _dbContext;
+        private readonly AccessRequestDbContext _dbContext;
 
-        public AccessRequestRepository(DiagnosticsDbContext dbContext)
+        public AccessRequestRepository(AccessRequestDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        public async Task<DiagnosticsAccessRequest> CreateAsync(DiagnosticsAccessRequest request)
+        public async Task<AccessRequest> CreateAsync(AccessRequest request)
         {
             await _dbContext.AccessRequests.AddAsync(request);
             await _dbContext.SaveChangesAsync();
             return request;
         }
 
-        public async Task<DiagnosticsAccessRequest?> GetByIdAsync(Guid id)
+        public async Task<AccessRequest?> GetByIdAsync(Guid id)
         {
             return await _dbContext.AccessRequests
                 .Include(r => r.Doctor)
@@ -30,7 +30,7 @@ namespace Diagnostics.Api.Repositories.Implementation
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
-        public async Task<DiagnosticsAccessRequest?> GetPendingAsync(Guid doctorId, Guid patientId)
+        public async Task<AccessRequest?> GetPendingAsync(Guid doctorId, Guid patientId)
         {
             return await _dbContext.AccessRequests
                 .AsNoTracking()
@@ -40,7 +40,7 @@ namespace Diagnostics.Api.Repositories.Implementation
                     r.Status == AccessRequestStatus.Pending);
         }
 
-        public async Task<IReadOnlyList<DiagnosticsAccessRequest>> GetByPatientIdAsync(Guid patientId)
+        public async Task<IReadOnlyList<AccessRequest>> GetByPatientIdAsync(Guid patientId)
         {
             return await _dbContext.AccessRequests
                 .Include(r => r.Doctor)
@@ -50,7 +50,7 @@ namespace Diagnostics.Api.Repositories.Implementation
                 .ToListAsync();
         }
 
-        public async Task<IReadOnlyList<DiagnosticsAccessRequest>> GetByDoctorIdAsync(Guid doctorId)
+        public async Task<IReadOnlyList<AccessRequest>> GetByDoctorIdAsync(Guid doctorId)
         {
             return await _dbContext.AccessRequests
                 .Include(r => r.Doctor)
@@ -60,14 +60,14 @@ namespace Diagnostics.Api.Repositories.Implementation
                 .ToListAsync();
         }
 
-        public async Task<DiagnosticsAccessRequest> UpdateAsync(DiagnosticsAccessRequest request)
+        public async Task<AccessRequest> UpdateAsync(AccessRequest request)
         {
             _dbContext.AccessRequests.Update(request);
             await _dbContext.SaveChangesAsync();
             return request;
         }
 
-        public async Task<IReadOnlyList<DiagnosticsAccessRequest>> GetExpiredApprovedAsync()
+        public async Task<IReadOnlyList<AccessRequest>> GetExpiredApprovedAsync()
         {
             var now = DateTime.UtcNow;
             return await _dbContext.AccessRequests
@@ -79,7 +79,7 @@ namespace Diagnostics.Api.Repositories.Implementation
                 .ToListAsync();
         }
 
-        public async Task<IReadOnlyList<DiagnosticsAccessRequest>> GetApprovedByPatientIdAsync(Guid patientId)
+        public async Task<IReadOnlyList<AccessRequest>> GetApprovedByPatientIdAsync(Guid patientId)
         {
             return await _dbContext.AccessRequests
                 .Include(r => r.Doctor)

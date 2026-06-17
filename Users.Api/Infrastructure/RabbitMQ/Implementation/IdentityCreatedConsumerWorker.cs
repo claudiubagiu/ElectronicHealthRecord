@@ -57,6 +57,7 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                         UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(patient);
                         userCreatedEvent.Role = identityCreatedEvent.Role;
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "accessrequest-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medicaldata-user-created-queue");
                     }
@@ -71,6 +72,7 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                         UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(doctor);
                         userCreatedEvent.Role = identityCreatedEvent.Role;
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "accessrequest-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medicaldata-user-created-queue");
                     }
@@ -85,6 +87,7 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                         UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(labTechnician);
                         userCreatedEvent.Role = identityCreatedEvent.Role;
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "accessrequest-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medicaldata-user-created-queue");
                     }
@@ -99,6 +102,7 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                         UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(pharmacist);
                         userCreatedEvent.Role = identityCreatedEvent.Role;
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "accessrequest-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medications-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medicaldata-user-created-queue");
                     }
@@ -113,6 +117,7 @@ namespace Users.Api.Infrastructure.RabbitMQ.Implementation
                         UserCreatedEvent userCreatedEvent = _mapper.Map<UserCreatedEvent>(medicalAssistant);
                         userCreatedEvent.Role = identityCreatedEvent.Role;
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "user-created-queue");
+                        await _genericRabbitMQService.PublishAsync(userCreatedEvent, "accessrequest-user-created-queue");
                         await _genericRabbitMQService.PublishAsync(userCreatedEvent, "medicaldata-user-created-queue");
                     }
                 });

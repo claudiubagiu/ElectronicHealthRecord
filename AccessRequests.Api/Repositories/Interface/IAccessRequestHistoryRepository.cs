@@ -1,6 +1,6 @@
-﻿using Diagnostics.Api.Models.Domain;
+﻿using AccessRequests.Api.Models.Domain;
 
-namespace Diagnostics.Api.Repositories.Interface
+namespace AccessRequests.Api.Repositories.Interface
 {
     public interface IAccessRequestHistoryRepository
     {

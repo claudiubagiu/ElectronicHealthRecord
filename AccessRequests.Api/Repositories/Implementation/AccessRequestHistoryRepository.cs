@@ -1,15 +1,15 @@
-﻿using Diagnostics.Api.Data;
-using Diagnostics.Api.Models.Domain;
-using Diagnostics.Api.Repositories.Interface;
+﻿using AccessRequests.Api.Data;
+using AccessRequests.Api.Models.Domain;
+using AccessRequests.Api.Repositories.Interface;
 using Microsoft.EntityFrameworkCore;
 
-namespace Diagnostics.Api.Repositories.Implementation
+namespace AccessRequests.Api.Repositories.Implementation
 {
     public class AccessRequestHistoryRepository : IAccessRequestHistoryRepository
     {
-        private readonly DiagnosticsDbContext _dbContext;
+        private readonly AccessRequestDbContext _dbContext;
 
-        public AccessRequestHistoryRepository(DiagnosticsDbContext dbContext)
+        public AccessRequestHistoryRepository(AccessRequestDbContext dbContext)
         {
             _dbContext = dbContext;
         }

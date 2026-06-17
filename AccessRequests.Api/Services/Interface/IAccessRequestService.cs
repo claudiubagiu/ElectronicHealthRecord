@@ -1,7 +1,7 @@
-﻿using Diagnostics.Api.Models.DTOs;
+﻿using AccessRequests.Api.Models.DTOs;
 using FluentResults;
 
-namespace Diagnostics.Api.Services.Interface
+namespace AccessRequests.Api.Services.Interface
 {
     public interface IAccessRequestService
     {

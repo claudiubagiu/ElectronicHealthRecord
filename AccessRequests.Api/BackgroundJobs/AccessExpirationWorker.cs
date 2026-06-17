@@ -1,21 +1,13 @@
-﻿using Diagnostics.Api.Services.Interface;
+﻿using AccessRequests.Api.Services.Interface;
 
-namespace Diagnostics.Api.BackgroundJobs
+namespace AccessRequests.Api.BackgroundJobs
 {
-    /// <summary>
-    /// Background service that periodically checks for approved access requests
-    /// that have passed their expiration date and marks them as Expired.
-    /// Also calls the Medications API to delete medication envelopes for expired doctors.
-    /// </summary>
     public class AccessExpirationWorker : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<AccessExpirationWorker> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        /// <summary>
-        /// How often the worker checks for expired requests.
-        /// </summary>
         private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(5);
 
         public AccessExpirationWorker(
@@ -55,17 +47,14 @@ namespace Diagnostics.Api.BackgroundJobs
             var accessRequestRepo = scope.ServiceProvider
                 .GetRequiredService<Repositories.Interface.IAccessRequestRepository>();
 
-            // 1. Get all requests that are about to be expired (still Approved but past ExpiresAt)
             var expiredRequests = await accessRequestRepo.GetExpiredApprovedAsync();
 
             if (expiredRequests.Count == 0) return;
 
             _logger.LogInformation("Found {Count} expired access request(s) to process.", expiredRequests.Count);
 
-            // 2. Mark them as Expired in the database (via the service method)
             var count = await accessRequestService.ExpireOverdueRequestsAsync();
 
-            // 3. Delete medication envelopes for each expired doctor-patient pair
             var httpClient = _httpClientFactory.CreateClient("MedicationsApi");
 
             foreach (var request in expiredRequests)

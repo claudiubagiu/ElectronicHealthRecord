@@ -1,11 +1,10 @@
-﻿using AutoMapper;
-using Diagnostics.Api.Models.Domain;
-using Diagnostics.Api.Models.DTOs;
-using Diagnostics.Api.Repositories.Interface;
-using Diagnostics.Api.Services.Interface;
+﻿using AccessRequests.Api.Models.Domain;
+using AccessRequests.Api.Models.DTOs;
+using AccessRequests.Api.Repositories.Interface;
+using AccessRequests.Api.Services.Interface;
 using FluentResults;
 
-namespace Diagnostics.Api.Services.Implementation
+namespace AccessRequests.Api.Services.Implementation
 {
     public class AccessRequestService : IAccessRequestService
     {
@@ -13,9 +12,6 @@ namespace Diagnostics.Api.Services.Implementation
         private readonly IAccessRequestHistoryRepository _historyRepository;
         private readonly IUsersRepository _usersRepository;
 
-        /// <summary>
-        /// Default access duration: 7 days.
-        /// </summary>
         private static readonly TimeSpan AccessDuration = TimeSpan.FromDays(7);
 
         public AccessRequestService(
@@ -44,7 +40,7 @@ namespace Diagnostics.Api.Services.Implementation
                     new Error("An access request is already pending for this patient.")
                         .WithMetadata("StatusCode", 409));
 
-            var accessRequest = new DiagnosticsAccessRequest
+            var accessRequest = new Models.Domain.AccessRequest
             {
                 Id = Guid.NewGuid(),
                 DoctorId = doctorId,
@@ -203,11 +199,6 @@ namespace Diagnostics.Api.Services.Implementation
             return Result.Ok<IReadOnlyList<AccessRequestHistoryDto>>(histories.Select(MapHistoryToDto).ToList());
         }
 
-        /// <summary>
-        /// Finds all Approved requests whose ExpiresAt has passed,
-        /// marks them as Expired, and creates history entries.
-        /// Returns the count of expired requests.
-        /// </summary>
         public async Task<int> ExpireOverdueRequestsAsync()
         {
             var expired = await _accessRequestRepository.GetExpiredApprovedAsync();
@@ -235,7 +226,7 @@ namespace Diagnostics.Api.Services.Implementation
             return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
         }
 
-        private static AccessRequestDto MapToDto(DiagnosticsAccessRequest r) => new()
+        private static AccessRequestDto MapToDto(Models.Domain.AccessRequest r) => new()
         {
             Id = r.Id,
             DoctorId = r.DoctorId,

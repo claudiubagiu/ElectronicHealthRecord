@@ -1,9 +1,9 @@
-﻿using Diagnostics.Api.Models.DTOs;
-using Diagnostics.Api.Services.Interface;
+﻿using AccessRequests.Api.Models.DTOs;
+using AccessRequests.Api.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Diagnostics.Api.Controllers
+namespace AccessRequests.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

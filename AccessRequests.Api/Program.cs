@@ -1,10 +1,13 @@
-using Diagnostics.Api.Data;
-using Diagnostics.Api.Extensions;
-using Diagnostics.Api.Infrastructure.RabbitMQ.Implementation;
-using Diagnostics.Api.Infrastructure.RabbitMQ.Interface;
-using Diagnostics.Api.Mappings;
-using Diagnostics.Api.Repositories.Implementation;
-using Diagnostics.Api.Repositories.Interface;
+using AccessRequests.Api.BackgroundJobs;
+using AccessRequests.Api.Data;
+using AccessRequests.Api.Extensions;
+using AccessRequests.Api.Infrastructure.RabbitMQ.Implementation;
+using AccessRequests.Api.Infrastructure.RabbitMQ.Interface;
+using AccessRequests.Api.Mappings;
+using AccessRequests.Api.Repositories.Implementation;
+using AccessRequests.Api.Repositories.Interface;
+using AccessRequests.Api.Services.Implementation;
+using AccessRequests.Api.Services.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -13,17 +16,24 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<DiagnosticsDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DiagnosticsConnectionString")));
+builder.Services.AddDbContext<AccessRequestDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AccessRequestConnectionString")));
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
-builder.Services.AddScoped<IDiagnosticDraftRepository, DiagnosticDraftRepository>();
+builder.Services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
+builder.Services.AddScoped<IAccessRequestHistoryRepository, AccessRequestHistoryRepository>();
+builder.Services.AddScoped<IAccessRequestService, AccessRequestService>();
+
+builder.Services.AddHttpClient("MedicationsApi", client =>
+{
+    client.BaseAddress = new Uri("http://medications.api:8080/");
+});
+
+builder.Services.AddHostedService<AccessExpirationWorker>();
 
 builder.Services.AddCors(options =>
 {
@@ -69,7 +79,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-
 var app = builder.Build();
 
 app.UseCors("AllowFrontend");
@@ -83,7 +92,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Configure the HTTP request pipeline.
 
 app.Run();

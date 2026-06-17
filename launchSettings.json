@@ -1,0 +1,17 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "accessrequests.api": "StartDebugging",
+        "angular-dev": "StartWithoutDebugging",
+        "auth.api": "StartDebugging",
+        "diagnostics.api": "StartDebugging",
+        "ipfs.api": "StartDebugging",
+        "medicaldata.api": "StartDebugging",
+        "users.api": "StartDebugging"
+      }
+    }
+  }
+}

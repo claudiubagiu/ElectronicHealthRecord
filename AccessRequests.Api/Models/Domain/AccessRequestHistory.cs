@@ -1,4 +1,4 @@
-﻿namespace Diagnostics.Api.Models.Domain
+﻿namespace AccessRequests.Api.Models.Domain
 {
     public class AccessRequestHistory
     {
@@ -7,6 +7,6 @@
         public string Action { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; }
 
-        public DiagnosticsAccessRequest? AccessRequest { get; set; }
+        public AccessRequest? AccessRequest { get; set; }
     }
 }

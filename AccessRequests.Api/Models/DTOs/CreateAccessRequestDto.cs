@@ -1,4 +1,4 @@
-﻿namespace Diagnostics.Api.Models.DTOs
+﻿namespace AccessRequests.Api.Models.DTOs
 {
     public class CreateAccessRequestDto
     {

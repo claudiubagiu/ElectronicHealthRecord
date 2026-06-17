@@ -1,8 +1,6 @@
-﻿namespace Diagnostics.Api.Models.Domain
+﻿namespace AccessRequests.Api.Models.Domain
 {
-    public enum AccessRequestStatus { Pending, Approved, Rejected, Revoked, Expired }
-
-    public class DiagnosticsAccessRequest
+    public class AccessRequest
     {
         public Guid Id { get; set; }
         public required Guid DoctorId { get; set; }

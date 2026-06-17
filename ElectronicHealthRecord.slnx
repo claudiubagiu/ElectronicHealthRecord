@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="AccessRequests.Api/AccessRequests.Api.csproj" Id="659dfed2-fd0f-44ee-bc70-cd4c3f033c9b" />
   <Project Path="Auth.Api/Auth.Api.csproj" />
   <Project Path="Diagnostics.Api/Diagnostics.Api.csproj" Id="4e3c95f9-a7ae-4751-a3ea-979c0e2ab7a9" />
   <Project Path="docker-compose.dcproj">

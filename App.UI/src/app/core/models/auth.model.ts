@@ -22,6 +22,7 @@ export interface RegisterRequest {
   walletAddress: string;
   eccSignature: string;
   eccPublicKey: string;
+  encryptedAesKey?: string;
   // Patient fields
   dateOfBirth?: string;
   cnp?: string;

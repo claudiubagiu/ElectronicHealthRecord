@@ -110,6 +110,7 @@ namespace Auth.Api.Services.Implementation
             var user = mapper.Map<ApplicationUser>(registerRequestDto);
             user.Challenge = GenerateSecureChallenge();
             user.IsApproved = !requiresApproval;
+            user.EncryptedAesKey = registerRequestDto.EncryptedAesKey;
 
             var result = await userManager.CreateAsync(user);
 
@@ -133,6 +134,7 @@ namespace Auth.Api.Services.Implementation
                         LastName = registerRequestDto.LastName,
                         WalletAddress = registerRequestDto.WalletAddress,
                         PublicKey = registerRequestDto.EccPublicKey,
+                        EncryptedAesKey = registerRequestDto.EncryptedAesKey,
                         CNP = registerRequestDto.CNP,
                         DateOfBirth = registerRequestDto.DateOfBirth,
                         Specialization = registerRequestDto.Specialization,

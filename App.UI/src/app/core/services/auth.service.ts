@@ -106,13 +106,16 @@ export class AuthService implements OnDestroy {
    * Full register flow with a single MetaMask popup:
    * 1. Connect wallet (if not connected).
    * 2. Derive ECC key pair from a single MetaMask signature (the only popup).
-   * 3. Request a challenge from the backend.
-   * 4. Sign the challenge with the derived ECC key (no MetaMask popup).
-   * 5. Send registration data + ECC public key + signed challenge to backend.
-   * 6. Store the returned JWT token.
+   * 3. Generate the user's personal AES data key, encrypted with their own ECC public key.
+   * 4. Request a challenge from the backend.
+   * 5. Sign the challenge with the derived ECC key (no popup).
+   * 6. Send registration data + ECC public key + encrypted AES key + signed challenge to backend.
+   * 7. Store the returned JWT token.
    *
    * The ECC public key is stored by the backend for future challenge-response
-   * authentication and for E2EE envelope creation by other users.
+   * authentication and for E2EE envelope creation by other users. The encrypted
+   * AES key is the user's personal data-encryption key, recoverable only by
+   * the user themself (via their wallet-derived private key).
    *
    * @param registerRequest - The registration form data (personal info, role, etc.).
    * @returns The login response containing the JWT token.
@@ -122,13 +125,14 @@ export class AuthService implements OnDestroy {
     const walletAddress =
       this.web3Service.getAddressOrNull() ?? (await this.web3Service.connectWallet());
 
-    // Derive ECC key pair — this is the single MetaMask popup
     const eccPublicKey = await this.e2eeService.getPublicKeyForRegistration();
 
-    // Request a challenge from the backend
-    const challenge = await this.getChallenge(walletAddress);
+    // Only patients get a personal AES data key
+    const encryptedAesKey = registerRequest.roles.includes('Patient')
+      ? await this.e2eeService.generateEncryptedAesKeyForRegistration()
+      : undefined;
 
-    // Sign the challenge with the derived ECC key (no popup)
+    const challenge = await this.getChallenge(walletAddress);
     const eccSignature = this.e2eeService.signChallenge(challenge);
 
     const payload: RegisterRequest = {
@@ -136,16 +140,11 @@ export class AuthService implements OnDestroy {
       walletAddress,
       eccSignature,
       eccPublicKey,
+      encryptedAesKey,
     };
 
     const response = await firstValueFrom(
-      this.http.post<LoginResponse>(`${this.API_URL}/register`, payload).pipe(
-        tap((res) => {
-          // if (res?.token) {
-          //   this.setToken(res.token);
-          // }
-        })
-      )
+      this.http.post<LoginResponse>(`${this.API_URL}/register`, payload)
     );
 
     return response;

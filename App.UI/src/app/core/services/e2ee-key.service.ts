@@ -213,6 +213,51 @@ export class E2eeKeyService {
     }
   }
 
+  /**
+   * Called BEFORE sending the register request, immediately after
+   * {@link getPublicKeyForRegistration}.
+   *
+   * Generates a fresh random AES-256-GCM key — this becomes the user's
+   * personal "data key", used to encrypt their own medical records.
+   * It is encrypted (wrapped) with the user's own ECC public key via
+   * ECIES, so only the user (via their wallet-derived private key) can
+   * ever recover it. The raw AES key never leaves the browser and is
+   * never sent to any server.
+   *
+   * @returns The base64-encoded ECIES ciphertext of the wrapped AES key,
+   *          ready to be sent to the backend for storage.
+   * @throws {AppError} If the ECC public key is not available, or key
+   *         generation/encryption fails.
+   */
+  async generateEncryptedAesKeyForRegistration(): Promise<string> {
+    const publicKey = this.getPublicKey();
+    if (!publicKey) {
+      throw new AppError({
+        message: 'ECC public key is not available. Please derive your encryption keys first.',
+        status: 401,
+        title: 'Key Not Available',
+        type: 'E2EE_KEY_NOT_AVAILABLE',
+      });
+    }
+
+    try {
+      const aesKey = await CryptoService.generateAESKey();
+      const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
+      const encryptedAesKey = CryptoService.encryptAESKeyWithECIES(aesKeyRaw, publicKey);
+      return CryptoService.arrayBufferToBase64(encryptedAesKey.buffer as ArrayBuffer);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+
+      console.error('Failed to generate encrypted AES key for registration:', error);
+      throw new AppError({
+        message: 'Failed to generate your personal encryption key. Please try again.',
+        status: 500,
+        title: 'AES Key Generation Failed',
+        type: 'AES_KEY_GENERATION_FAILED',
+      });
+    }
+  }
+
   // ==================== Public Key Retrieval ====================
 
   /**

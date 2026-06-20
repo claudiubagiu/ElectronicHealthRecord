@@ -111,6 +111,7 @@ export class Register implements OnInit {
         walletAddress: '',
         eccSignature: '',
         eccPublicKey: '',
+        encryptedAesKey: '',
         dateOfBirth:
           this.selectedRole === 'Patient' ? this.registerForm.value.dateOfBirth : undefined,
         cnp: this.selectedRole === 'Patient' ? this.registerForm.value.cnp : undefined,

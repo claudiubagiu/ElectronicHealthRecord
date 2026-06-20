@@ -20,6 +20,14 @@ namespace Auth.Api.Domain.Models
         public string? EccPublicKey { get; set; }
 
         /// <summary>
+        /// The user's personal AES-256 data key, base64-encoded and encrypted
+        /// (ECIES) with the user's own EccPublicKey. Only the user, via their
+        /// wallet-derived private key, can ever decrypt this. The server never
+        /// holds the raw key.
+        /// </summary>
+        public string? EncryptedAesKey { get; set; }
+
+        /// <summary>
         /// Indicates whether this user is allowed to log in.
         /// Patients and Medical Assistants are approved automatically on registration.
         /// Doctors, Laboratory Technicians, and Pharmacists must be approved

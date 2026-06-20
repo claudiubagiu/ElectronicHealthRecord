@@ -8,6 +8,12 @@
         public required string LastName { get; set; }
         public required string WalletAddress { get; set; }
         public required string PublicKey { get; set; }
+
+        /// <summary>
+        /// The user's ECIES-encrypted AES data key, propagated from Auth.Api.
+        /// </summary>
+        public required string EncryptedAesKey { get; set; }
+
         public string? CNP { get; set; }
         public DateTime? DateOfBirth { get; set; }
         public string? Specialization { get; set; }

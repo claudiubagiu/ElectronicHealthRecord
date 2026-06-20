@@ -7,11 +7,11 @@ namespace AccessRequests.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccessRequestController : ControllerBase
+    public class AccessRequestsController : ControllerBase
     {
         private readonly IAccessRequestService _accessRequestService;
 
-        public AccessRequestController(IAccessRequestService accessRequestService)
+        public AccessRequestsController(IAccessRequestService accessRequestService)
         {
             _accessRequestService = accessRequestService;
         }

@@ -3,19 +3,12 @@ export interface CreateMedicalRecordDto {
   recordType: string;
   encryptedData: string;
   iv: string;
-  envelopes: MedicalRecordEnvelopeDto[];
 }
 
 export interface UpdateMedicalRecordDto {
   recordType: string;
   encryptedData: string;
   iv: string;
-  envelopes: MedicalRecordEnvelopeDto[];
-}
-
-export interface MedicalRecordEnvelopeDto {
-  userId: string;
-  encryptedAesKey: string;
 }
 
 export interface MedicalRecordDto {
@@ -27,15 +20,4 @@ export interface MedicalRecordDto {
   createdByDoctorId: string;
   createdAt: string;
   updatedAt: string;
-  encryptedAesKey: string | null;
-}
-
-export interface BulkMedicalRecordEnvelopeDto {
-  envelopes: BulkMedicalRecordEnvelopeItemDto[];
-}
-
-export interface BulkMedicalRecordEnvelopeItemDto {
-  medicalRecordId: string;
-  userId: string;
-  encryptedAesKey: string;
 }

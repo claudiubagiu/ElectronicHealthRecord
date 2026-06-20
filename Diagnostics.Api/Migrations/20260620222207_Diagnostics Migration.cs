@@ -19,7 +19,9 @@ namespace Diagnostics.Api.Migrations
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EncryptedAesKey = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -53,32 +55,6 @@ namespace Diagnostics.Api.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "DiagnosticDraftEnvelopes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DiagnosticDraftId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    EncryptedAesKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DiagnosticDraftEnvelopes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DiagnosticDraftEnvelopes_DiagnosticDrafts_DiagnosticDraftId",
-                        column: x => x.DiagnosticDraftId,
-                        principalTable: "DiagnosticDrafts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DiagnosticDraftEnvelopes_DiagnosticDraftId_UserId",
-                table: "DiagnosticDraftEnvelopes",
-                columns: new[] { "DiagnosticDraftId", "UserId" },
-                unique: true);
-
             migrationBuilder.CreateIndex(
                 name: "IX_DiagnosticDrafts_PatientId",
                 table: "DiagnosticDrafts",
@@ -88,9 +64,6 @@ namespace Diagnostics.Api.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "DiagnosticDraftEnvelopes");
-
             migrationBuilder.DropTable(
                 name: "DiagnosticDrafts");
 

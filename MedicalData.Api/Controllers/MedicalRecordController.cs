@@ -62,37 +62,6 @@ namespace MedicalData.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        [HttpPost("envelopes/bulk")]
-        public async Task<IActionResult> AddEnvelopesBulk([FromBody] BulkEnvelopeDto dto)
-        {
-            var userId = GetUserId();
-            if (userId == null) return Unauthorized();
-
-            var result = await _medicalRecordService.AddEnvelopesBulkAsync(userId.Value, dto);
-            if (result.IsSuccess) return Ok();
-            return BuildError(result.Errors.First());
-        }
-
-        [HttpDelete("envelopes/user/{doctorId}/patient/{patientId}")]
-        public async Task<IActionResult> DeleteEnvelopes(Guid doctorId, Guid patientId)
-        {
-            var userId = GetUserId();
-            if (userId == null) return Unauthorized();
-
-            var result = await _medicalRecordService.DeleteEnvelopesAsync(
-                userId.Value, doctorId, patientId);
-            if (result.IsSuccess) return NoContent();
-            return BuildError(result.Errors.First());
-        }
-
-        [AllowAnonymous]
-        [HttpDelete("envelopes/internal/user/{doctorId}/patient/{patientId}")]
-        public async Task<IActionResult> DeleteEnvelopesInternal(Guid doctorId, Guid patientId)
-        {
-            await _medicalRecordService.DeleteEnvelopesInternalAsync(doctorId, patientId);
-            return NoContent();
-        }
-
         private Guid? GetUserId()
         {
             var claim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;

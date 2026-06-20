@@ -76,7 +76,8 @@ namespace Users.Api.Migrations
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CNP = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EncryptedAesKey = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

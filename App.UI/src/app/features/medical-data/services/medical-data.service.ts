@@ -5,7 +5,6 @@ import {
   CreateMedicalRecordDto,
   UpdateMedicalRecordDto,
   MedicalRecordDto,
-  BulkMedicalRecordEnvelopeDto,
 } from '../models/medical-data.model';
 import { environment } from '../../../../environments/environment';
 
@@ -28,15 +27,5 @@ export class MedicalDataService {
 
   delete(id: string): Promise<void> {
     return firstValueFrom(this.http.delete<void>(`${this.API}/${id}`));
-  }
-
-  addEnvelopesBulk(dto: BulkMedicalRecordEnvelopeDto): Promise<void> {
-    return firstValueFrom(this.http.post<void>(`${this.API}/envelopes/bulk`, dto));
-  }
-
-  deleteEnvelopes(doctorId: string, patientId: string): Promise<void> {
-    return firstValueFrom(
-      this.http.delete<void>(`${this.API}/envelopes/user/${doctorId}/patient/${patientId}`)
-    );
   }
 }

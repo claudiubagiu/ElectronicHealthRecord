@@ -1,6 +1,5 @@
 ﻿using MedicalData.Api.Models.Domain;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace MedicalData.Api.Data
 {
@@ -10,7 +9,6 @@ namespace MedicalData.Api.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<MedicalRecord> MedicalRecords { get; set; }
-        public DbSet<MedicalRecordEnvelope> MedicalRecordEnvelopes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,16 +25,6 @@ namespace MedicalData.Api.Data
                     .WithMany()
                     .HasForeignKey(m => m.CreatedByDoctorId)
                     .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasMany(m => m.Envelopes)
-                    .WithOne(e => e.MedicalRecord)
-                    .HasForeignKey(e => e.MedicalRecordId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            modelBuilder.Entity<MedicalRecordEnvelope>(entity =>
-            {
-                entity.HasIndex(e => new { e.MedicalRecordId, e.UserId }).IsUnique();
             });
         }
     }

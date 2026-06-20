@@ -30,23 +30,9 @@ namespace Diagnostics.Api.Services.Implementation
                 return Result.Fail<DiagnosticDraftDto>(
                     new Error("An active draft already exists for this patient.").WithMetadata("StatusCode", 409));
 
-            var draftId = Guid.NewGuid();
-
-            var envelopes = new List<DiagnosticDraftEnvelope>();
-            foreach (var e in dto.Envelopes)
-            {
-                envelopes.Add(new DiagnosticDraftEnvelope
-                {
-                    Id = Guid.NewGuid(),
-                    DiagnosticDraftId = draftId,
-                    UserId = e.UserId,
-                    EncryptedAesKey = e.EncryptedAesKey
-                });
-            }
-
             var draft = new DiagnosticDraft
             {
-                Id = draftId,
+                Id = Guid.NewGuid(),
                 Status = "Draft",
                 PatientId = dto.PatientId,
                 PatientWalletAddress = dto.PatientWalletAddress,
@@ -56,8 +42,7 @@ namespace Diagnostics.Api.Services.Implementation
                 UpdatedAt = DateTime.UtcNow,
                 EncryptedData = dto.EncryptedData,
                 Iv = dto.Iv,
-                LinkedMedicalRecordIds = dto.LinkedMedicalRecordIds,
-                Envelopes = envelopes
+                LinkedMedicalRecordIds = dto.LinkedMedicalRecordIds
             };
 
             var created = await _draftRepository.CreateAsync(draft);
@@ -98,19 +83,6 @@ namespace Diagnostics.Api.Services.Implementation
 
             if (dto.CompletedByDoctorId.HasValue)
                 draft.CompletedByDoctorId = dto.CompletedByDoctorId;
-
-            var updatedEnvelopes = new List<DiagnosticDraftEnvelope>();
-            foreach (var e in dto.Envelopes)
-            {
-                updatedEnvelopes.Add(new DiagnosticDraftEnvelope
-                {
-                    Id = Guid.NewGuid(),
-                    DiagnosticDraftId = draft.Id,
-                    UserId = e.UserId,
-                    EncryptedAesKey = e.EncryptedAesKey
-                });
-            }
-            draft.Envelopes = updatedEnvelopes;
 
             var updated = await _draftRepository.UpdateAsync(draft);
             var assistantName = await ResolveAssistantNameAsync(updated.CreatedByAssistantId);
@@ -153,12 +125,7 @@ namespace Diagnostics.Api.Services.Implementation
             UpdatedAt = draft.UpdatedAt,
             EncryptedData = draft.EncryptedData,
             Iv = draft.Iv,
-            LinkedMedicalRecordIds = draft.LinkedMedicalRecordIds,
-            Envelopes = draft.Envelopes.Select(e => new DiagnosticDraftEnvelopeDto
-            {
-                UserId = e.UserId,
-                EncryptedAesKey = e.EncryptedAesKey
-            }).ToList()
+            LinkedMedicalRecordIds = draft.LinkedMedicalRecordIds
         };
     }
 }

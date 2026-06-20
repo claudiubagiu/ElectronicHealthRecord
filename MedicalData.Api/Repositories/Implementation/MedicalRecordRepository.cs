@@ -21,12 +21,10 @@ namespace MedicalData.Api.Repositories.Implementation
             return record;
         }
 
-        public async Task<IReadOnlyList<MedicalRecord>> GetByPatientIdAsync(
-            Guid patientId, Guid requestingUserId)
+        public async Task<IReadOnlyList<MedicalRecord>> GetByPatientIdAsync(Guid patientId)
         {
             return await _dbContext.MedicalRecords
                 .Where(m => m.PatientId == patientId)
-                .Include(m => m.Envelopes.Where(e => e.UserId == requestingUserId))
                 .AsNoTracking()
                 .OrderByDescending(m => m.CreatedAt)
                 .ToListAsync();
@@ -35,7 +33,6 @@ namespace MedicalData.Api.Repositories.Implementation
         public async Task<MedicalRecord?> GetByIdAsync(Guid id)
         {
             return await _dbContext.MedicalRecords
-                .Include(m => m.Envelopes)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
@@ -51,25 +48,8 @@ namespace MedicalData.Api.Repositories.Implementation
             existingRecord.Iv = record.Iv;
             existingRecord.UpdatedAt = record.UpdatedAt;
 
-            var oldEnvelopes = await _dbContext.MedicalRecordEnvelopes
-                .Where(e => e.MedicalRecordId == record.Id)
-                .ToListAsync();
-
-            _dbContext.MedicalRecordEnvelopes.RemoveRange(oldEnvelopes);
-
-            var newEnvelopes = record.Envelopes.Select(e => new MedicalRecordEnvelope
-            {
-                Id = Guid.NewGuid(),
-                MedicalRecordId = record.Id,
-                UserId = e.UserId,
-                EncryptedAesKey = e.EncryptedAesKey
-            }).ToList();
-
-            await _dbContext.MedicalRecordEnvelopes.AddRangeAsync(newEnvelopes);
-
             await _dbContext.SaveChangesAsync();
 
-            existingRecord.Envelopes = newEnvelopes;
             return existingRecord;
         }
 
@@ -81,23 +61,6 @@ namespace MedicalData.Api.Repositories.Implementation
             _dbContext.MedicalRecords.Remove(record);
             await _dbContext.SaveChangesAsync();
             return true;
-        }
-
-        public async Task AddEnvelopesAsync(IEnumerable<MedicalRecordEnvelope> envelopes)
-        {
-            await _dbContext.MedicalRecordEnvelopes.AddRangeAsync(envelopes);
-            await _dbContext.SaveChangesAsync();
-        }
-
-        public async Task DeleteEnvelopesByUserAndPatientAsync(Guid userId, Guid patientId)
-        {
-            var envelopes = await _dbContext.MedicalRecordEnvelopes
-                .Where(e => e.UserId == userId &&
-                            e.MedicalRecord!.PatientId == patientId)
-                .ToListAsync();
-
-            _dbContext.MedicalRecordEnvelopes.RemoveRange(envelopes);
-            await _dbContext.SaveChangesAsync();
         }
     }
 }

@@ -61,41 +61,24 @@ namespace MedicalData.Api.Migrations
                     b.ToTable("MedicalRecords");
                 });
 
-            modelBuilder.Entity("MedicalData.Api.Models.Domain.MedicalRecordEnvelope", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("EncryptedAesKey")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("MedicalRecordId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MedicalRecordId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("MedicalRecordEnvelopes");
-                });
-
             modelBuilder.Entity("MedicalData.Api.Models.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("EncryptedAesKey")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicKey")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -125,22 +108,6 @@ namespace MedicalData.Api.Migrations
                     b.Navigation("CreatedByDoctor");
 
                     b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("MedicalData.Api.Models.Domain.MedicalRecordEnvelope", b =>
-                {
-                    b.HasOne("MedicalData.Api.Models.Domain.MedicalRecord", "MedicalRecord")
-                        .WithMany("Envelopes")
-                        .HasForeignKey("MedicalRecordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MedicalRecord");
-                });
-
-            modelBuilder.Entity("MedicalData.Api.Models.Domain.MedicalRecord", b =>
-                {
-                    b.Navigation("Envelopes");
                 });
 #pragma warning restore 612, 618
         }

@@ -5,8 +5,8 @@ namespace Auth.Api.Models.DTOs
     /// <summary>
     /// Payload sent by the frontend during registration.
     /// Includes personal information, an ECC public key for future challenge-response
-    /// authentication, the user's self-encrypted AES data key, and the signed
-    /// challenge to prove key ownership.
+    /// authentication, the user's self-encrypted AES data key (patients only), and
+    /// the signed challenge to prove key ownership.
     /// </summary>
     public class RegisterRequestDto
     {
@@ -20,13 +20,7 @@ namespace Auth.Api.Models.DTOs
         public required string WalletAddress { get; set; }
         public required string EccSignature { get; set; }
         public required string EccPublicKey { get; set; }
-
-        /// <summary>
-        /// The user's personal AES-256 data key, base64-encoded and encrypted
-        /// (ECIES) with the user's own EccPublicKey. Generated client-side at
-        /// registration; the backend never sees the raw key.
-        /// </summary>
-        public required string EncryptedAesKey { get; set; }
+        public string? EncryptedAesKey { get; set; }
 
         // Patient fields
         public string? CNP { get; set; }

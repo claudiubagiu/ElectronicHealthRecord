@@ -38,14 +38,6 @@ export interface DiagnosticDraftPayload {
 }
 
 /**
- * Envelope DTO — one per authorized recipient.
- */
-export interface DiagnosticDraftEnvelopeDto {
-  userId: string;
-  encryptedAesKey: string;
-}
-
-/**
  * DTO returned by the backend.
  */
 export interface DiagnosticDraftDto {
@@ -61,7 +53,6 @@ export interface DiagnosticDraftDto {
   encryptedData: string;
   iv: string;
   linkedMedicalRecordIds: string;
-  envelopes: DiagnosticDraftEnvelopeDto[];
 }
 
 /**
@@ -73,7 +64,6 @@ export interface CreateDiagnosticDraftDto {
   encryptedData: string;
   iv: string;
   linkedMedicalRecordIds: string;
-  envelopes: DiagnosticDraftEnvelopeDto[];
 }
 
 /**
@@ -85,5 +75,4 @@ export interface UpdateDiagnosticDraftDto {
   linkedMedicalRecordIds: string;
   status?: string;
   completedByDoctorId?: string;
-  envelopes: DiagnosticDraftEnvelopeDto[];
 }

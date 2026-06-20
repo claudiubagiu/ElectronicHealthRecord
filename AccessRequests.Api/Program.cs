@@ -27,6 +27,7 @@ builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
 builder.Services.AddScoped<IAccessRequestHistoryRepository, AccessRequestHistoryRepository>();
 builder.Services.AddScoped<IAccessRequestService, AccessRequestService>();
+builder.Services.AddScoped<IEnvelopeRepository, EnvelopeRepository>();
 
 builder.Services.AddHttpClient("MedicationsApi", client =>
 {

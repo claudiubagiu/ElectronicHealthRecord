@@ -70,42 +70,24 @@ namespace Diagnostics.Api.Migrations
                     b.ToTable("DiagnosticDrafts");
                 });
 
-            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticDraftEnvelope", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("DiagnosticDraftId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("EncryptedAesKey")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DiagnosticDraftId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("DiagnosticDraftEnvelopes");
-                });
-
             modelBuilder.Entity("Diagnostics.Api.Models.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("EncryptedAesKey")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicKey")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -131,22 +113,6 @@ namespace Diagnostics.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticDraftEnvelope", b =>
-                {
-                    b.HasOne("Diagnostics.Api.Models.Domain.DiagnosticDraft", "DiagnosticDraft")
-                        .WithMany("Envelopes")
-                        .HasForeignKey("DiagnosticDraftId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DiagnosticDraft");
-                });
-
-            modelBuilder.Entity("Diagnostics.Api.Models.Domain.DiagnosticDraft", b =>
-                {
-                    b.Navigation("Envelopes");
                 });
 #pragma warning restore 612, 618
         }

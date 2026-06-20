@@ -46,13 +46,20 @@ namespace AccessRequests.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
+        /// <summary>
+        /// Approves a pending access request. The patient's frontend must include
+        /// the patient's AES key, ECIES-encrypted with the requesting user's
+        /// public key — this becomes the envelope that user (doctor, lab
+        /// technician, pharmacist, medical assistant, etc.) uses to decrypt
+        /// medical data and diagnostics for this patient.
+        /// </summary>
         [HttpPatch("{id}/approve")]
-        public async Task<IActionResult> Approve(Guid id)
+        public async Task<IActionResult> Approve(Guid id, [FromBody] CreateEnvelopeDto envelope)
         {
             var patientIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
             if (patientIdClaim == null) return Unauthorized();
 
-            var result = await _accessRequestService.ApproveAsync(id, Guid.Parse(patientIdClaim));
+            var result = await _accessRequestService.ApproveAsync(id, Guid.Parse(patientIdClaim), envelope);
             if (result.IsSuccess) return Ok(result.Value);
             return BuildError(result.Errors.First());
         }
@@ -102,6 +109,17 @@ namespace AccessRequests.Api.Controllers
         public async Task<IActionResult> GetApprovedByPatientId(Guid patientId)
         {
             var result = await _accessRequestService.GetApprovedByPatientIdAsync(patientId);
+            if (result.IsSuccess) return Ok(result.Value);
+            return BuildError(result.Errors.First());
+        }
+
+        [HttpGet("patient/{patientId}/envelope")]
+        public async Task<IActionResult> GetEnvelope(Guid patientId)
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+            if (userIdClaim == null) return Unauthorized();
+
+            var result = await _accessRequestService.GetEnvelopeAsync(patientId, Guid.Parse(userIdClaim));
             if (result.IsSuccess) return Ok(result.Value);
             return BuildError(result.Errors.First());
         }

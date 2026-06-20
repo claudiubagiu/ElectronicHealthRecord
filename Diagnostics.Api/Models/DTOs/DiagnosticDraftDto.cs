@@ -14,12 +14,5 @@
         public required string EncryptedData { get; set; }
         public required string Iv { get; set; }
         public string LinkedMedicalRecordIds { get; set; } = string.Empty;
-        public List<DiagnosticDraftEnvelopeDto> Envelopes { get; set; } = new();
-    }
-
-    public class DiagnosticDraftEnvelopeDto
-    {
-        public required string UserId { get; set; }
-        public required string EncryptedAesKey { get; set; }
     }
 }

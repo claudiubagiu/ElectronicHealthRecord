@@ -24,7 +24,6 @@ namespace Diagnostics.Api.Repositories.Implementation
         public async Task<DiagnosticDraft?> GetByIdAsync(Guid id)
         {
             return await _dbContext.DiagnosticDrafts
-                .Include(d => d.Envelopes)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(d => d.Id == id);
         }
@@ -32,7 +31,6 @@ namespace Diagnostics.Api.Repositories.Implementation
         public async Task<DiagnosticDraft?> GetActiveByPatientIdAsync(Guid patientId)
         {
             return await _dbContext.DiagnosticDrafts
-                .Include(d => d.Envelopes)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(d => d.PatientId == patientId && d.Status == "Draft");
         }
@@ -54,25 +52,8 @@ namespace Diagnostics.Api.Repositories.Implementation
             if (draft.CompletedByDoctorId.HasValue)
                 existing.CompletedByDoctorId = draft.CompletedByDoctorId;
 
-            var oldEnvelopes = await _dbContext.DiagnosticDraftEnvelopes
-                .Where(e => e.DiagnosticDraftId == draft.Id)
-                .ToListAsync();
-
-            _dbContext.DiagnosticDraftEnvelopes.RemoveRange(oldEnvelopes);
-
-            var newEnvelopes = draft.Envelopes.Select(e => new DiagnosticDraftEnvelope
-            {
-                Id = Guid.NewGuid(),
-                DiagnosticDraftId = draft.Id,
-                UserId = e.UserId,
-                EncryptedAesKey = e.EncryptedAesKey
-            }).ToList();
-
-            await _dbContext.DiagnosticDraftEnvelopes.AddRangeAsync(newEnvelopes);
-
             await _dbContext.SaveChangesAsync();
 
-            existing.Envelopes = newEnvelopes;
             return existing;
         }
 

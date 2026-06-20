@@ -78,17 +78,53 @@ namespace AccessRequests.Api.Migrations
                     b.ToTable("AccessRequestHistories");
                 });
 
+            modelBuilder.Entity("AccessRequests.Api.Models.Domain.Envelope", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EncryptedAesKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("PatientId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("Envelopes");
+                });
+
             modelBuilder.Entity("AccessRequests.Api.Models.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("EncryptedAesKey")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicKey")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -133,6 +169,25 @@ namespace AccessRequests.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("AccessRequest");
+                });
+
+            modelBuilder.Entity("AccessRequests.Api.Models.Domain.Envelope", b =>
+                {
+                    b.HasOne("AccessRequests.Api.Models.Domain.User", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AccessRequests.Api.Models.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

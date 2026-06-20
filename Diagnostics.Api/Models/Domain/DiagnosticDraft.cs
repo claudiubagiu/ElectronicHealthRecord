@@ -1,5 +1,12 @@
 ﻿namespace Diagnostics.Api.Models.Domain
 {
+    /// <summary>
+    /// A diagnostic draft, encrypted once with the patient's personal AES
+    /// data key (AES-GCM) — same pattern as MedicalRecord. There is no
+    /// per-draft envelope here; the AES key itself is recovered via the
+    /// envelope stored in AccessRequests.Api (one envelope per
+    /// patient/authorized-user pair).
+    /// </summary>
     public class DiagnosticDraft
     {
         public required Guid Id { get; set; }
@@ -20,7 +27,5 @@
 
         // Navigation
         public User? Patient { get; set; }
-
-        public ICollection<DiagnosticDraftEnvelope> Envelopes { get; set; } = new List<DiagnosticDraftEnvelope>();
     }
 }

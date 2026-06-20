@@ -6,4 +6,6 @@ export interface PatientDto {
   walletAddress: string;
   cnp: string;
   dateOfBirth: string;
+  publicKey?: string;
+  encryptedAesKey?: string;
 }

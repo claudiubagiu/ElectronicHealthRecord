@@ -19,7 +19,9 @@ namespace AccessRequests.Api.Migrations
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WalletAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PublicKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EncryptedAesKey = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -50,6 +52,33 @@ namespace AccessRequests.Api.Migrations
                     table.ForeignKey(
                         name: "FK_AccessRequests_Users_PatientId",
                         column: x => x.PatientId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Envelopes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PatientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EncryptedAesKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Envelopes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Envelopes_Users_PatientId",
+                        column: x => x.PatientId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Envelopes_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -89,6 +118,17 @@ namespace AccessRequests.Api.Migrations
                 name: "IX_AccessRequests_PatientId",
                 table: "AccessRequests",
                 column: "PatientId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Envelopes_PatientId_UserId",
+                table: "Envelopes",
+                columns: new[] { "PatientId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Envelopes_UserId",
+                table: "Envelopes",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -96,6 +136,9 @@ namespace AccessRequests.Api.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AccessRequestHistories");
+
+            migrationBuilder.DropTable(
+                name: "Envelopes");
 
             migrationBuilder.DropTable(
                 name: "AccessRequests");

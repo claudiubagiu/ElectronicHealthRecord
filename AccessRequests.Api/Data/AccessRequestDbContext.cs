@@ -12,6 +12,7 @@ namespace AccessRequests.Api.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Models.Domain.AccessRequest> AccessRequests { get; set; }
         public DbSet<AccessRequestHistory> AccessRequestHistories { get; set; }
+        public DbSet<Envelope> Envelopes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +35,21 @@ namespace AccessRequests.Api.Data
                 .WithMany()
                 .HasForeignKey(h => h.AccessRequestId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Envelope>(entity =>
+            {
+                entity.HasOne(e => e.Patient)
+                    .WithMany()
+                    .HasForeignKey(e => e.PatientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.PatientId, e.UserId }).IsUnique();
+            });
         }
     }
 }

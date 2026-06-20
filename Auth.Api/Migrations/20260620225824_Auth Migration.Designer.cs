@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Auth.Api.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20260503181959_Auth Migration")]
+    [Migration("20260620225824_Auth Migration")]
     partial class AuthMigration
     {
         /// <inheritdoc />
@@ -50,6 +50,9 @@ namespace Auth.Api.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("EncryptedAesKey")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsApproved")
                         .HasColumnType("bit");

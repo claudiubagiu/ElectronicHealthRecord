@@ -8,9 +8,11 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AccessRequestDto } from '../../../../core/models/access-request.model';
 import { AccessRequestHistoryDto } from '../../../../core/models/access-request-history.model';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
-import { MedicalDataService } from '../../../medical-data/services/medical-data.service';
-import { MedicalDataCryptoService } from '../../../medical-data/services/medical-data-crypto.service';
 import { AccessHistoryListComponent } from '../../../../shared/components/access-history-list/access-history-list';
+import { CryptoService } from '../../../../core/services/crypto.service';
+import { E2eeKeyService } from '../../../../core/services/e2ee-key.service';
+import { UsersService } from '../../../../core/services/users.service';
+import { AppError } from '../../../../core/errors/app.error';
 
 @Component({
   selector: 'app-access-management',
@@ -22,10 +24,10 @@ import { AccessHistoryListComponent } from '../../../../shared/components/access
 export class AccessManagement implements OnInit {
   private service = inject(AccessManagementService);
   private blockchainService = inject(BlockchainService);
-  private medicalDataService = inject(MedicalDataService);
-  private medicalDataCryptoService = inject(MedicalDataCryptoService);
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
+  private e2eeService = inject(E2eeKeyService);
+  private usersService = inject(UsersService);
 
   private readonly ACCESS_DURATION_SECONDS = 7 * 24 * 60 * 60;
 
@@ -76,6 +78,17 @@ export class AccessManagement implements OnInit {
     }
   }
 
+  /**
+   * Approving access now does two things beyond the on-chain grant:
+   *   1. Build an envelope for the requesting user — decrypt the patient's
+   *      own AES key (with the patient's private key) and re-encrypt it
+   *      with the requesting user's public key (ECIES). This never leaves
+   *      plaintext key material outside the browser.
+   *   2. Send that envelope to AccessRequests.Api as part of the approve
+   *      call, so it can be stored (one envelope per patient/user pair)
+   *      and later retrieved by the authorized user to decrypt medical
+   *      data and diagnostics.
+   */
   async onApprove(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
@@ -84,22 +97,17 @@ export class AccessManagement implements OnInit {
         this.ACCESS_DURATION_SECONDS
       );
 
-      const updated = await this.service.approve(request.id);
-      this.updateLocal(updated);
+      const envelope = await this.buildEnvelopeForUser(request.doctorId);
 
-      const user = this.authService.getDecodedToken();
-      if (user) {
-        try {
-          await this.medicalDataCryptoService.grantEnvelopesToUser(request.doctorId, user.userId);
-        } catch (e) {
-          console.warn('Failed to create medical data envelopes for user:', e);
-        }
-      }
+      const updated = await this.service.approve(request.id, envelope);
+      this.updateLocal(updated);
 
       this.notify.showSuccess(`Access granted to ${request.doctorName} for 7 days.`);
       this.loadHistory();
-    } catch {
-      this.notify.showError('Failed to approve. Please try again.');
+    } catch (err) {
+      const message =
+        err instanceof AppError ? err.message : 'Failed to approve. Please try again.';
+      this.notify.showError(message);
     } finally {
       this.actioningId = null;
     }
@@ -119,6 +127,11 @@ export class AccessManagement implements OnInit {
     }
   }
 
+  /**
+   * Revoking access removes the on-chain grant and flips the request status.
+   * The envelope itself is deleted server-side by AccessRequests.Api as part
+   * of the revoke call — no separate cleanup call needed here anymore.
+   */
   async onRevoke(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
@@ -127,12 +140,6 @@ export class AccessManagement implements OnInit {
       const updated = await this.service.revoke(request.id);
       this.updateLocal(updated);
 
-      try {
-        await this.medicalDataService.deleteEnvelopes(request.doctorId, request.patientId);
-      } catch (e) {
-        console.warn('Failed to delete medical data envelopes:', e);
-      }
-
       this.notify.showSuccess(`Access revoked for ${request.doctorName}.`);
       this.loadHistory();
     } catch {
@@ -140,6 +147,47 @@ export class AccessManagement implements OnInit {
     } finally {
       this.actioningId = null;
     }
+  }
+
+  /**
+   * Builds the envelope payload for a newly-approved user: the patient's
+   * own AES key, decrypted with the patient's private key and re-encrypted
+   * (ECIES) with the target user's public key.
+   */
+  private async buildEnvelopeForUser(userId: string): Promise<{ encryptedAesKey: string }> {
+    const privateKey = this.e2eeService.getPrivateKey();
+    if (!privateKey) {
+      throw new AppError({
+        message: 'Your encryption key is not available. Please log in again.',
+        status: 401,
+        title: 'Key Not Available',
+        type: 'E2EE_KEY_NOT_AVAILABLE',
+      });
+    }
+
+    const myProfile = await this.usersService.getMyProfile();
+    if (!myProfile.encryptedAesKey) {
+      throw new AppError({
+        message: 'Your personal encryption key was not found on your profile.',
+        status: 403,
+        title: 'No Encryption Key',
+        type: 'PATIENT_NO_AES_KEY',
+      });
+    }
+
+    const myEncryptedAesKeyBuffer = CryptoService.base64ToUint8Array(myProfile.encryptedAesKey)
+      .buffer as ArrayBuffer;
+    const aesKeyRaw = CryptoService.decryptAESKeyWithECIES(myEncryptedAesKeyBuffer, privateKey);
+
+    const userPkResponse = await this.e2eeService.getPublicKey_remote(userId);
+    const encryptedForUser = CryptoService.encryptAESKeyWithECIES(
+      aesKeyRaw.buffer as ArrayBuffer,
+      userPkResponse.publicKey
+    );
+
+    return {
+      encryptedAesKey: CryptoService.arrayBufferToBase64(encryptedForUser.buffer as ArrayBuffer),
+    };
   }
 
   private updateLocal(updated: AccessRequestDto): void {

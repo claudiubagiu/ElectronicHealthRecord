@@ -12,7 +12,7 @@ using Users.Api.Data;
 namespace Users.Api.Migrations
 {
     [DbContext(typeof(UsersDbContext))]
-    [Migration("20260423115130_Users Migration")]
+    [Migration("20260620225733_Users Migration")]
     partial class UsersMigration
     {
         /// <inheritdoc />
@@ -154,6 +154,10 @@ namespace Users.Api.Migrations
 
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("EncryptedAesKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()

@@ -39,30 +39,12 @@ namespace MedicalData.Api.Services.Implementation
                 Iv = dto.Iv,
                 CreatedByDoctorId = doctorId,
                 CreatedAt = now,
-                UpdatedAt = now,
-                Envelopes = dto.Envelopes.Select(e => new MedicalRecordEnvelope
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = e.UserId,
-                    EncryptedAesKey = e.EncryptedAesKey
-                }).ToList()
+                UpdatedAt = now
             };
 
             var created = await _recordRepository.CreateAsync(record);
 
-            return Result.Ok(new MedicalRecordDto
-            {
-                Id = created.Id,
-                PatientId = created.PatientId,
-                RecordType = created.RecordType,
-                EncryptedData = created.EncryptedData,
-                Iv = created.Iv,
-                CreatedByDoctorId = created.CreatedByDoctorId,
-                CreatedAt = created.CreatedAt,
-                UpdatedAt = created.UpdatedAt,
-                EncryptedAesKey = created.Envelopes
-                    .FirstOrDefault(e => e.UserId == doctorId)?.EncryptedAesKey
-            });
+            return Result.Ok(MapToDto(created));
         }
 
         public async Task<Result<IReadOnlyList<MedicalRecordDto>>> GetByPatientIdAsync(
@@ -72,21 +54,9 @@ namespace MedicalData.Api.Services.Implementation
                 return Result.Fail<IReadOnlyList<MedicalRecordDto>>(
                     new Error("Patient not found.").WithMetadata("StatusCode", 404));
 
-            var records = await _recordRepository.GetByPatientIdAsync(patientId, requestingUserId);
+            var records = await _recordRepository.GetByPatientIdAsync(patientId);
 
-            var dtos = records.Select(m => new MedicalRecordDto
-            {
-                Id = m.Id,
-                PatientId = m.PatientId,
-                RecordType = m.RecordType,
-                EncryptedData = m.EncryptedData,
-                Iv = m.Iv,
-                CreatedByDoctorId = m.CreatedByDoctorId,
-                CreatedAt = m.CreatedAt,
-                UpdatedAt = m.UpdatedAt,
-                EncryptedAesKey = m.Envelopes
-                    .FirstOrDefault(e => e.UserId == requestingUserId)?.EncryptedAesKey
-            }).ToList();
+            var dtos = records.Select(MapToDto).ToList();
 
             return Result.Ok<IReadOnlyList<MedicalRecordDto>>(dtos);
         }
@@ -103,29 +73,10 @@ namespace MedicalData.Api.Services.Implementation
             record.EncryptedData = dto.EncryptedData;
             record.Iv = dto.Iv;
             record.UpdatedAt = DateTime.UtcNow;
-            record.Envelopes = dto.Envelopes.Select(e => new MedicalRecordEnvelope
-            {
-                Id = Guid.NewGuid(),
-                MedicalRecordId = record.Id,
-                UserId = e.UserId,
-                EncryptedAesKey = e.EncryptedAesKey
-            }).ToList();
 
             var updated = await _recordRepository.UpdateAsync(record);
 
-            return Result.Ok(new MedicalRecordDto
-            {
-                Id = updated.Id,
-                PatientId = updated.PatientId,
-                RecordType = updated.RecordType,
-                EncryptedData = updated.EncryptedData,
-                Iv = updated.Iv,
-                CreatedByDoctorId = updated.CreatedByDoctorId,
-                CreatedAt = updated.CreatedAt,
-                UpdatedAt = updated.UpdatedAt,
-                EncryptedAesKey = updated.Envelopes
-                    .FirstOrDefault(e => e.UserId == requestingUserId)?.EncryptedAesKey
-            });
+            return Result.Ok(MapToDto(updated));
         }
 
         public async Task<Result> DeleteAsync(Guid recordId, Guid requestingUserId)
@@ -143,35 +94,16 @@ namespace MedicalData.Api.Services.Implementation
             return Result.Ok();
         }
 
-        public async Task<Result> AddEnvelopesBulkAsync(Guid requestingUserId, BulkEnvelopeDto dto)
+        private static MedicalRecordDto MapToDto(MedicalRecord record) => new()
         {
-            var envelopes = dto.Envelopes.Select(e => new MedicalRecordEnvelope
-            {
-                Id = Guid.NewGuid(),
-                MedicalRecordId = e.MedicalRecordId,
-                UserId = e.UserId,
-                EncryptedAesKey = e.EncryptedAesKey
-            }).ToList();
-
-            await _recordRepository.AddEnvelopesAsync(envelopes);
-            return Result.Ok();
-        }
-
-        public async Task<Result> DeleteEnvelopesAsync(
-            Guid requestingUserId, Guid doctorId, Guid patientId)
-        {
-            if (requestingUserId != patientId)
-                return Result.Fail(
-                    new Error("Only the patient can revoke envelope access.")
-                        .WithMetadata("StatusCode", 403));
-
-            await _recordRepository.DeleteEnvelopesByUserAndPatientAsync(doctorId, patientId);
-            return Result.Ok();
-        }
-
-        public async Task DeleteEnvelopesInternalAsync(Guid doctorId, Guid patientId)
-        {
-            await _recordRepository.DeleteEnvelopesByUserAndPatientAsync(doctorId, patientId);
-        }
+            Id = record.Id,
+            PatientId = record.PatientId,
+            RecordType = record.RecordType,
+            EncryptedData = record.EncryptedData,
+            Iv = record.Iv,
+            CreatedByDoctorId = record.CreatedByDoctorId,
+            CreatedAt = record.CreatedAt,
+            UpdatedAt = record.UpdatedAt
+        };
     }
 }

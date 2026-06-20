@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { CryptoService } from '../../../core/services/crypto.service';
 import { E2eeKeyService } from '../../../core/services/e2ee-key.service';
+import { UsersService } from '../../../core/services/users.service';
 import { MedicalDataService } from './medical-data.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppError } from '../../../core/errors/app.error';
-import { MedicalRecordEnvelopeDto, MedicalRecordDto } from '../models/medical-data.model';
+import { MedicalRecordDto } from '../models/medical-data.model';
 import {
   MedicalRecordFormData,
   MedicalRecordSubmissionInput,
@@ -12,9 +13,26 @@ import {
 import { AccessManagementService } from '../../access-management/services/access-management.service';
 import { DecryptedMedicalRecord } from '../../../shared/components/medical-records-panel/medical-records-panel';
 
+/**
+ * Handles E2EE for medical records under the single-key-per-patient model:
+ *
+ *   - Every patient has exactly one personal AES data key (generated at
+ *     registration, ECIES-encrypted with their own public key, stored as
+ *     User.EncryptedAesKey).
+ *   - Every medical record is encrypted once with that key (AES-256-GCM).
+ *     There is no per-document envelope anymore.
+ *   - A doctor (or other authorized user) recovers the patient's AES key
+ *     via the envelope issued by AccessRequests.Api when access was
+ *     approved — one envelope per (patient, user) pair, not per document.
+ *
+ * Both paths converge on `resolvePatientAesKey`, which returns a usable
+ * CryptoKey regardless of whether the caller is the patient or an
+ * authorized doctor/assistant/etc.
+ */
 @Injectable({ providedIn: 'root' })
 export class MedicalDataCryptoService {
   private e2eeService = inject(E2eeKeyService);
+  private usersService = inject(UsersService);
   private medicalDataService = inject(MedicalDataService);
   private accessService = inject(AccessManagementService);
   private authService = inject(AuthService);
@@ -31,32 +49,19 @@ export class MedicalDataCryptoService {
       });
     }
 
+    const aesKey = await this.resolvePatientAesKey(patientId);
+
     const jsonPayload = JSON.stringify(record);
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(jsonPayload).buffer as ArrayBuffer;
 
-    const aesKey = await CryptoService.generateAESKey();
     const { encrypted, iv } = await CryptoService.encryptFileWithAES(dataBuffer, aesKey);
-    const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
-
-    const authorizedUserIds = await this.getAuthorizedUserIds(patientId);
-    const publicKeys = await this.e2eeService.getPublicKeysBulk(authorizedUserIds);
-
-    const envelopes: MedicalRecordEnvelopeDto[] = [];
-    for (const pk of publicKeys) {
-      const encryptedAesKey = CryptoService.encryptAESKeyWithECIES(aesKeyRaw, pk.publicKey);
-      envelopes.push({
-        userId: pk.userId,
-        encryptedAesKey: this.arrayBufferToBase64(encryptedAesKey.buffer as ArrayBuffer),
-      });
-    }
 
     await this.medicalDataService.create({
       patientId,
       recordType: record.type,
       encryptedData: this.arrayBufferToBase64(encrypted),
       iv: this.arrayBufferToBase64(iv.buffer as ArrayBuffer),
-      envelopes,
     });
   }
 
@@ -71,31 +76,18 @@ export class MedicalDataCryptoService {
       });
     }
 
+    const aesKey = await this.resolvePatientAesKey(patientId);
+
     const jsonPayload = JSON.stringify(record.data);
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(jsonPayload).buffer as ArrayBuffer;
 
-    const aesKey = await CryptoService.generateAESKey();
     const { encrypted, iv } = await CryptoService.encryptFileWithAES(dataBuffer, aesKey);
-    const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
-
-    const authorizedUserIds = await this.getAuthorizedUserIds(patientId);
-    const publicKeys = await this.e2eeService.getPublicKeysBulk(authorizedUserIds);
-
-    const envelopes: MedicalRecordEnvelopeDto[] = [];
-    for (const pk of publicKeys) {
-      const encryptedAesKey = CryptoService.encryptAESKeyWithECIES(aesKeyRaw, pk.publicKey);
-      envelopes.push({
-        userId: pk.userId,
-        encryptedAesKey: this.arrayBufferToBase64(encryptedAesKey.buffer as ArrayBuffer),
-      });
-    }
 
     return this.medicalDataService.update(record.id, {
       recordType: record.data.type,
       encryptedData: this.arrayBufferToBase64(encrypted),
       iv: this.arrayBufferToBase64(iv.buffer as ArrayBuffer),
-      envelopes,
     });
   }
 
@@ -104,27 +96,7 @@ export class MedicalDataCryptoService {
   }
 
   async decrypt(record: MedicalRecordDto): Promise<MedicalRecordFormData> {
-    const privateKey = this.requirePrivateKey();
-
-    if (!record.encryptedAesKey) {
-      throw new AppError({
-        message: 'No encryption envelope found for this record.',
-        status: 403,
-        title: 'No Envelope',
-        type: 'MEDICAL_RECORD_NO_ENVELOPE',
-      });
-    }
-
-    const encryptedAesKeyBuffer = this.base64ToArrayBuffer(record.encryptedAesKey);
-    const aesKeyRaw = CryptoService.decryptAESKeyWithECIES(encryptedAesKeyBuffer, privateKey);
-
-    const aesKey = await crypto.subtle.importKey(
-      'raw',
-      aesKeyRaw.buffer as ArrayBuffer,
-      { name: 'AES-GCM' },
-      false,
-      ['decrypt']
-    );
+    const aesKey = await this.resolvePatientAesKey(record.patientId);
 
     const encryptedDataBuffer = this.base64ToArrayBuffer(record.encryptedData);
     const ivBuffer = this.base64ToArrayBuffer(record.iv);
@@ -135,37 +107,60 @@ export class MedicalDataCryptoService {
     return JSON.parse(jsonString) as MedicalRecordFormData;
   }
 
-  async grantEnvelopesToUser(userId: string, patientId: string): Promise<void> {
+  /**
+   * Resolves a usable AES-GCM CryptoKey for the given patient, regardless of
+   * who is currently logged in:
+   *
+   *   - If the caller IS the patient: decrypts their own EncryptedAesKey
+   *     (from their profile) with their own private key.
+   *   - Otherwise: fetches the envelope AccessRequests.Api issued for this
+   *     (patient, caller) pair on approval, and decrypts it with the
+   *     caller's private key. Throws if no envelope exists (access not
+   *     approved, revoked, or expired).
+   *
+   * Public — also used by DiagnosticDraftService, which shares the same
+   * single-key-per-patient model.
+   */
+  async resolvePatientAesKey(patientId: string): Promise<CryptoKey> {
     const privateKey = this.requirePrivateKey();
+    const currentUser = this.authService.getDecodedToken();
 
-    const records = await this.medicalDataService.getByPatientId(patientId);
-    if (records.length === 0) return;
+    let encryptedAesKeyBase64: string;
 
-    const userPkResponse = await this.e2eeService.getPublicKey_remote(userId);
-
-    const envelopes: { medicalRecordId: string; userId: string; encryptedAesKey: string }[] = [];
-
-    for (const rec of records) {
-      if (!rec.encryptedAesKey) continue;
-
-      const encryptedAesKeyBuffer = this.base64ToArrayBuffer(rec.encryptedAesKey);
-      const aesKeyRaw = CryptoService.decryptAESKeyWithECIES(encryptedAesKeyBuffer, privateKey);
-
-      const encryptedForUser = CryptoService.encryptAESKeyWithECIES(
-        aesKeyRaw.buffer as ArrayBuffer,
-        userPkResponse.publicKey
-      );
-
-      envelopes.push({
-        medicalRecordId: rec.id,
-        userId: userId,
-        encryptedAesKey: this.arrayBufferToBase64(encryptedForUser.buffer as ArrayBuffer),
-      });
+    if (currentUser?.userId === patientId) {
+      const myProfile = await this.usersService.getMyProfile();
+      if (!myProfile.encryptedAesKey) {
+        throw new AppError({
+          message: 'Your personal encryption key was not found on your profile.',
+          status: 403,
+          title: 'No Encryption Key',
+          type: 'PATIENT_NO_AES_KEY',
+        });
+      }
+      encryptedAesKeyBase64 = myProfile.encryptedAesKey;
+    } else {
+      const envelope = await this.accessService.getEnvelope(patientId);
+      if (!envelope) {
+        throw new AppError({
+          message: 'No decryption envelope found for this patient. Access may not be approved.',
+          status: 403,
+          title: 'No Envelope',
+          type: 'MEDICAL_RECORD_NO_ENVELOPE',
+        });
+      }
+      encryptedAesKeyBase64 = envelope.encryptedAesKey;
     }
 
-    if (envelopes.length > 0) {
-      await this.medicalDataService.addEnvelopesBulk({ envelopes });
-    }
+    const encryptedAesKeyBuffer = this.base64ToArrayBuffer(encryptedAesKeyBase64);
+    const aesKeyRaw = CryptoService.decryptAESKeyWithECIES(encryptedAesKeyBuffer, privateKey);
+
+    return crypto.subtle.importKey(
+      'raw',
+      aesKeyRaw.buffer as ArrayBuffer,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt', 'decrypt']
+    );
   }
 
   private requirePrivateKey(): string {
@@ -179,18 +174,6 @@ export class MedicalDataCryptoService {
       });
     }
     return privateKey;
-  }
-
-  private async getAuthorizedUserIds(patientId: string): Promise<string[]> {
-    const ids = new Set<string>();
-    ids.add(patientId);
-    try {
-      const response = await this.accessService.getApprovedUserIds(patientId);
-      response.forEach((id) => ids.add(id));
-    } catch {
-      console.warn('Could not fetch approved users, proceeding with patient only.');
-    }
-    return Array.from(ids);
   }
 
   arrayBufferToBase64(buffer: ArrayBuffer): string {

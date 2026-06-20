@@ -11,17 +11,20 @@ namespace AccessRequests.Api.Services.Implementation
         private readonly IAccessRequestRepository _accessRequestRepository;
         private readonly IAccessRequestHistoryRepository _historyRepository;
         private readonly IUsersRepository _usersRepository;
+        private readonly IEnvelopeRepository _envelopeRepository;
 
         private static readonly TimeSpan AccessDuration = TimeSpan.FromDays(7);
 
         public AccessRequestService(
             IAccessRequestRepository accessRequestRepository,
             IAccessRequestHistoryRepository historyRepository,
-            IUsersRepository usersRepository)
+            IUsersRepository usersRepository,
+            IEnvelopeRepository envelopeRepository)
         {
             _accessRequestRepository = accessRequestRepository;
             _historyRepository = historyRepository;
             _usersRepository = usersRepository;
+            _envelopeRepository = envelopeRepository;
         }
 
         public async Task<Result<AccessRequestDto>> CreateAsync(Guid doctorId, CreateAccessRequestDto request)
@@ -63,27 +66,7 @@ namespace AccessRequests.Api.Services.Implementation
             return Result.Ok(MapToDto(created!));
         }
 
-        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByPatientIdAsync(Guid patientId)
-        {
-            if (!await _usersRepository.ExistsAsync(patientId))
-                return Result.Fail<IReadOnlyList<AccessRequestDto>>(
-                    new Error("Patient not found.").WithMetadata("StatusCode", 404));
-
-            var requests = await _accessRequestRepository.GetByPatientIdAsync(patientId);
-            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
-        }
-
-        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByDoctorIdAsync(Guid doctorId)
-        {
-            if (!await _usersRepository.ExistsAsync(doctorId))
-                return Result.Fail<IReadOnlyList<AccessRequestDto>>(
-                    new Error("Doctor not found.").WithMetadata("StatusCode", 404));
-
-            var requests = await _accessRequestRepository.GetByDoctorIdAsync(doctorId);
-            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
-        }
-
-        public async Task<Result<AccessRequestDto>> ApproveAsync(Guid requestId, Guid patientId)
+        public async Task<Result<AccessRequestDto>> ApproveAsync(Guid requestId, Guid patientId, CreateEnvelopeDto envelope)
         {
             var request = await _accessRequestRepository.GetByIdAsync(requestId);
 
@@ -99,11 +82,37 @@ namespace AccessRequests.Api.Services.Implementation
                 return Result.Fail<AccessRequestDto>(
                     new Error("Request is no longer pending.").WithMetadata("StatusCode", 409));
 
+            if (string.IsNullOrWhiteSpace(envelope?.EncryptedAesKey))
+                return Result.Fail<AccessRequestDto>(
+                    new Error("An encrypted AES key envelope is required to approve access.")
+                        .WithMetadata("StatusCode", 400));
+
             var now = DateTime.UtcNow;
             request.Status = AccessRequestStatus.Approved;
             request.ApprovedAt = now;
             request.ExpiresAt = now.Add(AccessDuration);
             var updated = await _accessRequestRepository.UpdateAsync(request);
+
+            // request.DoctorId identifies the authorized user (doctor, lab tech,
+            // pharmacist, medical assistant, etc.) this access request is for —
+            // the column name is historical, the value is a generic user id.
+            var authorizedUserId = request.DoctorId;
+
+            // One envelope per (patient, user) — replace any stale leftover instead of duplicating.
+            var existingEnvelope = await _envelopeRepository.GetByPatientAndUserAsync(request.PatientId, authorizedUserId);
+            if (existingEnvelope != null)
+            {
+                await _envelopeRepository.DeleteAsync(existingEnvelope);
+            }
+
+            await _envelopeRepository.CreateAsync(new Envelope
+            {
+                Id = Guid.NewGuid(),
+                PatientId = request.PatientId,
+                UserId = authorizedUserId,
+                EncryptedAesKey = envelope.EncryptedAesKey,
+                CreatedAt = now
+            });
 
             await _historyRepository.CreateAsync(new AccessRequestHistory
             {
@@ -167,6 +176,8 @@ namespace AccessRequests.Api.Services.Implementation
             request.Status = AccessRequestStatus.Revoked;
             var updated = await _accessRequestRepository.UpdateAsync(request);
 
+            await DeleteEnvelopeIfExistsAsync(request.PatientId, request.DoctorId);
+
             await _historyRepository.CreateAsync(new AccessRequestHistory
             {
                 Id = Guid.NewGuid(),
@@ -177,6 +188,26 @@ namespace AccessRequests.Api.Services.Implementation
 
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
             return Result.Ok(MapToDto(result!));
+        }
+
+        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByPatientIdAsync(Guid patientId)
+        {
+            if (!await _usersRepository.ExistsAsync(patientId))
+                return Result.Fail<IReadOnlyList<AccessRequestDto>>(
+                    new Error("Patient not found.").WithMetadata("StatusCode", 404));
+
+            var requests = await _accessRequestRepository.GetByPatientIdAsync(patientId);
+            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
+        }
+
+        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByDoctorIdAsync(Guid doctorId)
+        {
+            if (!await _usersRepository.ExistsAsync(doctorId))
+                return Result.Fail<IReadOnlyList<AccessRequestDto>>(
+                    new Error("Doctor not found.").WithMetadata("StatusCode", 404));
+
+            var requests = await _accessRequestRepository.GetByDoctorIdAsync(doctorId);
+            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
         }
 
         public async Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByPatientIdAsync(Guid patientId)
@@ -208,6 +239,8 @@ namespace AccessRequests.Api.Services.Implementation
                 request.Status = AccessRequestStatus.Expired;
                 await _accessRequestRepository.UpdateAsync(request);
 
+                await DeleteEnvelopeIfExistsAsync(request.PatientId, request.DoctorId);
+
                 await _historyRepository.CreateAsync(new AccessRequestHistory
                 {
                     Id = Guid.NewGuid(),
@@ -224,6 +257,28 @@ namespace AccessRequests.Api.Services.Implementation
         {
             var requests = await _accessRequestRepository.GetApprovedByPatientIdAsync(patientId);
             return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
+        }
+
+        // ── Envelopes ────────────────────────────────────────────────────────
+
+        public async Task<Result<EnvelopeDto>> GetEnvelopeAsync(Guid patientId, Guid userId)
+        {
+            var envelope = await _envelopeRepository.GetByPatientAndUserAsync(patientId, userId);
+            if (envelope == null)
+                return Result.Fail<EnvelopeDto>(
+                    new Error("No envelope found for this patient/user pair. Access may not be approved.")
+                        .WithMetadata("StatusCode", 404));
+
+            return Result.Ok(MapEnvelopeToDto(envelope));
+        }
+
+        private async Task DeleteEnvelopeIfExistsAsync(Guid patientId, Guid userId)
+        {
+            var envelope = await _envelopeRepository.GetByPatientAndUserAsync(patientId, userId);
+            if (envelope != null)
+            {
+                await _envelopeRepository.DeleteAsync(envelope);
+            }
         }
 
         private static AccessRequestDto MapToDto(Models.Domain.AccessRequest r) => new()
@@ -255,6 +310,15 @@ namespace AccessRequests.Api.Services.Implementation
                 ? $"{h.AccessRequest.Patient.FirstName} {h.AccessRequest.Patient.LastName}"
                 : string.Empty,
             Timestamp = h.Timestamp
+        };
+
+        private static EnvelopeDto MapEnvelopeToDto(Envelope e) => new()
+        {
+            Id = e.Id,
+            PatientId = e.PatientId,
+            UserId = e.UserId,
+            EncryptedAesKey = e.EncryptedAesKey,
+            CreatedAt = e.CreatedAt
         };
     }
 }

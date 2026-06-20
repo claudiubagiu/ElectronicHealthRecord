@@ -7,6 +7,5 @@
         public string LinkedMedicalRecordIds { get; set; } = string.Empty;
         public string? Status { get; set; }
         public Guid? CompletedByDoctorId { get; set; }
-        public List<DiagnosticDraftEnvelopeDto> Envelopes { get; set; } = new();
     }
 }

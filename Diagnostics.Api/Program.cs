@@ -5,6 +5,8 @@ using Diagnostics.Api.Infrastructure.RabbitMQ.Interface;
 using Diagnostics.Api.Mappings;
 using Diagnostics.Api.Repositories.Implementation;
 using Diagnostics.Api.Repositories.Interface;
+using Diagnostics.Api.Services.Implementation;
+using Diagnostics.Api.Services.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -24,6 +26,7 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IDiagnosticDraftRepository, DiagnosticDraftRepository>();
+builder.Services.AddScoped<IDiagnosticDraftService, DiagnosticDraftService>();
 
 builder.Services.AddCors(options =>
 {

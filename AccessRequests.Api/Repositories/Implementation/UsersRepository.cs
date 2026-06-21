@@ -30,5 +30,15 @@ namespace AccessRequests.Api.Repositories.Implementation
         {
             return await _dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
         }
+
+        public async Task<bool> UpdateEncryptedAesKeyAsync(Guid userId, string encryptedAesKey)
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            user.EncryptedAesKey = encryptedAesKey;
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
     }
 }

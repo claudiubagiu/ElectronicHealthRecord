@@ -25,5 +25,15 @@ namespace MedicalData.Api.Repositories.Implementation
         {
             return await _dbContext.Users.AnyAsync(u => u.Id == userId);
         }
+
+        public async Task<bool> UpdateEncryptedAesKeyAsync(Guid userId, string encryptedAesKey)
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            user.EncryptedAesKey = encryptedAesKey;
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
     }
 }

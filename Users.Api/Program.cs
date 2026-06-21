@@ -44,6 +44,7 @@ builder.Services.AddSingleton(typeof(IGenericRabbitMQService<>), typeof(GenericR
 builder.Services.AddSingleton(typeof(IGenericRabbitMQConsumer<>), typeof(GenericRabbitMQConsumer<>));
 
 builder.Services.AddHostedService<IdentityCreatedConsumerWorker>();
+builder.Services.AddHostedService<AesKeyRotatedConsumerWorker>();
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 

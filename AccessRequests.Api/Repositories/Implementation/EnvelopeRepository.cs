@@ -55,5 +55,22 @@ namespace AccessRequests.Api.Repositories.Implementation
             return await _dbContext.Envelopes
                 .AnyAsync(e => e.PatientId == patientId && e.UserId == userId);
         }
+
+        public async Task<int> UpdateEncryptedKeysAsync(Guid patientId, Dictionary<Guid, string> userIdToEncryptedAesKey)
+        {
+            var userIds = userIdToEncryptedAesKey.Keys.ToList();
+
+            var envelopes = await _dbContext.Envelopes
+                .Where(e => e.PatientId == patientId && userIds.Contains(e.UserId))
+                .ToListAsync();
+
+            foreach (var envelope in envelopes)
+            {
+                envelope.EncryptedAesKey = userIdToEncryptedAesKey[envelope.UserId];
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return envelopes.Count;
+        }
     }
 }

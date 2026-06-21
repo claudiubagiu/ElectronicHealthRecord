@@ -2,6 +2,7 @@
 using Auth.Api.Infrastructure.RabbitMQ.Interface;
 using Auth.Api.Models.Domain;
 using Auth.Api.Models.DTOs;
+using Auth.Api.Models.Messages;
 using Auth.Api.Repositories.Interface;
 using Auth.Api.Services.Interface;
 using AutoMapper;
@@ -44,6 +45,7 @@ namespace Auth.Api.Services.Implementation
         private readonly ITokenRepository tokenRepository;
         private readonly IMapper mapper;
         private readonly IGenericRabbitMQService<UserData> genericRabbitMQService;
+        private readonly IGenericRabbitMQService<AesKeyRotatedEvent> aesKeyRotatedRabbitMQService;
         private readonly IMemoryCache cache;
 
         public AuthService(
@@ -51,12 +53,14 @@ namespace Auth.Api.Services.Implementation
             ITokenRepository tokenRepository,
             IMapper mapper,
             IGenericRabbitMQService<UserData> genericRabbitMQService,
+            IGenericRabbitMQService<AesKeyRotatedEvent> aesKeyRotatedRabbitMQService,
             IMemoryCache cache)
         {
             this.userManager = userManager;
             this.tokenRepository = tokenRepository;
             this.mapper = mapper;
             this.genericRabbitMQService = genericRabbitMQService;
+            this.aesKeyRotatedRabbitMQService = aesKeyRotatedRabbitMQService;
             this.cache = cache;
         }
 
@@ -68,7 +72,7 @@ namespace Auth.Api.Services.Implementation
         /// Medical staff roles are created with IsApproved = false.
         /// Patients and Medical Assistants are created with IsApproved = true.
         /// </summary>
-        public async Task<Result<LoginResponseDto>> Register([FromBody] RegisterRequestDto registerRequestDto)
+        public async Task<Result<LoginResponseDto>> Register(RegisterRequestDto registerRequestDto)
         {
             var walletAddress = registerRequestDto.WalletAddress.ToLower();
 
@@ -234,6 +238,70 @@ namespace Auth.Api.Services.Implementation
             var jwtToken = tokenRepository.CreateToken(user, roles.ToList());
 
             return Result.Ok(new LoginResponseDto { Token = jwtToken });
+        }
+
+        /// <summary>
+        /// Rotates the caller's PatientMasterKey. Auth.Api is the system of
+        /// record for EncryptedAesKey, so this update happens first (and
+        /// synchronously) here, then propagates asynchronously to every
+        /// other service holding a denormalized copy via AesKeyRotatedEvent.
+        ///
+        /// identityId is the ApplicationUser.Id taken from the caller's JWT
+        /// (the "identityId" claim) — never trust a caller-supplied id here.
+        ///
+        /// Loads the linked Auth.Api.Models.Domain.User (via .Include) to
+        /// resolve UserId — the Guid that AccessRequests.Api, MedicalData.Api
+        /// and Diagnostics.Api actually key their local User copies by. That
+        /// link is populated when Users.Api echoes back UserCreatedResponseEvent
+        /// at registration time, so it should always be present for a fully
+        /// registered patient.
+        /// </summary>
+        public async Task<Result> RotateAesKeyAsync(string identityId, string encryptedAesKey)
+        {
+            if (string.IsNullOrWhiteSpace(encryptedAesKey))
+                return Result.Fail(
+                    new Error("EncryptedAesKey is required.").WithMetadata("StatusCode", 400));
+
+            var user = await userManager.Users
+                .Include(u => u.User)
+                .FirstOrDefaultAsync(u => u.Id == identityId);
+
+            if (user == null)
+                return Result.Fail(
+                    new Error("User not found.").WithMetadata("StatusCode", 404));
+
+            if (string.IsNullOrEmpty(user.EncryptedAesKey))
+                return Result.Fail(
+                    new Error("This account has no PatientMasterKey to rotate.")
+                        .WithMetadata("StatusCode", 400));
+
+            if (user.User == null)
+                return Result.Fail(
+                    new Error("This account is not fully linked yet. Please try again shortly.")
+                        .WithMetadata("StatusCode", 409));
+
+            if (!Guid.TryParse(user.User.Id, out var userId))
+                return Result.Fail(
+                    new Error("Failed to resolve the user id for this account.")
+                        .WithMetadata("StatusCode", 500));
+
+            user.EncryptedAesKey = encryptedAesKey;
+            var updateResult = await userManager.UpdateAsync(user);
+
+            if (!updateResult.Succeeded)
+                return Result.Fail(
+                    new Error("Failed to update the encryption key.").WithMetadata("StatusCode", 500));
+
+            await aesKeyRotatedRabbitMQService.PublishAsync(
+                new AesKeyRotatedEvent
+                {
+                    IdentityId = user.Id,
+                    UserId = userId,
+                    EncryptedAesKey = encryptedAesKey
+                },
+                "aes-key-rotated-queue");
+
+            return Result.Ok();
         }
 
         /// <summary>

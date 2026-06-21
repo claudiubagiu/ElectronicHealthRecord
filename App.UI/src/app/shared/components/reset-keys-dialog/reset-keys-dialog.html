@@ -1,0 +1,71 @@
+<div class="dialog-container">
+
+  <!-- Header -->
+  <div class="dialog-header">
+    <div class="dialog-header-left">
+      <mat-icon class="header-icon">vpn_key</mat-icon>
+      <h2 class="dialog-title">Reset Account Keys</h2>
+    </div>
+    @if (step !== 'rotating') {
+      <button mat-icon-button type="button" (click)="onCancel()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </div>
+
+  <!-- Body -->
+  <div class="dialog-body">
+
+    @if (step === 'confirm') {
+      <p class="dialog-text">
+        This generates a brand new encryption key for your account and re-encrypts
+        every medical document and active doctor access with it. Your old key stops
+        being used once this finishes.
+      </p>
+      <p class="dialog-text dialog-text-muted">
+        This can take a little while depending on how many records you have, and it
+        can't be undone. Are you sure you want to continue?
+      </p>
+    }
+
+    @if (step === 'rotating') {
+      <div class="rotating-state">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p class="dialog-text">
+          Resetting your keys — please don't close this window.
+        </p>
+      </div>
+    }
+
+    @if (step === 'error') {
+      <div class="error-state">
+        <mat-icon class="error-icon">error_outline</mat-icon>
+        <p class="dialog-text">{{ errorMessage }}</p>
+        <p class="dialog-text dialog-text-muted">
+          Nothing was changed — your existing key is still active and safe to retry.
+        </p>
+      </div>
+    }
+
+  </div>
+
+  <!-- Footer -->
+  <div class="dialog-footer">
+    @if (step === 'confirm') {
+      <button mat-stroked-button type="button" (click)="onCancel()">Cancel</button>
+      <button mat-flat-button color="primary" type="button" (click)="onConfirm()">
+        <mat-icon>vpn_key</mat-icon>
+        Reset Keys
+      </button>
+    }
+
+    @if (step === 'error') {
+      <button mat-stroked-button type="button" (click)="onCancel()">Close</button>
+      <button mat-flat-button color="primary" type="button" (click)="onRetry()">
+        <mat-icon>refresh</mat-icon>
+        Retry
+      </button>
+    }
+  </div>
+
+</div>

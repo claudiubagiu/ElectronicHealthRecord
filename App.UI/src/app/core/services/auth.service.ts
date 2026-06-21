@@ -151,6 +151,23 @@ export class AuthService implements OnDestroy {
   }
 
   /**
+   * Rotates the calling patient's PatientMasterKey. Must be called LAST in
+   * the client-side rotation flow — see KeyRotationService — after every
+   * DocumentKey (medical records, diagnostic drafts) and every access
+   * envelope has already been re-wrapped under the new key. Auth.Api is
+   * the system of record for EncryptedAesKey; once this call succeeds,
+   * the new key is authoritative and propagates asynchronously to every
+   * other service via AesKeyRotatedEvent.
+   *
+   * @param encryptedAesKey - The new PatientMasterKey, ECIES-encrypted
+   *        with the caller's own EccPublicKey.
+   * @throws {AppError} If the HTTP request fails (propagated from errorInterceptor).
+   */
+  async rotateAesKey(encryptedAesKey: string): Promise<void> {
+    await firstValueFrom(this.http.patch<void>(`${this.API_URL}/me/aes-key`, { encryptedAesKey }));
+  }
+
+  /**
    * Logout: clear token, clear ECC private key from memory, and disconnect wallet.
    */
   logout(): void {

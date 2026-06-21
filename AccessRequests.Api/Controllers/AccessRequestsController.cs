@@ -124,6 +124,17 @@ namespace AccessRequests.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
+        [HttpPatch("patient/me/envelopes/rotate")]
+        public async Task<IActionResult> RotateEnvelopes([FromBody] RotateEnvelopesDto dto)
+        {
+            var patientIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+            if (patientIdClaim == null) return Unauthorized();
+
+            var result = await _accessRequestService.RotateEnvelopesAsync(Guid.Parse(patientIdClaim), dto);
+            if (result.IsSuccess) return Ok(new { updatedCount = result.Value });
+            return BuildError(result.Errors.First());
+        }
+
         private ObjectResult BuildError(FluentResults.IError error)
         {
             var statusCode = error.Metadata.ContainsKey("StatusCode")

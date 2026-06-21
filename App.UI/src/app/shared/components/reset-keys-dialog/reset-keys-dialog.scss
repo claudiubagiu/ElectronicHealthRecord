@@ -1,0 +1,101 @@
+.dialog-container {
+  display: flex;
+  flex-direction: column;
+  width: 440px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.dialog-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  color: #1565c0;
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #212121;
+}
+
+// ── Body ──────────────────────────────────────────────────────────────────────
+
+.dialog-body {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.dialog-text {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #212121;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.dialog-text-muted {
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 0.83rem;
+}
+
+.rotating-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 0 12px;
+  text-align: center;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 12px;
+  text-align: center;
+
+  .error-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: #c62828;
+    margin-bottom: 4px;
+  }
+}
+
+// ── Footer ────────────────────────────────────────────────────────────────────
+
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  gap: 8px;
+}

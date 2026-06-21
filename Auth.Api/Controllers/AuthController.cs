@@ -1,5 +1,6 @@
 ﻿using Auth.Api.Models.DTOs;
 using Auth.Api.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Auth.Api.Controllers
@@ -97,6 +98,44 @@ namespace Auth.Api.Controllers
             return StatusCode(statusCode, new ProblemDetails
             {
                 Title = "Registration failed",
+                Detail = error.Message,
+                Status = statusCode,
+                Instance = HttpContext.Request.Path
+            });
+        }
+
+        /// <summary>
+        /// Rotates the calling patient's PatientMasterKey. Must be called
+        /// LAST in the client-side rotation flow — after every DocumentKey
+        /// (medical records, diagnostic drafts) and every access envelope
+        /// has already been re-wrapped under the new key — so that a failed
+        /// or interrupted rotation always leaves the old key fully valid
+        /// and retryable, never a half-migrated state.
+        ///
+        /// Restricted to Patients: other roles don't hold a personal
+        /// PatientMasterKey (they recover one via an access envelope).
+        /// </summary>
+        [HttpPatch]
+        [Route("me/aes-key")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> RotateAesKey([FromBody] RotateAesKeyRequestDto dto)
+        {
+            var identityId = User.Claims.FirstOrDefault(c => c.Type == "identityId")?.Value;
+            if (identityId == null) return Unauthorized();
+
+            var result = await authService.RotateAesKeyAsync(identityId, dto.EncryptedAesKey);
+            if (result.IsSuccess)
+                return NoContent();
+
+            var error = result.Errors.First();
+
+            var statusCode = error.Metadata.ContainsKey("StatusCode")
+                ? (int)error.Metadata["StatusCode"]
+                : StatusCodes.Status400BadRequest;
+
+            return StatusCode(statusCode, new ProblemDetails
+            {
+                Title = "Key rotation failed",
                 Detail = error.Message,
                 Status = statusCode,
                 Instance = HttpContext.Request.Path

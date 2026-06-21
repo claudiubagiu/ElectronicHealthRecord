@@ -10,5 +10,6 @@ namespace AccessRequests.Api.Repositories.Interface
         Task<IReadOnlyList<Envelope>> GetByUserIdAsync(Guid userId);
         Task DeleteAsync(Envelope envelope);
         Task<bool> ExistsAsync(Guid patientId, Guid userId);
+        Task<int> UpdateEncryptedKeysAsync(Guid patientId, Dictionary<Guid, string> userIdToEncryptedAesKey);
     }
 }

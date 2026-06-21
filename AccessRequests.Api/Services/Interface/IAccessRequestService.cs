@@ -16,5 +16,13 @@ namespace AccessRequests.Api.Services.Interface
         Task<int> ExpireOverdueRequestsAsync();
         Task<Result<IReadOnlyList<AccessRequestDto>>> GetApprovedByPatientIdAsync(Guid patientId);
         Task<Result<EnvelopeDto>> GetEnvelopeAsync(Guid patientId, Guid userId);
+
+        /// <summary>
+        /// Batch re-wraps every active envelope belonging to patientId under
+        /// a new PatientMasterKey, as part of a client-driven key rotation.
+        /// Only Envelope.EncryptedAesKey changes — access relationships
+        /// (who has an envelope at all) are untouched.
+        /// </summary>
+        Task<Result<int>> RotateEnvelopesAsync(Guid patientId, RotateEnvelopesDto dto);
     }
 }

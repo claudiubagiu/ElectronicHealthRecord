@@ -170,4 +170,18 @@ export class DiagnosticDraftService {
     const jsonString = new TextDecoder().decode(decryptedBuffer);
     return JSON.parse(jsonString) as DiagnosticDraftPayload;
   }
+
+  async rotateDocumentKeys(
+    entries: { draftId: string; encryptedDocumentKey: string }[]
+  ): Promise<number> {
+    const response = await firstValueFrom(
+      this.http.patch<{ updatedCount: number }>(`${this.API}/rotate-keys`, {
+        entries: entries.map((e) => ({
+          draftId: e.draftId,
+          encryptedDocumentKey: e.encryptedDocumentKey,
+        })),
+      })
+    );
+    return response.updatedCount;
+  }
 }

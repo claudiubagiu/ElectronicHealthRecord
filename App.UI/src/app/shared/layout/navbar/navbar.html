@@ -35,6 +35,11 @@
         <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
         <span matListItemTitle>{{ item.label }}</span>
       </a>
+      } @if (isPatient(roles)) {
+      <a mat-list-item (click)="openResetKeysDialog(); sidenav.close()">
+        <mat-icon matListItemIcon>vpn_key</mat-icon>
+        <span matListItemTitle>Reset Account Keys</span>
+      </a>
       } }
 
       <a
@@ -119,6 +124,11 @@
         <button mat-menu-item [routerLink]="item.route">
           <mat-icon>{{ item.icon }}</mat-icon>
           <span>{{ item.label }}</span>
+        </button>
+        } @if (isPatient(roles)) {
+        <button mat-menu-item (click)="openResetKeysDialog()">
+          <mat-icon>vpn_key</mat-icon>
+          <span>Reset Account Keys</span>
         </button>
         } }
 

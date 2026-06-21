@@ -213,6 +213,27 @@ export class MedicalDataCryptoService {
     ]);
   }
 
+  /**
+   * Like {@link unwrapDocumentKey}, but imports the resulting DocumentKey as
+   * extractable. Used exclusively by KeyRotationService, which needs to
+   * immediately re-export the key in order to re-wrap it under a new
+   * PatientMasterKey. unwrapDocumentKey itself stays non-extractable —
+   * every other call site only ever decrypts with the key, never exports
+   * it, so the stricter default is the right one everywhere else.
+   */
+  async unwrapDocumentKeyExtractable(
+    encryptedDocumentKey: string,
+    patientMasterKey: CryptoKey
+  ): Promise<CryptoKey> {
+    const rawKeyBase64 = await CryptoService.decryptString(encryptedDocumentKey, patientMasterKey);
+    const rawDocumentKey = this.base64ToArrayBuffer(rawKeyBase64);
+
+    return crypto.subtle.importKey('raw', rawDocumentKey, { name: 'AES-GCM' }, true, [
+      'encrypt',
+      'decrypt',
+    ]);
+  }
+
   private requirePrivateKey(): string {
     const privateKey = this.e2eeService.getPrivateKey();
     if (!privateKey) {

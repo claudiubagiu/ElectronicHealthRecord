@@ -9,6 +9,16 @@ import {
 import { AccessRequestHistoryDto } from '../../../core/models/access-request-history.model';
 import { environment } from '../../../../environments/environment';
 
+/**
+ * One entry in a batch envelope-rotation request — re-wraps the patient's
+ * new PatientMasterKey for a single authorized user who currently holds an
+ * active envelope.
+ */
+export interface RotateEnvelopeEntry {
+  userId: string;
+  encryptedAesKey: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AccessManagementService {
   private readonly API = environment.apiUrls.accessRequest;
@@ -73,5 +83,26 @@ export class AccessManagementService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Batch-rotates EncryptedAesKey for every active envelope owned by the
+   * calling patient, after the patient has generated a new
+   * PatientMasterKey client-side and re-encrypted it for each user who
+   * currently holds an envelope. patientId is resolved server-side from
+   * the JWT — only ever rotates the caller's own envelopes.
+   *
+   * @returns The number of envelopes actually updated.
+   */
+  async rotateEnvelopes(entries: RotateEnvelopeEntry[]): Promise<number> {
+    const response = await firstValueFrom(
+      this.http.patch<{ updatedCount: number }>(`${this.API}/patient/me/envelopes/rotate`, {
+        entries: entries.map((e) => ({
+          userId: e.userId,
+          encryptedAesKey: e.encryptedAesKey,
+        })),
+      })
+    );
+    return response.updatedCount;
   }
 }

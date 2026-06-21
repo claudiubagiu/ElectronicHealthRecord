@@ -63,6 +63,7 @@ builder.Services.AddSingleton<IConnection>(sp =>
 builder.Services.AddSingleton(typeof(IGenericRabbitMQConsumer<>), typeof(GenericRabbitMQConsumer<>));
 
 builder.Services.AddHostedService<UserCreatedConsumerWorker>();
+builder.Services.AddHostedService<AesKeyRotatedConsumerWorker>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

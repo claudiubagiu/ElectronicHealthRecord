@@ -66,6 +66,18 @@ namespace AccessRequests.Api.Services.Implementation
             return Result.Ok(MapToDto(created!));
         }
 
+        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByPatientIdAsync(Guid patientId)
+        {
+            var requests = await _accessRequestRepository.GetByPatientIdAsync(patientId);
+            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
+        }
+
+        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByDoctorIdAsync(Guid doctorId)
+        {
+            var requests = await _accessRequestRepository.GetByDoctorIdAsync(doctorId);
+            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
+        }
+
         public async Task<Result<AccessRequestDto>> ApproveAsync(Guid requestId, Guid patientId, CreateEnvelopeDto envelope)
         {
             var request = await _accessRequestRepository.GetByIdAsync(requestId);
@@ -190,26 +202,6 @@ namespace AccessRequests.Api.Services.Implementation
             return Result.Ok(MapToDto(result!));
         }
 
-        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByPatientIdAsync(Guid patientId)
-        {
-            if (!await _usersRepository.ExistsAsync(patientId))
-                return Result.Fail<IReadOnlyList<AccessRequestDto>>(
-                    new Error("Patient not found.").WithMetadata("StatusCode", 404));
-
-            var requests = await _accessRequestRepository.GetByPatientIdAsync(patientId);
-            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
-        }
-
-        public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByDoctorIdAsync(Guid doctorId)
-        {
-            if (!await _usersRepository.ExistsAsync(doctorId))
-                return Result.Fail<IReadOnlyList<AccessRequestDto>>(
-                    new Error("Doctor not found.").WithMetadata("StatusCode", 404));
-
-            var requests = await _accessRequestRepository.GetByDoctorIdAsync(doctorId);
-            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
-        }
-
         public async Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByPatientIdAsync(Guid patientId)
         {
             if (!await _usersRepository.ExistsAsync(patientId))
@@ -270,6 +262,31 @@ namespace AccessRequests.Api.Services.Implementation
                         .WithMetadata("StatusCode", 404));
 
             return Result.Ok(MapEnvelopeToDto(envelope));
+        }
+
+        /// <summary>
+        /// Batch re-wraps every entry's EncryptedAesKey into the matching
+        /// (patientId, userId) envelope. Entries for users that don't
+        /// currently hold an envelope for this patient are silently
+        /// skipped — the repository scopes the update to existing rows
+        /// only, so there's nothing destructive about a stale entry
+        /// (e.g. access was revoked between key generation and submit).
+        /// </summary>
+        public async Task<Result<int>> RotateEnvelopesAsync(Guid patientId, RotateEnvelopesDto dto)
+        {
+            if (dto.Entries == null || dto.Entries.Count == 0)
+                return Result.Fail<int>(
+                    new Error("At least one entry is required.").WithMetadata("StatusCode", 400));
+
+            if (dto.Entries.Any(e => string.IsNullOrWhiteSpace(e.EncryptedAesKey)))
+                return Result.Fail<int>(
+                    new Error("EncryptedAesKey is required for every entry.").WithMetadata("StatusCode", 400));
+
+            var map = dto.Entries.ToDictionary(e => e.UserId, e => e.EncryptedAesKey);
+
+            var updatedCount = await _envelopeRepository.UpdateEncryptedKeysAsync(patientId, map);
+
+            return Result.Ok(updatedCount);
         }
 
         private async Task DeleteEnvelopeIfExistsAsync(Guid patientId, Guid userId)

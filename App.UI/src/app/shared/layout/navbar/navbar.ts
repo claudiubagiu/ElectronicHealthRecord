@@ -7,11 +7,16 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { Web3Service } from '../../../core/services/web3.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AppError } from '../../../core/errors/app.error';
+import {
+  ResetKeysDialogComponent,
+  ResetKeysDialogResult,
+} from '../../components/reset-keys-dialog/reset-keys-dialog';
 
 export interface NavItem {
   label: string;
@@ -89,6 +94,7 @@ const ROLE_NAV_ITEMS: NavItem[] = [
     MatListModule,
     MatMenuModule,
     MatDividerModule,
+    MatDialogModule,
     RouterLink,
     RouterLinkActive,
   ],
@@ -100,6 +106,7 @@ export class Navbar {
   private router = inject(Router);
   private web3Service = inject(Web3Service);
   private notify = inject(NotificationService);
+  private dialog = inject(MatDialog);
 
   isSidenavOpen = false;
   isLoggingIn = false;
@@ -145,6 +152,23 @@ export class Navbar {
     if (roles.includes('Pharmacist')) return '/pharmacist-profile';
     if (roles.includes('MedicalAssistant')) return '/medical-assistant-profile';
     return '/profile';
+  }
+
+  isPatient(roles: string[]): boolean {
+    return roles.includes('Patient');
+  }
+
+  openResetKeysDialog(): void {
+    const dialogRef = this.dialog.open<ResetKeysDialogComponent, unknown, ResetKeysDialogResult>(
+      ResetKeysDialogComponent,
+      { disableClose: false }
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'rotated') {
+        this.notify.showSuccess('Your account keys have been reset.');
+      }
+    });
   }
 
   logout(): void {

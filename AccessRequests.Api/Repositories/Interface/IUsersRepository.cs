@@ -7,5 +7,6 @@ namespace AccessRequests.Api.Repositories.Interface
         Task<User> CreateAsync(User user);
         Task<bool> ExistsAsync(Guid id);
         Task<User?> GetByIdAsync(Guid id);
+        Task<bool> UpdateEncryptedAesKeyAsync(Guid userId, string encryptedAesKey);
     }
 }

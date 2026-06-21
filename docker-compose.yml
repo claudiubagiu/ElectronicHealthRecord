@@ -34,7 +34,7 @@ services:
     labels:
       # Enable self-routing
       - "traefik.enable=true"
-   
+
       # Dashboard router
       - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
       - "traefik.http.routers.dashboard.entrypoints=web"
@@ -68,9 +68,9 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 10s 
-      timeout: 5s 
-      retries: 5 
+      interval: 10s
+      timeout: 5s
+      retries: 5
       start_period: 30s
     labels:
       - "traefik.enable=false"
@@ -84,7 +84,6 @@ services:
   #   image: ${DOCKER_REGISTRY-}angular
   #   ports:
   #     - "4201:8080"
-
 
   angular-dev:
     image: ${DOCKER_REGISTRY-}angular-dev
@@ -109,6 +108,11 @@ services:
     build:
       context: Auth.Api
       dockerfile: Dockerfile
+    environment:
+      - ConnectionStrings__AuthConnectionString=${AUTH_CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth-api.rule=Host(`auth.api.docker.localhost`)"
@@ -118,7 +122,7 @@ services:
       - "traefik.http.services.auth-api.loadbalancer.server.port=8080"
     depends_on:
       auth.database:
-        condition: service_started 
+        condition: service_started
       rabbitmq:
         condition: service_healthy
     networks:
@@ -129,7 +133,7 @@ services:
     container_name: auth-database
     restart: unless-stopped
     environment:
-      - SA_PASSWORD=Password1@
+      - SA_PASSWORD=${SA_PASSWORD}
       - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
@@ -147,6 +151,11 @@ services:
       dockerfile: Dockerfile
     container_name: users-api
     restart: unless-stopped
+    environment:
+      - ConnectionStrings__UsersConnectionString=${USERS_CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.users-api.rule=Host(`users.api.docker.localhost`)"
@@ -167,7 +176,7 @@ services:
     container_name: users-database
     restart: unless-stopped
     environment:
-      - SA_PASSWORD=Password1@
+      - SA_PASSWORD=${SA_PASSWORD}
       - ACCEPT_EULA=Y
     ports:
       - "1434:1433"
@@ -185,6 +194,11 @@ services:
       dockerfile: Dockerfile
     container_name: diagnostics-api
     restart: unless-stopped
+    environment:
+      - ConnectionStrings__DiagnosticsConnectionString=${DIAGNOSTICS_CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.diagnostics-api.rule=Host(`diagnostics.api.docker.localhost`)"
@@ -205,7 +219,7 @@ services:
     container_name: diagnostics-database
     restart: unless-stopped
     environment:
-      - SA_PASSWORD=Password1@
+      - SA_PASSWORD=${SA_PASSWORD}
       - ACCEPT_EULA=Y
     ports:
       - "1435:1433"
@@ -214,7 +228,7 @@ services:
     volumes:
       - diagnostics_database:/var/opt/mssql
     networks:
-      - proxy 
+      - proxy
 
   ipfs.api:
     image: ${DOCKER_REGISTRY-}ipfsapi
@@ -223,6 +237,14 @@ services:
       dockerfile: Dockerfile
     container_name: ipfs-api
     restart: unless-stopped
+    environment:
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Pinata__ApiKey=${PINATA_API_KEY}
+      - Pinata__SecretKey=${PINATA_SECRET_KEY}
+      - Pinata__ApiUrl=${PINATA_API_URL}
+      - Pinata__GatewayUrl=${PINATA_GATEWAY_URL}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ipfs-api.rule=Host(`ipfs.api.docker.localhost`)"
@@ -240,6 +262,11 @@ services:
       dockerfile: Dockerfile
     container_name: medicaldata-api
     restart: unless-stopped
+    environment:
+      - ConnectionStrings__MedicalDataConnectionString=${MEDICALDATA_CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.medicaldata-api.rule=Host(`medicaldata.api.docker.localhost`)"
@@ -260,7 +287,7 @@ services:
     container_name: medicaldata-database
     restart: unless-stopped
     environment:
-      - SA_PASSWORD=Password1@
+      - SA_PASSWORD=${SA_PASSWORD}
       - ACCEPT_EULA=Y
     ports:
       - "1437:1433"
@@ -278,6 +305,11 @@ services:
       dockerfile: Dockerfile
     container_name: accessrequests-api
     restart: unless-stopped
+    environment:
+      - ConnectionStrings__AccessRequestConnectionString=${ACCESSREQUESTS_CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.accessrequests-api.rule=Host(`accessrequests.api.docker.localhost`)"
@@ -298,7 +330,7 @@ services:
     container_name: accessrequests-database
     restart: unless-stopped
     environment:
-      - SA_PASSWORD=Password1@
+      - SA_PASSWORD=${SA_PASSWORD}
       - ACCEPT_EULA=Y
     ports:
       - "1438:1433"
@@ -320,4 +352,3 @@ volumes:
 networks:
   proxy:
     name: proxy
-

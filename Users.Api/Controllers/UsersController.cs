@@ -81,6 +81,23 @@ namespace Users.Api.Controllers
             return Ok(assistant);
         }
 
+        /// <summary>
+        /// Returns full patient details (including CNP) by patient ID.
+        /// Used by Doctors, Medical Assistants and Laboratory Technicians
+        /// who already have an approved access relationship with the
+        /// patient, to populate consultation/lab documents correctly
+        /// (e.g. the CNP shown on the generated PDF).
+        /// </summary>
+        [HttpGet("patient/{patientId}")]
+        [Authorize(Roles = "Doctor,MedicalAssistant,LaboratoryTechnician")]
+        public async Task<IActionResult> GetPatientById(Guid patientId)
+        {
+            var patient = await usersService.GetPatientByIdAsync(patientId);
+            if (patient == null) return NotFound("Patient not found.");
+
+            return Ok(patient);
+        }
+
         [HttpGet("search")]
         public async Task<IActionResult> SearchPatients([FromQuery] string search)
         {

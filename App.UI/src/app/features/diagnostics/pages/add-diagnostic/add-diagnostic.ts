@@ -10,6 +10,7 @@ import { debounceTime, distinctUntilChanged, Subject, switchMap, takeUntil, of }
 import { DiagnosticSubmissionService } from '../../services/diagnostic-submission.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { UsersService } from '../../../../core/services/users.service';
 import { CustomField } from '../../services/diagnostic-pdf.service';
 import { PatientDto } from '../../../../core/models/patient.model';
 import { AppError } from '../../../../core/errors/app.error';
@@ -46,6 +47,7 @@ export interface IcdSuggestion {
 export class AddDiagnostic implements OnInit, OnDestroy {
   private submissionService = inject(DiagnosticSubmissionService);
   private authService = inject(AuthService);
+  private usersService = inject(UsersService);
   private blockchainService = inject(BlockchainService);
   private notify = inject(NotificationService);
   private router = inject(Router);
@@ -86,7 +88,7 @@ export class AddDiagnostic implements OnInit, OnDestroy {
   customClinicalExam: CustomField[] = [];
   customDiagnosis: CustomField[] = [];
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.buildForm();
 
     const patientId = this.route.snapshot.paramMap.get('patientId') ?? '';
@@ -108,6 +110,7 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       dateOfBirth: '',
     };
 
+    this.loadPatientCnp(patientId);
     this.loadPatientLabAnalyses();
     this.loadPastDiagnoses();
     this.setupIcdSearch();
@@ -116,6 +119,24 @@ export class AddDiagnostic implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Fetches the patient's full record (including CNP) from Users.Api.
+   * The query params used to land on this page only carry name/wallet,
+   * never the CNP — it's sensitive data and shouldn't travel in a URL.
+   */
+  private async loadPatientCnp(patientId: string): Promise<void> {
+    if (!patientId) return;
+    try {
+      const fullPatient = await this.usersService.getPatientById(patientId);
+      if (this.selectedPatient) {
+        this.selectedPatient = { ...this.selectedPatient, cnp: fullPatient.cnp };
+      }
+    } catch {
+      // Non-blocking: if this fails, the form still works, the PDF will
+      // just show an empty CNP field as before.
+    }
   }
 
   buildForm(): void {

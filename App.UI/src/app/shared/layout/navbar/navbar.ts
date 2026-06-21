@@ -45,12 +45,6 @@ const ROLE_NAV_ITEMS: NavItem[] = [
     roles: ['Patient'],
   },
   {
-    label: 'Upload Analysis',
-    route: '/add-lab-analysis',
-    icon: 'biotech',
-    roles: ['LaboratoryTechnician'],
-  },
-  {
     label: 'My Lab Analyses',
     route: '/lab-analyses',
     icon: 'biotech',

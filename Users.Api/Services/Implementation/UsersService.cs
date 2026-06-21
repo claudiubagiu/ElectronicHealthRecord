@@ -80,6 +80,13 @@ namespace Users.Api.Services.Implementation
             return _mapper.Map<PatientDto>(patient);
         }
 
+        public async Task<PatientDto?> GetPatientByIdAsync(Guid id)
+        {
+            var patient = await _patientsRepository.GetByIdAsync(id);
+            if (patient == null) return null;
+            return _mapper.Map<PatientDto>(patient);
+        }
+
         public async Task<DoctorDto?> GetDoctorByIdentityIdAsync(string identityId)
         {
             var doctor = await _doctorsRepository.GetByIdentityIdAsync(identityId);

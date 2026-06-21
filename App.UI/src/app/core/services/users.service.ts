@@ -18,6 +18,10 @@ export class UsersService {
     return firstValueFrom(this.http.get<PatientDto[]>(`${this.API}/search`, { params }));
   }
 
+  getPatientById(patientId: string): Promise<PatientDto> {
+    return firstValueFrom(this.http.get<PatientDto>(`${this.API}/patient/${patientId}`));
+  }
+
   getMyProfile(): Promise<PatientDto> {
     return firstValueFrom(this.http.get<PatientDto>(`${this.API}/me`));
   }

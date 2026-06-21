@@ -51,17 +51,92 @@
   }
 }
 
+// ── Patient missing ──────────────────────────────────────────────────────────
+
+.patient-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 16px 16px;
+  color: rgba(0, 0, 0, 0.6);
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #e65100;
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 0.88rem;
+    color: #6b7280;
+    max-width: 380px;
+    margin: 0 0 24px;
+  }
+}
+
+.patient-missing-btn {
+  background-color: #1565c0 !important;
+  color: white !important;
+  border-radius: 10px;
+
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+// ── Patient banner ───────────────────────────────────────────────────────────
+
+.patient-section {
+  padding-bottom: 20px;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin: 0 0 12px;
+}
+
+.patient-preselected-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(21, 101, 192, 0.06);
+  border: 1px solid rgba(21, 101, 192, 0.2);
+
+  .preselected-icon {
+    color: #1565c0;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .preselected-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+  }
+}
+
 .section {
   padding: 20px 0 8px;
-
-  .section-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #6b7280;
-    margin: 0 0 12px;
-  }
 }
 
 .full {
@@ -72,36 +147,6 @@
   mat-spinner {
     margin-right: 8px;
   }
-}
-
-.patient-chip-prefix {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-
-  .chip-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-    color: #1565c0;
-  }
-
-  .chip-name {
-    font-weight: 600;
-    color: #1a1a2e;
-    font-size: 0.9rem;
-  }
-
-  .chip-cnp {
-    font-size: 0.78rem;
-    color: #6b7280;
-  }
-}
-
-.patient-cnp-option {
-  color: #6b7280;
-  font-size: 0.82rem;
 }
 
 // ── Upload area ────────────────────────────────────────────────────────────────

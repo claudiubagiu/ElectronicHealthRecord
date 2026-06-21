@@ -1,4 +1,5 @@
-﻿using AccessRequests.Api.Models.Domain;
+﻿using AccessRequests.Api.Mappings;
+using AccessRequests.Api.Models.Domain;
 using AccessRequests.Api.Models.DTOs;
 using AccessRequests.Api.Repositories.Interface;
 using AccessRequests.Api.Services.Interface;
@@ -63,19 +64,19 @@ namespace AccessRequests.Api.Services.Implementation
             });
 
             var created = await _accessRequestRepository.GetByIdAsync(accessRequest.Id);
-            return Result.Ok(MapToDto(created!));
+            return Result.Ok(Mapper.ToAccessRequestDto(created!));
         }
 
         public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByPatientIdAsync(Guid patientId)
         {
             var requests = await _accessRequestRepository.GetByPatientIdAsync(patientId);
-            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
+            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(Mapper.ToAccessRequestDto).ToList());
         }
 
         public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetByDoctorIdAsync(Guid doctorId)
         {
             var requests = await _accessRequestRepository.GetByDoctorIdAsync(doctorId);
-            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
+            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(Mapper.ToAccessRequestDto).ToList());
         }
 
         public async Task<Result<AccessRequestDto>> ApproveAsync(Guid requestId, Guid patientId, CreateEnvelopeDto envelope)
@@ -135,7 +136,7 @@ namespace AccessRequests.Api.Services.Implementation
             });
 
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
-            return Result.Ok(MapToDto(result!));
+            return Result.Ok(Mapper.ToAccessRequestDto(result!));
         }
 
         public async Task<Result<AccessRequestDto>> RejectAsync(Guid requestId, Guid patientId)
@@ -166,7 +167,7 @@ namespace AccessRequests.Api.Services.Implementation
             });
 
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
-            return Result.Ok(MapToDto(result!));
+            return Result.Ok(Mapper.ToAccessRequestDto(result!));
         }
 
         public async Task<Result<AccessRequestDto>> RevokeAsync(Guid requestId, Guid patientId)
@@ -199,7 +200,7 @@ namespace AccessRequests.Api.Services.Implementation
             });
 
             var result = await _accessRequestRepository.GetByIdAsync(updated.Id);
-            return Result.Ok(MapToDto(result!));
+            return Result.Ok(Mapper.ToAccessRequestDto(result!));
         }
 
         public async Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByPatientIdAsync(Guid patientId)
@@ -209,7 +210,7 @@ namespace AccessRequests.Api.Services.Implementation
                     new Error("Patient not found.").WithMetadata("StatusCode", 404));
 
             var histories = await _historyRepository.GetByPatientIdAsync(patientId);
-            return Result.Ok<IReadOnlyList<AccessRequestHistoryDto>>(histories.Select(MapHistoryToDto).ToList());
+            return Result.Ok<IReadOnlyList<AccessRequestHistoryDto>>(histories.Select(Mapper.ToAccessRequestHistoryDto).ToList());
         }
 
         public async Task<Result<IReadOnlyList<AccessRequestHistoryDto>>> GetHistoryByDoctorIdAsync(Guid doctorId)
@@ -219,7 +220,7 @@ namespace AccessRequests.Api.Services.Implementation
                     new Error("Doctor not found.").WithMetadata("StatusCode", 404));
 
             var histories = await _historyRepository.GetByDoctorIdAsync(doctorId);
-            return Result.Ok<IReadOnlyList<AccessRequestHistoryDto>>(histories.Select(MapHistoryToDto).ToList());
+            return Result.Ok<IReadOnlyList<AccessRequestHistoryDto>>(histories.Select(Mapper.ToAccessRequestHistoryDto).ToList());
         }
 
         public async Task<int> ExpireOverdueRequestsAsync()
@@ -248,7 +249,7 @@ namespace AccessRequests.Api.Services.Implementation
         public async Task<Result<IReadOnlyList<AccessRequestDto>>> GetApprovedByPatientIdAsync(Guid patientId)
         {
             var requests = await _accessRequestRepository.GetApprovedByPatientIdAsync(patientId);
-            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(MapToDto).ToList());
+            return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(Mapper.ToAccessRequestDto).ToList());
         }
 
         // ── Envelopes ────────────────────────────────────────────────────────
@@ -261,7 +262,7 @@ namespace AccessRequests.Api.Services.Implementation
                     new Error("No envelope found for this patient/user pair. Access may not be approved.")
                         .WithMetadata("StatusCode", 404));
 
-            return Result.Ok(MapEnvelopeToDto(envelope));
+            return Result.Ok(Mapper.ToEnvelopeDto(envelope));
         }
 
         /// <summary>
@@ -297,45 +298,5 @@ namespace AccessRequests.Api.Services.Implementation
                 await _envelopeRepository.DeleteAsync(envelope);
             }
         }
-
-        private static AccessRequestDto MapToDto(Models.Domain.AccessRequest r) => new()
-        {
-            Id = r.Id,
-            DoctorId = r.DoctorId,
-            DoctorName = r.Doctor != null ? $"{r.Doctor.FirstName} {r.Doctor.LastName}" : string.Empty,
-            DoctorWalletAddress = r.Doctor?.WalletAddress ?? string.Empty,
-            PatientId = r.PatientId,
-            PatientName = r.Patient != null ? $"{r.Patient.FirstName} {r.Patient.LastName}" : string.Empty,
-            PatientWalletAddress = r.Patient?.WalletAddress ?? string.Empty,
-            Status = r.Status.ToString(),
-            CreatedAt = r.CreatedAt,
-            ApprovedAt = r.ApprovedAt,
-            ExpiresAt = r.ExpiresAt
-        };
-
-        private static AccessRequestHistoryDto MapHistoryToDto(AccessRequestHistory h) => new()
-        {
-            Id = h.Id,
-            AccessRequestId = h.AccessRequestId,
-            Action = h.Action,
-            DoctorId = h.AccessRequest?.DoctorId ?? Guid.Empty,
-            DoctorName = h.AccessRequest?.Doctor != null
-                ? $"{h.AccessRequest.Doctor.FirstName} {h.AccessRequest.Doctor.LastName}"
-                : string.Empty,
-            PatientId = h.AccessRequest?.PatientId ?? Guid.Empty,
-            PatientName = h.AccessRequest?.Patient != null
-                ? $"{h.AccessRequest.Patient.FirstName} {h.AccessRequest.Patient.LastName}"
-                : string.Empty,
-            Timestamp = h.Timestamp
-        };
-
-        private static EnvelopeDto MapEnvelopeToDto(Envelope e) => new()
-        {
-            Id = e.Id,
-            PatientId = e.PatientId,
-            UserId = e.UserId,
-            EncryptedAesKey = e.EncryptedAesKey,
-            CreatedAt = e.CreatedAt
-        };
     }
 }

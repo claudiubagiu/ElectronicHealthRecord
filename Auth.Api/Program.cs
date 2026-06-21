@@ -3,7 +3,6 @@ using Auth.Api.Domain.Models;
 using Auth.Api.Extensions;
 using Auth.Api.Infrastructure.RabbitMQ.Implementation;
 using Auth.Api.Infrastructure.RabbitMQ.Interface;
-using Auth.Api.Mappings;
 using Auth.Api.Repositories.Implementation;
 using Auth.Api.Repositories.Interface;
 using Auth.Api.Services.Implementation;
@@ -40,8 +39,6 @@ builder.Services.AddSingleton(typeof(IGenericRabbitMQService<>), typeof(GenericR
 builder.Services.AddSingleton(typeof(IGenericRabbitMQConsumer<>), typeof(GenericRabbitMQConsumer<>));
 
 builder.Services.AddHostedService<UserCreatedConsumerWorker>();
-
-builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddMemoryCache();
 

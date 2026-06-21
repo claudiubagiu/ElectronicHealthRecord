@@ -1,4 +1,5 @@
 ﻿using Auth.Api.Domain.Models;
+using Auth.Api.Mappings;
 using Auth.Api.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -43,7 +44,7 @@ namespace Auth.Api.Controllers
                 var isMedic = roles.Any(r => MedicalRoles.Contains(r));
                 if (!isMedic) continue;
 
-                result.Add(MapToDto(user, roles));
+                result.Add(Mapper.ToPendingMedicDto(user, roles));
             }
 
             return Ok(result);
@@ -64,7 +65,7 @@ namespace Auth.Api.Controllers
                 var isMedic = roles.Any(r => MedicalRoles.Contains(r));
                 if (!isMedic) continue;
 
-                result.Add(MapToDto(user, roles));
+                result.Add(Mapper.ToPendingMedicDto(user, roles));
             }
 
             return Ok(result);
@@ -90,7 +91,7 @@ namespace Auth.Api.Controllers
                 return StatusCode(500, new ProblemDetails { Title = "Failed to approve user", Status = 500 });
 
             var roles = await _userManager.GetRolesAsync(user);
-            return Ok(MapToDto(user, roles));
+            return Ok(Mapper.ToPendingMedicDto(user, roles));
         }
 
         /// <summary>
@@ -113,22 +114,7 @@ namespace Auth.Api.Controllers
                 return StatusCode(500, new ProblemDetails { Title = "Failed to revoke user", Status = 500 });
 
             var roles = await _userManager.GetRolesAsync(user);
-            return Ok(MapToDto(user, roles));
+            return Ok(Mapper.ToPendingMedicDto(user, roles));
         }
-
-        // ── Helpers ───────────────────────────────────────────────────────────
-
-        private static PendingMedicDto MapToDto(ApplicationUser user, IList<string> roles) =>
-            new PendingMedicDto
-            {
-                Id = user.Id,
-                UserName = user.UserName ?? string.Empty,
-                Email = user.Email ?? string.Empty,
-                WalletAddress = user.WalletAddress,
-                FirstName = user.User?.FirstName ?? string.Empty,
-                LastName = user.User?.LastName ?? string.Empty,
-                Roles = roles.ToList(),
-                IsApproved = user.IsApproved,
-            };
     }
 }

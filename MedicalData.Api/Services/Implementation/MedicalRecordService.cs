@@ -1,4 +1,5 @@
 ﻿using FluentResults;
+using MedicalData.Api.Mappings;
 using MedicalData.Api.Models.Domain;
 using MedicalData.Api.Models.DTOs;
 using MedicalData.Api.Repositories.Interface;
@@ -45,7 +46,7 @@ namespace MedicalData.Api.Services.Implementation
 
             var created = await _recordRepository.CreateAsync(record);
 
-            return Result.Ok(MapToDto(created));
+            return Result.Ok(Mapper.ToMedicalRecordDto(created));
         }
 
         public async Task<Result<IReadOnlyList<MedicalRecordDto>>> GetByPatientIdAsync(
@@ -57,7 +58,7 @@ namespace MedicalData.Api.Services.Implementation
 
             var records = await _recordRepository.GetByPatientIdAsync(patientId);
 
-            var dtos = records.Select(MapToDto).ToList();
+            var dtos = records.Select(Mapper.ToMedicalRecordDto).ToList();
 
             return Result.Ok<IReadOnlyList<MedicalRecordDto>>(dtos);
         }
@@ -78,7 +79,7 @@ namespace MedicalData.Api.Services.Implementation
 
             var updated = await _recordRepository.UpdateAsync(record);
 
-            return Result.Ok(MapToDto(updated));
+            return Result.Ok(Mapper.ToMedicalRecordDto(updated));
         }
 
         public async Task<Result> DeleteAsync(Guid recordId, Guid requestingUserId)
@@ -123,18 +124,5 @@ namespace MedicalData.Api.Services.Implementation
 
             return Result.Ok(updatedCount);
         }
-
-        private static MedicalRecordDto MapToDto(MedicalRecord record) => new()
-        {
-            Id = record.Id,
-            PatientId = record.PatientId,
-            RecordType = record.RecordType,
-            EncryptedData = record.EncryptedData,
-            Iv = record.Iv,
-            EncryptedDocumentKey = record.EncryptedDocumentKey,
-            CreatedByDoctorId = record.CreatedByDoctorId,
-            CreatedAt = record.CreatedAt,
-            UpdatedAt = record.UpdatedAt
-        };
     }
 }

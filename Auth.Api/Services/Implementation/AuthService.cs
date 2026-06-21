@@ -1,11 +1,11 @@
 ﻿using Auth.Api.Domain.Models;
 using Auth.Api.Infrastructure.RabbitMQ.Interface;
+using Auth.Api.Mappings;
 using Auth.Api.Models.Domain;
 using Auth.Api.Models.DTOs;
 using Auth.Api.Models.Messages;
 using Auth.Api.Repositories.Interface;
 using Auth.Api.Services.Interface;
-using AutoMapper;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +43,6 @@ namespace Auth.Api.Services.Implementation
 
         private readonly UserManager<ApplicationUser> userManager;
         private readonly ITokenRepository tokenRepository;
-        private readonly IMapper mapper;
         private readonly IGenericRabbitMQService<UserData> genericRabbitMQService;
         private readonly IGenericRabbitMQService<AesKeyRotatedEvent> aesKeyRotatedRabbitMQService;
         private readonly IMemoryCache cache;
@@ -51,14 +50,12 @@ namespace Auth.Api.Services.Implementation
         public AuthService(
             UserManager<ApplicationUser> userManager,
             ITokenRepository tokenRepository,
-            IMapper mapper,
             IGenericRabbitMQService<UserData> genericRabbitMQService,
             IGenericRabbitMQService<AesKeyRotatedEvent> aesKeyRotatedRabbitMQService,
             IMemoryCache cache)
         {
             this.userManager = userManager;
             this.tokenRepository = tokenRepository;
-            this.mapper = mapper;
             this.genericRabbitMQService = genericRabbitMQService;
             this.aesKeyRotatedRabbitMQService = aesKeyRotatedRabbitMQService;
             this.cache = cache;
@@ -111,7 +108,7 @@ namespace Auth.Api.Services.Implementation
             var requiresApproval = registerRequestDto.Roles
                 .Any(r => RolesThatRequireApproval.Contains(r));
 
-            var user = mapper.Map<ApplicationUser>(registerRequestDto);
+            var user = Mapper.ToApplicationUser(registerRequestDto);
             user.Challenge = GenerateSecureChallenge();
             user.IsApproved = !requiresApproval;
             user.EncryptedAesKey = registerRequestDto.EncryptedAesKey;
@@ -126,7 +123,7 @@ namespace Auth.Api.Services.Implementation
                 var userCreated = await userManager.FindByEmailAsync(registerRequestDto.Email);
                 if (result.Succeeded && userCreated != null)
                 {
-                    var response = mapper.Map<LoginResponseDto>(userCreated);
+                    var response = Mapper.ToLoginResponseDto(userCreated);
                     var jwtToken = tokenRepository.CreateToken(user, roles);
                     response.Token = jwtToken;
 

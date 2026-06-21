@@ -7,7 +7,6 @@ using Users.Api.Data;
 using Users.Api.Extensions;
 using Users.Api.Infrastructure.RabbitMQ.Implementation;
 using Users.Api.Infrastructure.RabbitMQ.Interface;
-using Users.Api.Mappings;
 using Users.Api.Repositories.Implementation;
 using Users.Api.Repositories.Interface;
 using Users.Api.Services.Implementation;
@@ -45,8 +44,6 @@ builder.Services.AddSingleton(typeof(IGenericRabbitMQConsumer<>), typeof(Generic
 
 builder.Services.AddHostedService<IdentityCreatedConsumerWorker>();
 builder.Services.AddHostedService<AesKeyRotatedConsumerWorker>();
-
-builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddCors(options =>
 {

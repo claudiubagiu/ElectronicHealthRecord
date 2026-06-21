@@ -1,4 +1,5 @@
-﻿using Diagnostics.Api.Models.Domain;
+﻿using Diagnostics.Api.Mappings;
+using Diagnostics.Api.Models.Domain;
 using Diagnostics.Api.Models.DTOs;
 using Diagnostics.Api.Repositories.Interface;
 using Diagnostics.Api.Services.Interface;
@@ -49,7 +50,7 @@ namespace Diagnostics.Api.Services.Implementation
             var created = await _draftRepository.CreateAsync(draft);
 
             var assistantName = await ResolveAssistantNameAsync(created.CreatedByAssistantId);
-            return Result.Ok(MapToDto(created, assistantName));
+            return Result.Ok(Mapper.ToDiagnosticDraftDto(created, assistantName));
         }
 
         public async Task<Result<DiagnosticDraftDto>> GetActiveByPatientIdAsync(Guid patientId, Guid callerId)
@@ -64,7 +65,7 @@ namespace Diagnostics.Api.Services.Implementation
                     new Error("No active draft found for this patient.").WithMetadata("StatusCode", 404));
 
             var assistantName = await ResolveAssistantNameAsync(draft.CreatedByAssistantId);
-            return Result.Ok(MapToDto(draft, assistantName));
+            return Result.Ok(Mapper.ToDiagnosticDraftDto(draft, assistantName));
         }
 
         public async Task<Result<DiagnosticDraftDto>> UpdateAsync(Guid draftId, Guid callerId, UpdateDiagnosticDraftDto dto)
@@ -88,7 +89,7 @@ namespace Diagnostics.Api.Services.Implementation
 
             var updated = await _draftRepository.UpdateAsync(draft);
             var assistantName = await ResolveAssistantNameAsync(updated.CreatedByAssistantId);
-            return Result.Ok(MapToDto(updated, assistantName));
+            return Result.Ok(Mapper.ToDiagnosticDraftDto(updated, assistantName));
         }
 
         public async Task<Result> DeleteAsync(Guid draftId, Guid callerId)
@@ -137,22 +138,5 @@ namespace Diagnostics.Api.Services.Implementation
             if (user == null) return null;
             return $"{user.FirstName} {user.LastName}";
         }
-
-        private static DiagnosticDraftDto MapToDto(DiagnosticDraft draft, string? assistantName) => new()
-        {
-            Id = draft.Id,
-            Status = draft.Status,
-            PatientId = draft.PatientId,
-            PatientWalletAddress = draft.PatientWalletAddress,
-            CreatedByAssistantId = draft.CreatedByAssistantId,
-            CreatedByAssistantName = assistantName,
-            CompletedByDoctorId = draft.CompletedByDoctorId,
-            CreatedAt = draft.CreatedAt,
-            UpdatedAt = draft.UpdatedAt,
-            EncryptedData = draft.EncryptedData,
-            Iv = draft.Iv,
-            EncryptedDocumentKey = draft.EncryptedDocumentKey,
-            LinkedMedicalRecordIds = draft.LinkedMedicalRecordIds
-        };
     }
 }

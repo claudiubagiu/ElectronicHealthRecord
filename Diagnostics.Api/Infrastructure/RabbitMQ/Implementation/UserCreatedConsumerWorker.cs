@@ -1,5 +1,5 @@
-﻿using AutoMapper;
-using Diagnostics.Api.Infrastructure.RabbitMQ.Interface;
+﻿using Diagnostics.Api.Infrastructure.RabbitMQ.Interface;
+using Diagnostics.Api.Mappings;
 using Diagnostics.Api.Models.Domain;
 using Diagnostics.Api.Models.Messages;
 using Diagnostics.Api.Repositories.Interface;
@@ -10,15 +10,12 @@ namespace Diagnostics.Api.Infrastructure.RabbitMQ.Implementation
     {
         private readonly IGenericRabbitMQConsumer<UserCreatedEvent> _consumer;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IMapper _mapper;
 
         public UserCreatedConsumerWorker(IGenericRabbitMQConsumer<UserCreatedEvent> consumer,
-                                             IServiceScopeFactory scopeFactory,
-                                             IMapper mapper)
+                                             IServiceScopeFactory scopeFactory)
         {
             _consumer = consumer;
             _scopeFactory = scopeFactory;
-            _mapper = mapper;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -29,11 +26,11 @@ namespace Diagnostics.Api.Infrastructure.RabbitMQ.Implementation
                 handleMessage: async (message) =>
                 {
                     using var scope = _scopeFactory.CreateScope();
-                    var usersRepository  = scope.ServiceProvider.GetRequiredService<IUsersRepository>();
+                    var usersRepository = scope.ServiceProvider.GetRequiredService<IUsersRepository>();
 
                     UserCreatedEvent userCreatedEvent = message;
 
-                    User user = _mapper.Map<User>(userCreatedEvent);
+                    User user = Mapper.ToUser(userCreatedEvent);
                     user = await usersRepository.CreateAsync(user);
                 });
         }

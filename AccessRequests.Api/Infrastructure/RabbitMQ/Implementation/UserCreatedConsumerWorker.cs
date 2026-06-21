@@ -1,8 +1,8 @@
 ﻿using AccessRequests.Api.Infrastructure.RabbitMQ.Interface;
+using AccessRequests.Api.Mappings;
 using AccessRequests.Api.Models.Domain;
 using AccessRequests.Api.Models.Messages;
 using AccessRequests.Api.Repositories.Interface;
-using AutoMapper;
 
 namespace AccessRequests.Api.Infrastructure.RabbitMQ.Implementation
 {
@@ -10,15 +10,12 @@ namespace AccessRequests.Api.Infrastructure.RabbitMQ.Implementation
     {
         private readonly IGenericRabbitMQConsumer<UserCreatedEvent> _consumer;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IMapper _mapper;
 
         public UserCreatedConsumerWorker(IGenericRabbitMQConsumer<UserCreatedEvent> consumer,
-                                             IServiceScopeFactory scopeFactory,
-                                             IMapper mapper)
+                                             IServiceScopeFactory scopeFactory)
         {
             _consumer = consumer;
             _scopeFactory = scopeFactory;
-            _mapper = mapper;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,7 +30,7 @@ namespace AccessRequests.Api.Infrastructure.RabbitMQ.Implementation
 
                     UserCreatedEvent userCreatedEvent = message;
 
-                    User user = _mapper.Map<User>(userCreatedEvent);
+                    User user = Mapper.ToUser(userCreatedEvent);
                     user = await usersRepository.CreateAsync(user);
                 });
         }

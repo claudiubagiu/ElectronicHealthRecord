@@ -2,7 +2,6 @@ using Diagnostics.Api.Data;
 using Diagnostics.Api.Extensions;
 using Diagnostics.Api.Infrastructure.RabbitMQ.Implementation;
 using Diagnostics.Api.Infrastructure.RabbitMQ.Interface;
-using Diagnostics.Api.Mappings;
 using Diagnostics.Api.Repositories.Implementation;
 using Diagnostics.Api.Repositories.Interface;
 using Diagnostics.Api.Services.Implementation;
@@ -21,8 +20,6 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<DiagnosticsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DiagnosticsConnectionString")));
-
-builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IDiagnosticDraftRepository, DiagnosticDraftRepository>();

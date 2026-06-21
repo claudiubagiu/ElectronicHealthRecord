@@ -3,7 +3,6 @@ using AccessRequests.Api.Data;
 using AccessRequests.Api.Extensions;
 using AccessRequests.Api.Infrastructure.RabbitMQ.Implementation;
 using AccessRequests.Api.Infrastructure.RabbitMQ.Interface;
-using AccessRequests.Api.Mappings;
 using AccessRequests.Api.Repositories.Implementation;
 using AccessRequests.Api.Repositories.Interface;
 using AccessRequests.Api.Services.Implementation;
@@ -20,8 +19,6 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AccessRequestDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AccessRequestConnectionString")));
-
-builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();

@@ -2,7 +2,6 @@ using MedicalData.Api.Data;
 using MedicalData.Api.Extensions;
 using MedicalData.Api.Infrastructure.RabbitMQ.Implementation;
 using MedicalData.Api.Infrastructure.RabbitMQ.Interface;
-using MedicalData.Api.Mappings;
 using MedicalData.Api.Repositories.Implementation;
 using MedicalData.Api.Repositories.Interface;
 using MedicalData.Api.Services.Implementation;
@@ -20,8 +19,6 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<MedicalDataDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MedicalDataConnectionString")));
-
-builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IMedicalRecordRepository, MedicalRecordRepository>();

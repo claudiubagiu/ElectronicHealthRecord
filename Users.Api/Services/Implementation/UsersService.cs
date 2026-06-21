@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿using Users.Api.Mappings;
 using Users.Api.Models.DTOs;
 using Users.Api.Repositories.Interface;
 using Users.Api.Services.Interface;
@@ -12,28 +12,25 @@ namespace Users.Api.Services.Implementation
         private readonly IMedicalAssistantsRepository _medicalAssistantsRepository;
         private readonly ILaboratoryTechniciansRepository _labTechRepository;
         private readonly IPharmacistsRepository _pharmacistsRepository;
-        private readonly IMapper _mapper;
 
         public UsersService(
             IPatientsRepository patientsRepository,
             IDoctorsRepository doctorsRepository,
             IMedicalAssistantsRepository medicalAssistantsRepository,
             ILaboratoryTechniciansRepository labTechRepository,
-            IPharmacistsRepository pharmacistsRepository,
-            IMapper mapper)
+            IPharmacistsRepository pharmacistsRepository)
         {
             _patientsRepository = patientsRepository;
             _doctorsRepository = doctorsRepository;
             _medicalAssistantsRepository = medicalAssistantsRepository;
             _labTechRepository = labTechRepository;
             _pharmacistsRepository = pharmacistsRepository;
-            _mapper = mapper;
         }
 
         public async Task<IReadOnlyList<PatientDto>> GetPatiensByFullName(string search)
         {
             var patients = await _patientsRepository.SearchByNameAsync(search);
-            return _mapper.Map<IReadOnlyList<PatientDto>>(patients);
+            return Mapper.ToPatientDtoList(patients);
         }
 
         public async Task<PublicKeyDto?> GetPublicKeyAsync(Guid userId)
@@ -77,42 +74,42 @@ namespace Users.Api.Services.Implementation
         {
             var patient = await _patientsRepository.GetByIdentityIdAsync(identityId);
             if (patient == null) return null;
-            return _mapper.Map<PatientDto>(patient);
+            return Mapper.ToPatientDto(patient);
         }
 
         public async Task<PatientDto?> GetPatientByIdAsync(Guid id)
         {
             var patient = await _patientsRepository.GetByIdAsync(id);
             if (patient == null) return null;
-            return _mapper.Map<PatientDto>(patient);
+            return Mapper.ToPatientDto(patient);
         }
 
         public async Task<DoctorDto?> GetDoctorByIdentityIdAsync(string identityId)
         {
             var doctor = await _doctorsRepository.GetByIdentityIdAsync(identityId);
             if (doctor == null) return null;
-            return _mapper.Map<DoctorDto>(doctor);
+            return Mapper.ToDoctorDto(doctor);
         }
 
         public async Task<LaboratoryTechnicianDto?> GetLabTechByIdentityIdAsync(string identityId)
         {
             var labTech = await _labTechRepository.GetByIdentityIdAsync(identityId);
             if (labTech == null) return null;
-            return _mapper.Map<LaboratoryTechnicianDto>(labTech);
+            return Mapper.ToLaboratoryTechnicianDto(labTech);
         }
 
         public async Task<PharmacistDto?> GetPharmacistByIdentityIdAsync(string identityId)
         {
             var pharmacist = await _pharmacistsRepository.GetByIdentityIdAsync(identityId);
             if (pharmacist == null) return null;
-            return _mapper.Map<PharmacistDto>(pharmacist);
+            return Mapper.ToPharmacistDto(pharmacist);
         }
 
         public async Task<MedicalAssistantDto?> GetMedicalAssistantByIdentityIdAsync(string identityId)
         {
             var assistant = await _medicalAssistantsRepository.GetByIdentityIdAsync(identityId);
             if (assistant == null) return null;
-            return _mapper.Map<MedicalAssistantDto>(assistant);
+            return Mapper.ToMedicalAssistantDto(assistant);
         }
     }
 }

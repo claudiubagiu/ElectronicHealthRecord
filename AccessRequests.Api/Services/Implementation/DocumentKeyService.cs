@@ -1,4 +1,5 @@
-﻿using AccessRequests.Api.Models.Domain;
+﻿using AccessRequests.Api.Mappings;
+using AccessRequests.Api.Models.Domain;
 using AccessRequests.Api.Models.DTOs;
 using AccessRequests.Api.Repositories.Interface;
 using AccessRequests.Api.Services.Interface;
@@ -70,7 +71,7 @@ namespace AccessRequests.Api.Services.Implementation
             };
 
             var created = await _documentKeyRepository.CreateAsync(documentKey);
-            return Result.Ok(MapToDto(created));
+            return Result.Ok(Mapper.ToDocumentKeyDto(created));
         }
 
         public async Task<Result<DocumentKeyDto>> GetByIpfsCidAsync(Guid callerId, string ipfsCid)
@@ -85,7 +86,7 @@ namespace AccessRequests.Api.Services.Implementation
                     new Error("You are not authorized to access this document key.")
                         .WithMetadata("StatusCode", 403));
 
-            return Result.Ok(MapToDto(documentKey));
+            return Result.Ok(Mapper.ToDocumentKeyDto(documentKey));
         }
 
         public async Task<Result<IReadOnlyList<DocumentKeyDto>>> GetByPatientIdAsync(Guid patientId, Guid callerId)
@@ -100,7 +101,7 @@ namespace AccessRequests.Api.Services.Implementation
                         .WithMetadata("StatusCode", 403));
 
             var documentKeys = await _documentKeyRepository.GetByPatientIdAsync(patientId);
-            return Result.Ok<IReadOnlyList<DocumentKeyDto>>(documentKeys.Select(MapToDto).ToList());
+            return Result.Ok<IReadOnlyList<DocumentKeyDto>>(documentKeys.Select(Mapper.ToDocumentKeyDto).ToList());
         }
 
         /// <summary>
@@ -135,15 +136,5 @@ namespace AccessRequests.Api.Services.Implementation
             if (callerId == patientId) return true;
             return await _envelopeRepository.ExistsAsync(patientId, callerId);
         }
-
-        private static DocumentKeyDto MapToDto(DocumentKey d) => new()
-        {
-            Id = d.Id,
-            PatientId = d.PatientId,
-            IpfsCid = d.IpfsCid,
-            EncryptedDocumentKey = d.EncryptedDocumentKey,
-            CreatedAt = d.CreatedAt,
-            UpdatedAt = d.UpdatedAt
-        };
     }
 }

@@ -1,8 +1,8 @@
 ﻿using Auth.Api.Infrastructure.RabbitMQ.Interface;
+using Auth.Api.Mappings;
 using Auth.Api.Models.Domain;
 using Auth.Api.Models.Messages;
 using Auth.Api.Repositories.Interface;
-using AutoMapper;
 
 namespace Auth.Api.Infrastructure.RabbitMQ.Implementation
 {
@@ -10,15 +10,13 @@ namespace Auth.Api.Infrastructure.RabbitMQ.Implementation
     {
         private readonly IGenericRabbitMQConsumer<UserCreatedResponseEvent> _consumer;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IMapper _mapper;
 
-        public UserCreatedConsumerWorker(IGenericRabbitMQConsumer<UserCreatedResponseEvent> consumer,
-                                             IServiceScopeFactory scopeFactory,
-                                             IMapper mapper)
+        public UserCreatedConsumerWorker(
+            IGenericRabbitMQConsumer<UserCreatedResponseEvent> consumer,
+            IServiceScopeFactory scopeFactory)
         {
             _consumer = consumer;
             _scopeFactory = scopeFactory;
-            _mapper = mapper;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,7 +31,7 @@ namespace Auth.Api.Infrastructure.RabbitMQ.Implementation
 
                     UserCreatedResponseEvent identityCreatedEvent = message;
 
-                    User user = _mapper.Map<User>(identityCreatedEvent);
+                    User user = Mapper.ToUser(identityCreatedEvent);
 
                     await usersRepository.CreateAsync(user);
                 });

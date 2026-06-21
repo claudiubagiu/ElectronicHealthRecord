@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diagnostics.Api.Migrations
 {
     [DbContext(typeof(DiagnosticsDbContext))]
-    [Migration("20260620222207_Diagnostics Migration")]
+    [Migration("20260621141604_Diagnostics Migration")]
     partial class DiagnosticsMigration
     {
         /// <inheritdoc />
@@ -41,6 +41,10 @@ namespace Diagnostics.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("EncryptedData")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EncryptedDocumentKey")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

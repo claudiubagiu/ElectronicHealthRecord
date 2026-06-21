@@ -6,6 +6,7 @@
         public required string PatientWalletAddress { get; set; }
         public required string EncryptedData { get; set; }
         public required string Iv { get; set; }
+        public required string EncryptedDocumentKey { get; set; }
         public string LinkedMedicalRecordIds { get; set; } = string.Empty;
     }
 }

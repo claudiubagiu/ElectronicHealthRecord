@@ -9,5 +9,6 @@ namespace Diagnostics.Api.Repositories.Interface
         Task<DiagnosticDraft?> GetActiveByPatientIdAsync(Guid patientId);
         Task<DiagnosticDraft> UpdateAsync(DiagnosticDraft draft);
         Task<bool> DeleteAsync(Guid id);
+        Task<int> UpdateDocumentKeysAsync(Guid patientId, IReadOnlyDictionary<Guid, string> draftIdToEncryptedDocumentKey);
     }
 }

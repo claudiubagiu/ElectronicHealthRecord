@@ -81,6 +81,24 @@ namespace Diagnostics.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
+        /// <summary>
+        /// Batch-rotates EncryptedDocumentKey for the caller's own drafts,
+        /// after the caller (the patient) has generated a new
+        /// PatientMasterKey client-side and re-wrapped each DocumentKey
+        /// under it. Draft content is never re-sent here.
+        /// </summary>
+        [HttpPatch("rotate-keys")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> RotateDocumentKeys([FromBody] RotateDocumentKeysDto dto)
+        {
+            var callerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+            if (callerIdClaim == null) return Unauthorized();
+
+            var result = await _draftService.RotateDocumentKeysAsync(Guid.Parse(callerIdClaim), dto);
+            if (result.IsSuccess) return Ok(new { updatedCount = result.Value });
+            return BuildError(result.Errors.First());
+        }
+
         private IActionResult BuildError(FluentResults.IError error)
         {
             var statusCode = error.Metadata.ContainsKey("StatusCode")

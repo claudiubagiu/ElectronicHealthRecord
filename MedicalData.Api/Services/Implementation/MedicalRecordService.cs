@@ -37,6 +37,7 @@ namespace MedicalData.Api.Services.Implementation
                 RecordType = dto.RecordType,
                 EncryptedData = dto.EncryptedData,
                 Iv = dto.Iv,
+                EncryptedDocumentKey = dto.EncryptedDocumentKey,
                 CreatedByDoctorId = doctorId,
                 CreatedAt = now,
                 UpdatedAt = now
@@ -72,6 +73,7 @@ namespace MedicalData.Api.Services.Implementation
             record.RecordType = dto.RecordType;
             record.EncryptedData = dto.EncryptedData;
             record.Iv = dto.Iv;
+            record.EncryptedDocumentKey = dto.EncryptedDocumentKey;
             record.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _recordRepository.UpdateAsync(record);
@@ -94,6 +96,34 @@ namespace MedicalData.Api.Services.Implementation
             return Result.Ok();
         }
 
+        /// <summary>
+        /// Batch re-wraps DocumentKeys under a new PatientMasterKey, used
+        /// when the patient rotates their master key (e.g. revoking a
+        /// compromised doctor). Only EncryptedDocumentKey changes — document
+        /// content (EncryptedData/Iv) is left untouched, keeping the
+        /// operation cheap regardless of document size.
+        ///
+        /// requestingUserId must equal patientId: only the patient (who
+        /// holds the old and new PatientMasterKey client-side) can produce
+        /// valid re-wrapped keys.
+        /// </summary>
+        public async Task<Result<int>> RotateDocumentKeysAsync(Guid patientId, RotateDocumentKeysDto dto)
+        {
+            if (dto.Entries == null || dto.Entries.Count == 0)
+                return Result.Fail<int>(
+                    new Error("At least one entry is required.").WithMetadata("StatusCode", 400));
+
+            if (dto.Entries.Any(e => string.IsNullOrWhiteSpace(e.EncryptedDocumentKey)))
+                return Result.Fail<int>(
+                    new Error("EncryptedDocumentKey is required for every entry.").WithMetadata("StatusCode", 400));
+
+            var map = dto.Entries.ToDictionary(e => e.RecordId, e => e.EncryptedDocumentKey);
+
+            var updatedCount = await _recordRepository.UpdateDocumentKeysAsync(patientId, map);
+
+            return Result.Ok(updatedCount);
+        }
+
         private static MedicalRecordDto MapToDto(MedicalRecord record) => new()
         {
             Id = record.Id,
@@ -101,6 +131,7 @@ namespace MedicalData.Api.Services.Implementation
             RecordType = record.RecordType,
             EncryptedData = record.EncryptedData,
             Iv = record.Iv,
+            EncryptedDocumentKey = record.EncryptedDocumentKey,
             CreatedByDoctorId = record.CreatedByDoctorId,
             CreatedAt = record.CreatedAt,
             UpdatedAt = record.UpdatedAt

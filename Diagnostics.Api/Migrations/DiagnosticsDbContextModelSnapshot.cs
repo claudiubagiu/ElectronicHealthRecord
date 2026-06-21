@@ -41,6 +41,10 @@ namespace Diagnostics.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EncryptedDocumentKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Iv")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

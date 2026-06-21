@@ -1,10 +1,11 @@
 ﻿namespace Diagnostics.Api.Models.Domain
 {
     /// <summary>
-    /// A diagnostic draft, encrypted once with the patient's personal AES
-    /// data key (AES-GCM) — same pattern as MedicalRecord. There is no
-    /// per-draft envelope here; the AES key itself is recovered via the
-    /// envelope stored in AccessRequests.Api (one envelope per
+    /// A diagnostic draft, encrypted with a per-draft DocumentKey (AES-GCM) —
+    /// same two-level pattern as MedicalRecord. The DocumentKey is encrypted
+    /// with the patient's PatientMasterKey and stored as
+    /// EncryptedDocumentKey. The PatientMasterKey itself is recovered via
+    /// the envelope stored in AccessRequests.Api (one envelope per
     /// patient/authorized-user pair).
     /// </summary>
     public class DiagnosticDraft
@@ -21,6 +22,7 @@
         // E2EE fields — same pattern as MedicalRecord
         public required string EncryptedData { get; set; }
         public required string Iv { get; set; }
+        public required string EncryptedDocumentKey { get; set; }
 
         // IDs of Medical Data records marked as relevant for this consultation
         public string LinkedMedicalRecordIds { get; set; } = string.Empty; // JSON array stored as string

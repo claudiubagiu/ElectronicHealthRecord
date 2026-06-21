@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalData.Api.Migrations
 {
     [DbContext(typeof(MedicalDataDbContext))]
-    [Migration("20260620222331_Medical Data Migration")]
+    [Migration("20260621141628_Medical Data Migration")]
     partial class MedicalDataMigration
     {
         /// <inheritdoc />
@@ -38,6 +38,10 @@ namespace MedicalData.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("EncryptedData")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EncryptedDocumentKey")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

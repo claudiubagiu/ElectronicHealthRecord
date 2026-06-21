@@ -43,6 +43,7 @@ namespace Diagnostics.Api.Repositories.Implementation
 
             existing.EncryptedData = draft.EncryptedData;
             existing.Iv = draft.Iv;
+            existing.EncryptedDocumentKey = draft.EncryptedDocumentKey;
             existing.LinkedMedicalRecordIds = draft.LinkedMedicalRecordIds;
             existing.UpdatedAt = draft.UpdatedAt;
 
@@ -65,6 +66,35 @@ namespace Diagnostics.Api.Repositories.Implementation
             _dbContext.DiagnosticDrafts.Remove(draft);
             await _dbContext.SaveChangesAsync();
             return true;
+        }
+
+        /// <summary>
+        /// Batch-updates only EncryptedDocumentKey for the given drafts,
+        /// scoped to patientId for safety. Used during PatientMasterKey
+        /// rotation — EncryptedData/Iv are never touched here.
+        /// </summary>
+        public async Task<int> UpdateDocumentKeysAsync(
+            Guid patientId,
+            IReadOnlyDictionary<Guid, string> draftIdToEncryptedDocumentKey)
+        {
+            if (draftIdToEncryptedDocumentKey.Count == 0) return 0;
+
+            var ids = draftIdToEncryptedDocumentKey.Keys.ToList();
+
+            var drafts = await _dbContext.DiagnosticDrafts
+                .Where(d => d.PatientId == patientId && ids.Contains(d.Id))
+                .ToListAsync();
+
+            var now = DateTime.UtcNow;
+            foreach (var draft in drafts)
+            {
+                draft.EncryptedDocumentKey = draftIdToEncryptedDocumentKey[draft.Id];
+                draft.UpdatedAt = now;
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            return drafts.Count;
         }
     }
 }

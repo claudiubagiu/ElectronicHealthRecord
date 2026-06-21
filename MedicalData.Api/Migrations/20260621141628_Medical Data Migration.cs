@@ -36,6 +36,7 @@ namespace MedicalData.Api.Migrations
                     RecordType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     EncryptedData = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Iv = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EncryptedDocumentKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedByDoctorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)

@@ -22,7 +22,7 @@ export class LitProtocolService {
   private connectingPromise: Promise<void> | null = null;
 
   /** Address of the deployed PatientRecords smart contract used in ACCs. */
-  private readonly ACCESS_CONTRACT = '0x2789bC71872B6f2896aa05AFeaF4061610dDd221';
+  private readonly ACCESS_CONTRACT = '0x658C7662736D7112fDF332F1aFcC43F2560D4Da2';
 
   /**
    * Establishes a connection to the Lit Protocol network and initialises

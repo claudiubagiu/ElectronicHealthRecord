@@ -3,12 +3,14 @@ export interface CreateMedicalRecordDto {
   recordType: string;
   encryptedData: string;
   iv: string;
+  encryptedDocumentKey: string;
 }
 
 export interface UpdateMedicalRecordDto {
   recordType: string;
   encryptedData: string;
   iv: string;
+  encryptedDocumentKey: string;
 }
 
 export interface MedicalRecordDto {
@@ -17,6 +19,7 @@ export interface MedicalRecordDto {
   recordType: string;
   encryptedData: string;
   iv: string;
+  encryptedDocumentKey: string;
   createdByDoctorId: string;
   createdAt: string;
   updatedAt: string;

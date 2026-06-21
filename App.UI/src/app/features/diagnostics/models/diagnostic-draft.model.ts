@@ -52,6 +52,7 @@ export interface DiagnosticDraftDto {
   updatedAt: string;
   encryptedData: string;
   iv: string;
+  encryptedDocumentKey: string;
   linkedMedicalRecordIds: string;
 }
 
@@ -63,6 +64,7 @@ export interface CreateDiagnosticDraftDto {
   patientWalletAddress: string;
   encryptedData: string;
   iv: string;
+  encryptedDocumentKey: string;
   linkedMedicalRecordIds: string;
 }
 
@@ -72,6 +74,7 @@ export interface CreateDiagnosticDraftDto {
 export interface UpdateDiagnosticDraftDto {
   encryptedData: string;
   iv: string;
+  encryptedDocumentKey: string;
   linkedMedicalRecordIds: string;
   status?: string;
   completedByDoctorId?: string;

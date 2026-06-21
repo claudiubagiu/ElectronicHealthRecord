@@ -9,5 +9,6 @@ namespace MedicalData.Api.Services.Interface
         Task<Result<IReadOnlyList<MedicalRecordDto>>> GetByPatientIdAsync(Guid patientId, Guid requestingUserId);
         Task<Result<MedicalRecordDto>> UpdateAsync(Guid recordId, Guid requestingUserId, UpdateMedicalRecordDto dto);
         Task<Result> DeleteAsync(Guid recordId, Guid requestingUserId);
+        Task<Result<int>> RotateDocumentKeysAsync(Guid patientId, RotateDocumentKeysDto dto);
     }
 }

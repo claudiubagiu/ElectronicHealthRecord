@@ -9,5 +9,6 @@ namespace Diagnostics.Api.Services.Interface
         Task<Result<DiagnosticDraftDto>> GetActiveByPatientIdAsync(Guid patientId, Guid callerId);
         Task<Result<DiagnosticDraftDto>> UpdateAsync(Guid draftId, Guid callerId, UpdateDiagnosticDraftDto dto);
         Task<Result> DeleteAsync(Guid draftId, Guid callerId);
+        Task<Result<int>> RotateDocumentKeysAsync(Guid patientId, RotateDocumentKeysDto dto);
     }
 }

@@ -42,6 +42,7 @@ namespace Diagnostics.Api.Services.Implementation
                 UpdatedAt = DateTime.UtcNow,
                 EncryptedData = dto.EncryptedData,
                 Iv = dto.Iv,
+                EncryptedDocumentKey = dto.EncryptedDocumentKey,
                 LinkedMedicalRecordIds = dto.LinkedMedicalRecordIds
             };
 
@@ -75,6 +76,7 @@ namespace Diagnostics.Api.Services.Implementation
 
             draft.EncryptedData = dto.EncryptedData;
             draft.Iv = dto.Iv;
+            draft.EncryptedDocumentKey = dto.EncryptedDocumentKey;
             draft.LinkedMedicalRecordIds = dto.LinkedMedicalRecordIds;
             draft.UpdatedAt = DateTime.UtcNow;
 
@@ -104,6 +106,30 @@ namespace Diagnostics.Api.Services.Implementation
             return Result.Ok();
         }
 
+        /// <summary>
+        /// Batch re-wraps DocumentKeys under a new PatientMasterKey, used
+        /// when the patient rotates their master key. Only
+        /// EncryptedDocumentKey changes — EncryptedData/Iv are left
+        /// untouched. requestingUserId (patientId here) must be the patient
+        /// themselves — only they hold the old and new PatientMasterKey.
+        /// </summary>
+        public async Task<Result<int>> RotateDocumentKeysAsync(Guid patientId, RotateDocumentKeysDto dto)
+        {
+            if (dto.Entries == null || dto.Entries.Count == 0)
+                return Result.Fail<int>(
+                    new Error("At least one entry is required.").WithMetadata("StatusCode", 400));
+
+            if (dto.Entries.Any(e => string.IsNullOrWhiteSpace(e.EncryptedDocumentKey)))
+                return Result.Fail<int>(
+                    new Error("EncryptedDocumentKey is required for every entry.").WithMetadata("StatusCode", 400));
+
+            var map = dto.Entries.ToDictionary(e => e.DraftId, e => e.EncryptedDocumentKey);
+
+            var updatedCount = await _draftRepository.UpdateDocumentKeysAsync(patientId, map);
+
+            return Result.Ok(updatedCount);
+        }
+
         private async Task<string?> ResolveAssistantNameAsync(Guid? assistantId)
         {
             if (assistantId == null) return null;
@@ -125,6 +151,7 @@ namespace Diagnostics.Api.Services.Implementation
             UpdatedAt = draft.UpdatedAt,
             EncryptedData = draft.EncryptedData,
             Iv = draft.Iv,
+            EncryptedDocumentKey = draft.EncryptedDocumentKey,
             LinkedMedicalRecordIds = draft.LinkedMedicalRecordIds
         };
     }

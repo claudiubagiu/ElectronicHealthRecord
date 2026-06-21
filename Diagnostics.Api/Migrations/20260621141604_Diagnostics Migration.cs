@@ -42,6 +42,7 @@ namespace Diagnostics.Api.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EncryptedData = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Iv = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EncryptedDocumentKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LinkedMedicalRecordIds = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>

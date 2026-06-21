@@ -9,5 +9,6 @@ namespace MedicalData.Api.Repositories.Interface
         Task<MedicalRecord?> GetByIdAsync(Guid id);
         Task<MedicalRecord> UpdateAsync(MedicalRecord record);
         Task<bool> DeleteAsync(Guid id);
+        Task<int> UpdateDocumentKeysAsync(Guid patientId, IReadOnlyDictionary<Guid, string> recordIdToEncryptedDocumentKey);
     }
 }

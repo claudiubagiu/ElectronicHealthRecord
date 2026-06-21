@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -6,7 +6,7 @@ import {
   AbstractControl,
   ValidationErrors,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of, takeUntil } from 'rxjs';
 import {
   MatAutocompleteModule,
@@ -27,12 +27,13 @@ import { MAT_FORM_IMPORTS } from '../../../../shared/imports/material.imports';
   standalone: true,
   imports: [...MAT_FORM_IMPORTS, MatAutocompleteModule],
 })
-export class AddLabAnalysis {
+export class AddLabAnalysis implements OnInit, OnDestroy {
   private submissionService = inject(LabAnalysisService);
   private authService = inject(AuthService);
   private usersService = inject(UsersService);
   private notify = inject(NotificationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
 
@@ -44,14 +45,48 @@ export class AddLabAnalysis {
   isSearching = false;
   searchPerformed = false;
 
+  /** True when the patient was pre-filled via query params (from Patient
+   *  Access > Active Access), so the search field is hidden/locked. */
+  patientPrefilled = false;
+
   ngOnInit(): void {
     this.buildForm();
+    this.hydratePatientFromQueryParams();
     this.setupPatientSearch();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * If navigated here from Patient Access (Active Access tab), the patient
+   * is already known and approved — pre-fill it instead of making the lab
+   * tech search again.
+   */
+  private hydratePatientFromQueryParams(): void {
+    const patientId = this.route.snapshot.queryParamMap.get('patientId');
+    const patientName = this.route.snapshot.queryParamMap.get('patientName');
+    const patientWalletAddress = this.route.snapshot.queryParamMap.get('patientWalletAddress');
+
+    if (!patientId || !patientName || !patientWalletAddress) return;
+
+    const spaceIndex = patientName.indexOf(' ');
+    const firstName = spaceIndex > -1 ? patientName.substring(0, spaceIndex) : patientName;
+    const lastName = spaceIndex > -1 ? patientName.substring(spaceIndex + 1) : '';
+
+    this.selectedPatient = {
+      id: patientId,
+      firstName,
+      lastName,
+      walletAddress: patientWalletAddress,
+      cnp: '',
+      identityId: '',
+      dateOfBirth: '',
+    };
+    this.patientPrefilled = true;
+    this.form.get('patientSearch')!.setValue(patientName);
   }
 
   buildForm(): void {
@@ -113,6 +148,7 @@ export class AddLabAnalysis {
   clearPatient(event: Event): void {
     event.stopPropagation();
     this.selectedPatient = null;
+    this.patientPrefilled = false;
     this.form.get('patientSearch')!.setValue('');
     this.filteredPatients = [];
     this.searchPerformed = false;
@@ -155,6 +191,7 @@ export class AddLabAnalysis {
       await this.submissionService.submit({
         pdfFile: this.selectedFile!,
         patientWalletAddress: this.selectedPatient!.walletAddress,
+        patientId: this.selectedPatient!.id,
         labTechName,
       });
 

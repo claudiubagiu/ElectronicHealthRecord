@@ -36,7 +36,7 @@ const ROLE_NAV_ITEMS: NavItem[] = [
     label: 'Patient Access',
     route: '/patient-access',
     icon: 'manage_accounts',
-    roles: ['Doctor', 'MedicalAssistant'],
+    roles: ['Doctor', 'MedicalAssistant', 'LaboratoryTechnician'],
   },
   {
     label: 'My Diagnostics',

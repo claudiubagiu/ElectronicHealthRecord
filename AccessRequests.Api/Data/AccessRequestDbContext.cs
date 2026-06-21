@@ -13,6 +13,7 @@ namespace AccessRequests.Api.Data
         public DbSet<Models.Domain.AccessRequest> AccessRequests { get; set; }
         public DbSet<AccessRequestHistory> AccessRequestHistories { get; set; }
         public DbSet<Envelope> Envelopes { get; set; }
+        public DbSet<DocumentKey> DocumentKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +50,16 @@ namespace AccessRequests.Api.Data
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasIndex(e => new { e.PatientId, e.UserId }).IsUnique();
+            });
+
+            modelBuilder.Entity<DocumentKey>(entity =>
+            {
+                entity.HasOne(d => d.Patient)
+                    .WithMany()
+                    .HasForeignKey(d => d.PatientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(d => d.IpfsCid).IsUnique();
             });
         }
     }

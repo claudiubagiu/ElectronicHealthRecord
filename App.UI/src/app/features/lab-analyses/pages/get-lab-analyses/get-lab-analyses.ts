@@ -7,6 +7,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { LabAnalysis } from '../../../../core/models/blockchain.model';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 import { SharedRecordCard } from '../../../../shared/components/shared-record-card/shared-record-card';
+import { AppError } from '../../../../core/errors/app.error';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-get-lab-analyses',
@@ -16,6 +18,7 @@ import { SharedRecordCard } from '../../../../shared/components/shared-record-ca
   imports: [...MAT_COMMON_IMPORTS, SharedRecordCard],
 })
 export class GetLabAnalyses implements OnInit {
+  private authService = inject(AuthService);
   private blockchainService = inject(BlockchainService);
   private web3Service = inject(Web3Service);
   private labAnalysisService = inject(LabAnalysisService);
@@ -55,7 +58,16 @@ export class GetLabAnalyses implements OnInit {
   async openFile(analysis: LabAnalysis): Promise<void> {
     this.downloadingId = analysis.id;
     try {
-      await this.labAnalysisService.decryptAndOpen(analysis);
+      const currentUser = this.authService.getDecodedToken();
+      if (!currentUser) {
+        throw new AppError({
+          message: 'You must be logged in.',
+          status: 401,
+          title: 'Unauthorized',
+          type: 'UNAUTHORIZED',
+        });
+      }
+      await this.labAnalysisService.decryptAndOpen(analysis, currentUser.userId);
     } catch {
       this.notify.showError('Failed to decrypt file.');
     } finally {

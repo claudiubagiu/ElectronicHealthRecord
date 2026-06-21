@@ -58,7 +58,7 @@ export class PatientLabAnalyses implements OnInit {
   async openFile(analysis: LabAnalysis): Promise<void> {
     this.downloadingId = analysis.id;
     try {
-      await this.labAnalysisService.decryptAndOpen(analysis);
+      await this.labAnalysisService.decryptAndOpen(analysis, this.patientId);
     } catch {
       this.notify.showError('Failed to decrypt file.');
     } finally {

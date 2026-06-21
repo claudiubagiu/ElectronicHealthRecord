@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AccessRequests.Api.Migrations
 {
     [DbContext(typeof(AccessRequestDbContext))]
-    [Migration("20260620222004_Access Requests Migration")]
+    [Migration("20260621211210_Access Requests Migration")]
     partial class AccessRequestsMigration
     {
         /// <inheritdoc />
@@ -79,6 +79,39 @@ namespace AccessRequests.Api.Migrations
                     b.HasIndex("AccessRequestId");
 
                     b.ToTable("AccessRequestHistories");
+                });
+
+            modelBuilder.Entity("AccessRequests.Api.Models.Domain.DocumentKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EncryptedDocumentKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IpfsCid")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IpfsCid")
+                        .IsUnique();
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("DocumentKeys");
                 });
 
             modelBuilder.Entity("AccessRequests.Api.Models.Domain.Envelope", b =>
@@ -172,6 +205,17 @@ namespace AccessRequests.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("AccessRequest");
+                });
+
+            modelBuilder.Entity("AccessRequests.Api.Models.Domain.DocumentKey", b =>
+                {
+                    b.HasOne("AccessRequests.Api.Models.Domain.User", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("AccessRequests.Api.Models.Domain.Envelope", b =>

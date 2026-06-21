@@ -58,6 +58,28 @@ namespace AccessRequests.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DocumentKeys",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PatientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IpfsCid = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    EncryptedDocumentKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DocumentKeys", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DocumentKeys_Users_PatientId",
+                        column: x => x.PatientId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Envelopes",
                 columns: table => new
                 {
@@ -120,6 +142,17 @@ namespace AccessRequests.Api.Migrations
                 column: "PatientId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_DocumentKeys_IpfsCid",
+                table: "DocumentKeys",
+                column: "IpfsCid",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DocumentKeys_PatientId",
+                table: "DocumentKeys",
+                column: "PatientId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Envelopes_PatientId_UserId",
                 table: "Envelopes",
                 columns: new[] { "PatientId", "UserId" },
@@ -136,6 +169,9 @@ namespace AccessRequests.Api.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AccessRequestHistories");
+
+            migrationBuilder.DropTable(
+                name: "DocumentKeys");
 
             migrationBuilder.DropTable(
                 name: "Envelopes");

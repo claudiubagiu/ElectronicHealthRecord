@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { IpfsService } from '../../../core/services/ipfs.service';
-import { LitProtocolService } from '../../../core/services/lit-protocol.service';
-import { Web3Service } from '../../../core/services/web3.service';
+import { DocumentKeyService } from '../../../core/services/document-key.service';
 import { CryptoService } from '../../../core/services/crypto.service';
+import { MedicalDataCryptoService } from '../../medical-data/services/medical-data-crypto.service';
 import { AppError } from '../../../core/errors/app.error';
 import { Diagnosis } from '../../../core/models/blockchain.model';
 
@@ -11,11 +11,12 @@ import { Diagnosis } from '../../../core/models/blockchain.model';
  * a blockchain-stored diagnosis:
  *
  * 1. Download the encrypted payload from IPFS.
- * 2. Validate that Lit Protocol metadata is present.
- * 3. Connect to Lit Protocol and build access control conditions.
- * 4. Decrypt the AES key via Lit (requires wallet signature).
- * 5. Decrypt the file with the recovered AES key.
- * 6. Open the decrypted file in a new browser tab.
+ * 2. Fetch the DocumentKey (wrapped with the patient's PatientMasterKey)
+ *    from AccessRequests.Api, by IPFS CID.
+ * 3. Resolve the caller's usable PatientMasterKey — their own key if
+ *    they're the patient, or their envelope's key otherwise.
+ * 4. Unwrap the DocumentKey, decrypt the file with it.
+ * 5. Open the decrypted file in a new browser tab.
  *
  * This service owns NO UI state — it simply accepts a Diagnosis and
  * either opens the file or throws an error. The calling component
@@ -24,71 +25,52 @@ import { Diagnosis } from '../../../core/models/blockchain.model';
 @Injectable({ providedIn: 'root' })
 export class DiagnosticDecryptionService {
   private ipfsService = inject(IpfsService);
-  private litService = inject(LitProtocolService);
-  private web3Service = inject(Web3Service);
+  private documentKeyService = inject(DocumentKeyService);
+  private medicalDataCryptoService = inject(MedicalDataCryptoService);
 
   /**
    * Decrypts and opens a diagnosis file in a new browser tab.
    *
-   * The method downloads the encrypted payload from IPFS, uses Lit Protocol
-   * to recover the AES key (which requires the user to sign a SIWE message),
-   * decrypts the file with AES-GCM, and opens the result as a blob URL.
-   *
-   * @param diagnosis - The on-chain Diagnosis object containing the IPFS CID
-   *                    and patient address needed for decryption.
+   * @param diagnosis - The on-chain Diagnosis object containing the IPFS CID.
+   * @param patientId - The patient's user ID (GUID) — needed to resolve the
+   *   PatientMasterKey. Pass the caller's own userId if they ARE the patient,
+   *   or the patient's userId if the caller is an authorized doctor/assistant.
    * @throws {AppError} If any step in the pipeline fails (IPFS download,
-   *         missing Lit metadata, Lit connection, wallet signature, AES decryption).
+   *         missing DocumentKey, key resolution, or AES decryption).
    */
-  async decryptAndOpen(diagnosis: Diagnosis): Promise<void> {
+  async decryptAndOpen(diagnosis: Diagnosis, patientId: string): Promise<void> {
     // 1. Download the encrypted payload from IPFS (already decoded from Base64)
     const data = await this.ipfsService.downloadEncryptedData(diagnosis.ipfsCid);
 
-    // 2. Validate that Lit Protocol metadata exists in the payload
-    if (!data.litMetadata?.ciphertext || !data.litMetadata?.dataToEncryptHash) {
+    // 2. Fetch the wrapped DocumentKey for this file
+    const documentKeyRecord = await this.documentKeyService.getByIpfsCid(diagnosis.ipfsCid);
+    if (!documentKeyRecord?.encryptedDocumentKey) {
       throw new AppError({
         message:
-          'The encrypted payload is missing Lit Protocol metadata. ' +
-          'The file may be corrupted or stored in an unsupported format.',
+          'No document key was found for this file. The diagnosis may be corrupted or ' +
+          'stored in an unsupported format.',
         status: 422,
-        title: 'Invalid Payload',
-        type: 'MISSING_LIT_METADATA',
+        title: 'Missing Document Key',
+        type: 'MISSING_DOCUMENT_KEY',
       });
     }
 
-    // 3. Connect to Lit Protocol network
-    await this.litService.connect();
+    // 3. Resolve the caller's usable PatientMasterKey
+    const patientMasterKey = await this.medicalDataCryptoService.resolvePatientAesKey(patientId);
 
-    // 4. Build access control conditions scoped to this patient
-    const accs = this.litService.createAccsBuilder(diagnosis.patientAddr);
-
-    // 5. Get viem wallet client for Lit SIWE auth context
-    const walletClient = await this.web3Service.getViemWalletClient();
-
-    // 6. Decrypt the AES key via Lit Protocol (triggers wallet signature)
-    const decryptResult = await this.litService.decrypt(
-      {
-        ciphertext: data.litMetadata.ciphertext,
-        dataToEncryptHash: data.litMetadata.dataToEncryptHash,
-      },
-      accs,
-      walletClient
+    // 4. Unwrap the DocumentKey and decrypt the file
+    const documentKey = await this.medicalDataCryptoService.unwrapDocumentKey(
+      documentKeyRecord.encryptedDocumentKey,
+      patientMasterKey
     );
 
-    // 7. Recover the raw AES key from the Lit-decrypted Base64 string
-    const raw = decryptResult.decryptedData as Uint8Array;
-    const aesKeyBase64 = new TextDecoder().decode(raw);
-    const aesKeyRaw = Uint8Array.from(atob(aesKeyBase64), (c) => c.charCodeAt(0))
-      .buffer as ArrayBuffer;
-    const aesKey = await CryptoService.importAESKey(aesKeyRaw);
-
-    // 8. Decrypt the file content with AES-GCM
     const decryptedBuffer = await CryptoService.decryptFileWithAES(
       data.encryptedFile.buffer as ArrayBuffer,
-      aesKey,
+      documentKey,
       new Uint8Array(data.iv) as Uint8Array<ArrayBuffer>
     );
 
-    // 9. Determine the MIME type from the file extension and open in a new tab
+    // 5. Determine the MIME type from the file extension and open in a new tab
     const mimeType = this.getMimeType(data.fileName);
     const blob = new Blob([decryptedBuffer], { type: mimeType });
     const url = URL.createObjectURL(blob);

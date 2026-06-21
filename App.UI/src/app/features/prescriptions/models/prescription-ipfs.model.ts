@@ -3,13 +3,8 @@ export interface EncryptedPrescriptionPayload {
   encryptedData: string;
   /** Base64-encoded 12-byte AES-GCM IV */
   iv: string;
-  /** Base64-encoded 32-byte salt — redundant with on-chain, stored for convenience */
+  /** Base64-encoded 32-byte salt — used for the pharmacist's PBKDF2 path */
   salt: string;
-  /** Lit Protocol metadata for patient-side decryption */
-  litMetadata: {
-    ciphertext: string;
-    dataToEncryptHash: string;
-  };
   timestamp: number;
 }
 
@@ -17,9 +12,5 @@ export interface DecryptedPrescriptionPayload {
   encryptedData: Uint8Array;
   iv: Uint8Array;
   salt: string;
-  litMetadata: {
-    ciphertext: string;
-    dataToEncryptHash: string;
-  };
   timestamp: number;
 }

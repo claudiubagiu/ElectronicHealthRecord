@@ -59,7 +59,7 @@ export class PatientPrescriptions implements OnInit {
   async openPrescription(prescription: Prescription): Promise<void> {
     this.openingId = prescription.id;
     try {
-      await this.decryptionService.decryptAndOpenForPatient(prescription);
+      await this.decryptionService.decryptAndOpenForPatient(prescription, this.patientId);
     } catch {
       this.notify.showError('Failed to decrypt prescription. Please try again.');
     } finally {

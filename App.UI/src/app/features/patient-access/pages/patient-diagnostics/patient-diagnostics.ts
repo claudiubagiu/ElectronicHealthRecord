@@ -58,7 +58,7 @@ export class PatientDiagnostics implements OnInit {
   async openFile(diagnosis: Diagnosis): Promise<void> {
     this.downloadingId = diagnosis.id;
     try {
-      await this.decryptionService.decryptAndOpen(diagnosis);
+      await this.decryptionService.decryptAndOpen(diagnosis, this.patientId);
     } catch {
       this.notify.showError('Failed to decrypt file.');
     } finally {

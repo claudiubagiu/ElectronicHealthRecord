@@ -1,12 +1,14 @@
 ﻿namespace Ipfs.Api.Models.DTOs
 {
     /// <summary>
-    /// Request DTO for uploading an encrypted diagnostic payload to IPFS.
-    /// 
+    /// Request DTO for uploading an encrypted file payload to IPFS.
+    ///
     /// Binary fields (encrypted file content and IV) are transmitted as
     /// Base64-encoded strings to reduce JSON payload size compared to
-    /// integer arrays. The AES encryption key is managed entirely by
-    /// Lit Protocol and is not included in this payload.
+    /// integer arrays. The AES key used to encrypt this file is NOT
+    /// included here — it's registered separately as a DocumentKey in
+    /// AccessRequests.Api, wrapped with the patient's PatientMasterKey
+    /// and indexed by the IPFS CID returned after this upload.
     /// </summary>
     public class UploadEncryptedDataRequestDto
     {
@@ -30,28 +32,5 @@
         /// Unix timestamp in milliseconds indicating when the payload was created.
         /// </summary>
         public required long Timestamp { get; set; }
-
-        /// <summary>
-        /// Lit Protocol metadata containing the encrypted AES key and its
-        /// integrity hash. Required for decryption through Lit's network.
-        /// </summary>
-        public required LitMetadataDto LitMetadata { get; set; }
-    }
-
-    /// <summary>
-    /// Lit Protocol encryption metadata returned after encrypting
-    /// the AES key with access-controlled conditions.
-    /// </summary>
-    public class LitMetadataDto
-    {
-        /// <summary>
-        /// The Lit-encrypted ciphertext containing the AES key.
-        /// </summary>
-        public required string Ciphertext { get; set; }
-
-        /// <summary>
-        /// Hash of the original plaintext data, used by Lit for integrity verification.
-        /// </summary>
-        public required string DataToEncryptHash { get; set; }
     }
 }

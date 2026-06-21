@@ -22,6 +22,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { PatientDto } from '../../../../core/models/patient.model';
 import { AccessRequestDto } from '../../../../core/models/access-request.model';
 import { Diagnosis, Prescription, LabAnalysis } from '../../../../core/models/blockchain.model';
+import { AppError } from '../../../../core/errors/app.error';
 
 @Component({
   selector: 'app-patient-profile',
@@ -188,7 +189,16 @@ export class PatientProfile implements OnInit {
   async onOpenDiagnosis(diagnosis: Diagnosis): Promise<void> {
     this.downloadingId = diagnosis.id;
     try {
-      await this.decryptionService.decryptAndOpen(diagnosis);
+      const currentUser = this.authService.getDecodedToken();
+      if (!currentUser) {
+        throw new AppError({
+          message: 'You must be logged in.',
+          status: 401,
+          title: 'Unauthorized',
+          type: 'UNAUTHORIZED',
+        });
+      }
+      await this.decryptionService.decryptAndOpen(diagnosis, currentUser.userId);
     } catch {
       this.notify.showError('Failed to decrypt file.');
     } finally {
@@ -199,7 +209,16 @@ export class PatientProfile implements OnInit {
   async onOpenPrescription(prescription: Prescription): Promise<void> {
     this.openingPrescriptionId = prescription.id;
     try {
-      await this.prescriptionService.decryptAndOpenForPatient(prescription);
+      const currentUser = this.authService.getDecodedToken();
+      if (!currentUser) {
+        throw new AppError({
+          message: 'You must be logged in.',
+          status: 401,
+          title: 'Unauthorized',
+          type: 'UNAUTHORIZED',
+        });
+      }
+      await this.prescriptionService.decryptAndOpenForPatient(prescription, currentUser.userId);
     } catch {
       this.notify.showError('Failed to decrypt prescription. Please try again.');
     } finally {
@@ -210,7 +229,16 @@ export class PatientProfile implements OnInit {
   async onOpenLabAnalysis(analysis: LabAnalysis): Promise<void> {
     this.openingLabAnalysisId = analysis.id;
     try {
-      await this.labAnalysisService.decryptAndOpen(analysis);
+      const currentUser = this.authService.getDecodedToken();
+      if (!currentUser) {
+        throw new AppError({
+          message: 'You must be logged in.',
+          status: 401,
+          title: 'Unauthorized',
+          type: 'UNAUTHORIZED',
+        });
+      }
+      await this.labAnalysisService.decryptAndOpen(analysis, currentUser.userId);
     } catch {
       this.notify.showError('Failed to decrypt lab analysis. Please try again.');
     } finally {

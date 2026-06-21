@@ -5,8 +5,10 @@
  * significantly reduce JSON payload size (roughly 2.5× smaller
  * than a number[] representation for binary data).
  *
- * The AES key is NOT stored here — it is encrypted and managed
- * entirely by Lit Protocol via the {@link litMetadata} field.
+ * The DocumentKey used to encrypt this file is NOT stored here.
+ * It lives in AccessRequests.Api as a DocumentKey record (see
+ * core/models/document-key.model.ts), wrapped with the patient's
+ * PatientMasterKey and indexed by the IPFS CID returned after upload.
  */
 export interface EncryptedPayload {
   /** AES-GCM encrypted file content, encoded as a Base64 string. */
@@ -20,15 +22,6 @@ export interface EncryptedPayload {
 
   /** Unix timestamp (milliseconds) when the payload was created. */
   timestamp: number;
-
-  /** Lit Protocol ciphertext and hash required to decrypt the AES key. */
-  litMetadata: {
-    /** Lit-encrypted ciphertext containing the AES key. */
-    ciphertext: string;
-
-    /** Hash of the original data used by Lit for integrity verification. */
-    dataToEncryptHash: string;
-  };
 }
 
 /**
@@ -49,15 +42,6 @@ export interface EncryptedData {
 
   /** Unix timestamp (milliseconds) from when the payload was created. */
   timestamp: number;
-
-  /** Lit Protocol metadata required to decrypt the AES key. */
-  litMetadata: {
-    /** Lit-encrypted ciphertext containing the AES key. */
-    ciphertext: string;
-
-    /** Hash of the original data used by Lit for integrity verification. */
-    dataToEncryptHash: string;
-  };
 }
 
 /**

@@ -142,11 +142,35 @@ export class PatientAccess implements OnInit, OnDestroy {
     }
   }
 
+  get isLabTechnician(): boolean {
+    const user = this.authService.getDecodedToken();
+    const roles = user ? (Array.isArray(user.role) ? user.role : [user.role]) : [];
+    return roles.includes('LaboratoryTechnician');
+  }
+
+  /**
+   * For Doctor/MedicalAssistant: navigates to the patient's profile page.
+   * For LaboratoryTechnician: navigates directly to the "Add Lab Analysis"
+   * form, pre-filled with this patient — lab techs don't have a patient
+   * profile view, their only action once access is granted is to upload
+   * a new analysis.
+   */
   viewPatientProfile(req: AccessRequestDto): void {
     const user = this.authService.getDecodedToken();
     const roles = user ? (Array.isArray(user.role) ? user.role : [user.role]) : [];
-    const isAssistant = roles.includes('MedicalAssistant');
 
+    if (roles.includes('LaboratoryTechnician')) {
+      this.router.navigate(['/add-lab-analysis'], {
+        queryParams: {
+          patientId: req.patientId,
+          patientName: req.patientName,
+          patientWalletAddress: req.patientWalletAddress,
+        },
+      });
+      return;
+    }
+
+    const isAssistant = roles.includes('MedicalAssistant');
     const targetPath = isAssistant ? 'assistant-profile' : 'profile';
 
     this.router.navigate(['/patient', req.patientId, targetPath], {

@@ -115,6 +115,7 @@ export class CreatePrescription implements OnInit {
           notes: this.form.value.notes ?? '',
         },
         patientWalletAddress: this.selectedPatient!.walletAddress,
+        patientId: this.selectedPatient!.id,
         patientName: `${this.selectedPatient!.firstName} ${this.selectedPatient!.lastName}`,
         doctorName,
       });

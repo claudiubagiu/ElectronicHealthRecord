@@ -50,6 +50,14 @@ namespace Users.Api.Services.Implementation
             if (assistant?.PublicKey != null)
                 return new PublicKeyDto { UserId = assistant.Id, PublicKey = assistant.PublicKey };
 
+            var labTech = await _labTechRepository.GetByIdAsync(userId);
+            if (labTech?.PublicKey != null)
+                return new PublicKeyDto { UserId = labTech.Id, PublicKey = labTech.PublicKey };
+
+            var pharmacist = await _pharmacistsRepository.GetByIdAsync(userId);
+            if (pharmacist?.PublicKey != null)
+                return new PublicKeyDto { UserId = pharmacist.Id, PublicKey = pharmacist.PublicKey };
+
             return null;
         }
 

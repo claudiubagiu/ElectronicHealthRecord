@@ -1,11 +1,14 @@
 ﻿namespace Ipfs.Api.Models.DTOs
 {
     /// <summary>
-    /// Response DTO returned when downloading an encrypted diagnostic payload from IPFS.
-    /// 
-    /// Binary fields are represented as Base64-encoded strings, matching the
-    /// format used during upload. The frontend decodes these back into typed
-    /// byte arrays for use with the Web Crypto API.
+    /// Response DTO returned when downloading an encrypted file payload
+    /// from IPFS.
+    ///
+    /// Binary fields are represented as Base64-encoded strings, matching
+    /// the format used during upload. The frontend decodes these back
+    /// into typed byte arrays for use with the Web Crypto API. The
+    /// DocumentKey needed to decrypt EncryptedFile is fetched separately
+    /// from AccessRequests.Api, by this payload's IPFS CID.
     /// </summary>
     public class EncryptedDataResponseDto
     {
@@ -28,11 +31,5 @@
         /// Unix timestamp in milliseconds from when the payload was created.
         /// </summary>
         public required long Timestamp { get; set; }
-
-        /// <summary>
-        /// Lit Protocol metadata required to decrypt the AES key.
-        /// May be null for legacy payloads uploaded before Lit integration.
-        /// </summary>
-        public LitMetadataDto? LitMetadata { get; set; }
     }
 }

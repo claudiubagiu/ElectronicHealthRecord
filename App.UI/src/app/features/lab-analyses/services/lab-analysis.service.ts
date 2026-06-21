@@ -1,10 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { getAddress } from 'ethers';
 import { BlockchainService } from '../../../core/services/blockchain.service';
 import { IpfsService } from '../../../core/services/ipfs.service';
-import { LitProtocolService } from '../../../core/services/lit-protocol.service';
+import { DocumentKeyService } from '../../../core/services/document-key.service';
 import { CryptoService } from '../../../core/services/crypto.service';
-import { Web3Service } from '../../../core/services/web3.service';
+import { MedicalDataCryptoService } from '../../medical-data/services/medical-data-crypto.service';
 import { EncryptedPayload } from '../../../core/models/ipfs.model';
 import { LabAnalysis } from '../../../core/models/blockchain.model';
 import { AppError } from '../../../core/errors/app.error';
@@ -12,6 +11,9 @@ import { AppError } from '../../../core/errors/app.error';
 export interface LabAnalysisSubmissionInput {
   pdfFile: File;
   patientWalletAddress: string;
+  /** The patient's user ID (GUID) — required to resolve the PatientMasterKey
+   *  and to register the new DocumentKey in AccessRequests.Api. */
+  patientId: string;
   labTechName: string;
 }
 
@@ -20,54 +22,83 @@ export interface LabAnalysisSubmissionResult {
   ipfsCid: string;
 }
 
+/**
+ * Facade service that orchestrates the full lab analysis submission and
+ * decryption pipeline — mirrors DiagnosticSubmissionService /
+ * DiagnosticDecryptionService:
+ *
+ * Submission:
+ * 1. Encrypt the uploaded PDF with a random per-document DocumentKey.
+ * 2. Resolve the patient's PatientMasterKey and wrap the DocumentKey with it.
+ * 3. Upload the encrypted file to IPFS (no key material included).
+ * 4. Register the wrapped DocumentKey in AccessRequests.Api, by IPFS CID.
+ * 5. Record the analysis on-chain.
+ *
+ * Decryption:
+ * 1. Download the encrypted payload from IPFS.
+ * 2. Fetch the wrapped DocumentKey by IPFS CID.
+ * 3. Resolve the caller's usable PatientMasterKey.
+ * 4. Unwrap the DocumentKey, decrypt the file with it.
+ * 5. Open the decrypted file in a new browser tab.
+ */
 @Injectable({ providedIn: 'root' })
 export class LabAnalysisService {
   private blockchainService = inject(BlockchainService);
   private ipfsService = inject(IpfsService);
-  private litService = inject(LitProtocolService);
-  private web3Service = inject(Web3Service);
+  private documentKeyService = inject(DocumentKeyService);
+  private medicalDataCryptoService = inject(MedicalDataCryptoService);
 
   // ── Submission ─────────────────────────────────────────────────────────────
 
   async submit(input: LabAnalysisSubmissionInput): Promise<LabAnalysisSubmissionResult> {
-    const { pdfFile, patientWalletAddress, labTechName } = input;
+    const { pdfFile, patientWalletAddress, patientId, labTechName } = input;
+
+    if (!patientId) {
+      throw new AppError({
+        message: 'Patient ID is required to submit a lab analysis.',
+        status: 400,
+        title: 'Missing Patient ID',
+        type: 'MISSING_PATIENT_ID',
+      });
+    }
 
     // 1. Read uploaded PDF into ArrayBuffer
     const fileBuffer = await pdfFile.arrayBuffer();
 
-    // 2. Encrypt with AES-256-GCM
-    const aesKey = await CryptoService.generateAESKey();
-    const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, aesKey);
+    // 2. Encrypt with a random per-document DocumentKey (AES-256-GCM)
+    const documentKey = await CryptoService.generateAESKey();
+    const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, documentKey);
 
-    // 3. Export AES key and encrypt via Lit Protocol
-    const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
-    const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyRaw)));
+    // 3. Resolve the patient's PatientMasterKey and wrap the DocumentKey with it
+    const patientMasterKey = await this.medicalDataCryptoService.resolvePatientAesKey(patientId);
+    const encryptedDocumentKey = await this.medicalDataCryptoService.wrapDocumentKey(
+      documentKey,
+      patientMasterKey
+    );
 
-    const patientAddress = getAddress(patientWalletAddress);
-    await this.litService.connect();
-    const accs = this.litService.createAccsBuilder(patientAddress);
-    const litResult = await this.litService.encrypt(aesKeyBase64, accs);
-
-    // 4. Build and upload IPFS payload
+    // 4. Build and upload the IPFS payload — no key material included
     const payload: EncryptedPayload = {
       encryptedFile: this.arrayBufferToBase64(encrypted),
       iv: this.arrayBufferToBase64(iv.buffer as ArrayBuffer),
-      litMetadata: {
-        ciphertext: litResult.ciphertext,
-        dataToEncryptHash: litResult.dataToEncryptHash,
-      },
       fileName: pdfFile.name,
       timestamp: Date.now(),
     };
 
     const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
 
-    // 5. Record on blockchain
+    // 5. Register the wrapped DocumentKey, indexed by the IPFS CID
+    await this.documentKeyService.create({
+      patientId,
+      ipfsCid,
+      encryptedDocumentKey,
+    });
+
+    // 6. Record on blockchain
     const title = pdfFile.name.replace(/\.pdf$/i, '').replace(/_/g, ' ');
     const labAnalysisId = await this.blockchainService.addLabAnalysis(
       title,
       ipfsCid,
-      patientAddress,
+      patientWalletAddress,
       labTechName
     );
 
@@ -76,54 +107,45 @@ export class LabAnalysisService {
 
   // ── Decryption ─────────────────────────────────────────────────────────────
 
-  async decryptAndOpen(analysis: LabAnalysis): Promise<void> {
+  /**
+   * @param analysis - The on-chain LabAnalysis object containing the IPFS CID.
+   * @param patientId - The patient's user ID (GUID) — needed to resolve the
+   *   PatientMasterKey. Pass the caller's own userId if they ARE the patient,
+   *   or the patient's userId if the caller is an authorized doctor/assistant.
+   */
+  async decryptAndOpen(analysis: LabAnalysis, patientId: string): Promise<void> {
     // 1. Download encrypted payload from IPFS
     const data = await this.ipfsService.downloadEncryptedData(analysis.ipfsCid);
 
-    // 2. Validate Lit metadata
-    if (!data.litMetadata?.ciphertext || !data.litMetadata?.dataToEncryptHash) {
+    // 2. Fetch the wrapped DocumentKey for this file
+    const documentKeyRecord = await this.documentKeyService.getByIpfsCid(analysis.ipfsCid);
+    if (!documentKeyRecord?.encryptedDocumentKey) {
       throw new AppError({
-        message: 'The encrypted payload is missing Lit Protocol metadata.',
+        message:
+          'No document key was found for this file. The analysis may be corrupted or ' +
+          'stored in an unsupported format.',
         status: 422,
-        title: 'Invalid Payload',
-        type: 'MISSING_LIT_METADATA',
+        title: 'Missing Document Key',
+        type: 'MISSING_DOCUMENT_KEY',
       });
     }
 
-    // 3. Connect to Lit Protocol
-    await this.litService.connect();
+    // 3. Resolve the caller's usable PatientMasterKey
+    const patientMasterKey = await this.medicalDataCryptoService.resolvePatientAesKey(patientId);
 
-    // 4. Build access control conditions
-    const accs = this.litService.createAccsBuilder(analysis.patientAddr);
-
-    // 5. Get wallet client for Lit SIWE auth
-    const walletClient = await this.web3Service.getViemWalletClient();
-
-    // 6. Decrypt AES key via Lit
-    const decryptResult = await this.litService.decrypt(
-      {
-        ciphertext: data.litMetadata.ciphertext,
-        dataToEncryptHash: data.litMetadata.dataToEncryptHash,
-      },
-      accs,
-      walletClient
+    // 4. Unwrap the DocumentKey and decrypt the file
+    const documentKey = await this.medicalDataCryptoService.unwrapDocumentKey(
+      documentKeyRecord.encryptedDocumentKey,
+      patientMasterKey
     );
 
-    // 7. Recover raw AES key
-    const raw = decryptResult.decryptedData as Uint8Array;
-    const aesKeyBase64 = new TextDecoder().decode(raw);
-    const aesKeyRaw = Uint8Array.from(atob(aesKeyBase64), (c) => c.charCodeAt(0))
-      .buffer as ArrayBuffer;
-    const aesKey = await CryptoService.importAESKey(aesKeyRaw);
-
-    // 8. Decrypt file
     const decryptedBuffer = await CryptoService.decryptFileWithAES(
       data.encryptedFile.buffer as ArrayBuffer,
-      aesKey,
+      documentKey,
       new Uint8Array(data.iv) as Uint8Array<ArrayBuffer>
     );
 
-    // 9. Open in new tab
+    // 5. Open in new tab
     const mimeType = this.getMimeType(data.fileName);
     const blob = new Blob([decryptedBuffer], { type: mimeType });
     const url = URL.createObjectURL(blob);

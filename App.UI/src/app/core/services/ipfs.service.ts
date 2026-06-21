@@ -62,7 +62,6 @@ export class IpfsService {
         iv: this.base64ToUint8Array(data.iv),
         fileName: data.fileName,
         timestamp: data.timestamp,
-        litMetadata: data.litMetadata,
       };
     } catch (error) {
       throw new AppError({

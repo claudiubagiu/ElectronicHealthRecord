@@ -7,6 +7,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { Diagnosis } from '../../../../core/models/blockchain.model';
 import { MAT_COMMON_IMPORTS } from '../../../../shared/imports/material.imports';
 import { SharedRecordCard } from '../../../../shared/components/shared-record-card/shared-record-card';
+import { AppError } from '../../../../core/errors/app.error';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-get-diagnostics',
@@ -16,6 +18,7 @@ import { SharedRecordCard } from '../../../../shared/components/shared-record-ca
   imports: [...MAT_COMMON_IMPORTS, SharedRecordCard],
 })
 export class GetDiagnostics implements OnInit {
+  private authService = inject(AuthService);
   private blockchainService = inject(BlockchainService);
   private web3Service = inject(Web3Service);
   private decryptionService = inject(DiagnosticDecryptionService);
@@ -55,7 +58,16 @@ export class GetDiagnostics implements OnInit {
   async openFile(diagnosis: Diagnosis): Promise<void> {
     this.downloadingId = diagnosis.id;
     try {
-      await this.decryptionService.decryptAndOpen(diagnosis);
+      const currentUser = this.authService.getDecodedToken();
+      if (!currentUser) {
+        throw new AppError({
+          message: 'You must be logged in.',
+          status: 401,
+          title: 'Unauthorized',
+          type: 'UNAUTHORIZED',
+        });
+      }
+      await this.decryptionService.decryptAndOpen(diagnosis, currentUser.userId);
     } catch {
       this.notify.showError('Failed to decrypt file.');
     } finally {

@@ -35,7 +35,7 @@ export const routes: Routes = [
       import('./features/patient-access/pages/patient-access/patient-access').then(
         (m) => m.PatientAccess
       ),
-    canActivate: [roleGuard(['Doctor', 'MedicalAssistant'])],
+    canActivate: [roleGuard(['Doctor', 'MedicalAssistant', 'LaboratoryTechnician'])],
   },
   {
     path: 'access-management',

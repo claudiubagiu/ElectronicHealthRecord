@@ -145,7 +145,7 @@ export class DoctorPatientProfile implements OnInit {
   async onOpenDiagnosis(diagnosis: Diagnosis): Promise<void> {
     this.openingDiagnosisId = diagnosis.id;
     try {
-      await this.diagService.decryptAndOpen(diagnosis);
+      await this.diagService.decryptAndOpen(diagnosis, this.patientId);
     } catch {
       this.notify.showError('Failed to decrypt diagnosis.');
     } finally {
@@ -156,7 +156,7 @@ export class DoctorPatientProfile implements OnInit {
   async onOpenPrescription(prescription: Prescription): Promise<void> {
     this.openingPrescriptionId = prescription.id;
     try {
-      await this.rxService.decryptAndOpenForPatient(prescription);
+      await this.rxService.decryptAndOpenForPatient(prescription, this.patientId);
     } catch {
       this.notify.showError('Failed to decrypt prescription.');
     } finally {
@@ -167,7 +167,7 @@ export class DoctorPatientProfile implements OnInit {
   async onOpenLabAnalysis(analysis: LabAnalysis): Promise<void> {
     this.openingLabAnalysisId = analysis.id;
     try {
-      await this.labService.decryptAndOpen(analysis);
+      await this.labService.decryptAndOpen(analysis, this.patientId);
     } catch {
       this.notify.showError('Failed to decrypt lab analysis.');
     } finally {

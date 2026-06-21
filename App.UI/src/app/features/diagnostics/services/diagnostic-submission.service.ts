@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { getAddress } from 'ethers';
 import { BlockchainService } from '../../../core/services/blockchain.service';
 import { IpfsService } from '../../../core/services/ipfs.service';
-import { LitProtocolService } from '../../../core/services/lit-protocol.service';
+import { DocumentKeyService } from '../../../core/services/document-key.service';
 import { CryptoService } from '../../../core/services/crypto.service';
 import {
   DiagnosticPdfService,
@@ -12,6 +11,7 @@ import {
 import { EncryptedPayload } from '../../../core/models/ipfs.model';
 import { MedicalDataService } from '../../medical-data/services/medical-data.service';
 import { MedicalDataCryptoService } from '../../medical-data/services/medical-data-crypto.service';
+import { AppError } from '../../../core/errors/app.error';
 
 /**
  * Input data required to submit a diagnosis.
@@ -29,8 +29,9 @@ export interface DiagnosticSubmissionInput {
   /** IDs of medical records selected as relevant for this consultation. */
   linkedMedicalRecordIds?: string[];
 
-  /** The patient's user ID (GUID) — needed to fetch medical records for the PDF. */
-  patientId?: string;
+  /** The patient's user ID (GUID) — required to resolve the PatientMasterKey
+   *  and to register the new DocumentKey in AccessRequests.Api. */
+  patientId: string;
 }
 
 /**
@@ -49,9 +50,13 @@ export interface DiagnosticSubmissionResult {
  *
  * 1. Resolve selected medical records and inject them into the PDF data.
  * 2. Generate a PDF from the diagnostic data.
- * 3. Encrypt the PDF with a random AES-256-GCM key.
- * 4. Encrypt the AES key via Lit Protocol (access-controlled).
- * 5. Upload the encrypted payload to IPFS (Base64-encoded).
+ * 3. Encrypt the PDF with a random per-document DocumentKey (AES-256-GCM).
+ * 4. Resolve the patient's PatientMasterKey (via envelope/own profile) and
+ *    wrap the DocumentKey with it.
+ * 5. Upload the encrypted file to IPFS (Base64-encoded, no key material).
+ * 6. Register the wrapped DocumentKey in AccessRequests.Api, keyed by the
+ *    IPFS CID returned in step 5.
+ * 7. Record the diagnosis on-chain.
  *
  * This service owns NO UI state — it simply accepts data and returns a result
  * or throws an error. The calling component handles loading indicators,
@@ -62,22 +67,31 @@ export class DiagnosticSubmissionService {
   private pdfService = inject(DiagnosticPdfService);
   private blockchainService = inject(BlockchainService);
   private ipfsService = inject(IpfsService);
-  private litService = inject(LitProtocolService);
+  private documentKeyService = inject(DocumentKeyService);
   private medicalDataService = inject(MedicalDataService);
   private medicalDataCryptoService = inject(MedicalDataCryptoService);
 
   /**
    * Runs the full submission pipeline.
    *
-   * @param input - The diagnostic data, patient wallet, doctor name, and optional linked records.
+   * @param input - The diagnostic data, patient wallet/id, doctor name, and optional linked records.
    * @returns The on-chain diagnosis ID and the IPFS CID.
    * @throws {AppError} If any step in the pipeline fails.
    */
   async submit(input: DiagnosticSubmissionInput): Promise<DiagnosticSubmissionResult> {
     const { pdfData, patientWalletAddress, doctorName, linkedMedicalRecordIds, patientId } = input;
 
+    if (!patientId) {
+      throw new AppError({
+        message: 'Patient ID is required to submit a diagnosis.',
+        status: 400,
+        title: 'Missing Patient ID',
+        type: 'MISSING_PATIENT_ID',
+      });
+    }
+
     // 1. Resolve selected medical records into human-readable summaries for the PDF
-    if (linkedMedicalRecordIds?.length && patientId) {
+    if (linkedMedicalRecordIds?.length) {
       pdfData.selectedMedicalRecords = await this.resolveSelectedRecords(
         linkedMedicalRecordIds,
         patientId
@@ -88,41 +102,40 @@ export class DiagnosticSubmissionService {
     const pdfBlob = await this.pdfService.generateDiagnosticPdf(pdfData);
     const fileBuffer = await pdfBlob.arrayBuffer();
 
-    // 3. Encrypt the PDF with a random AES-256-GCM key
-    const aesKey = await CryptoService.generateAESKey();
-    const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, aesKey);
+    // 3. Encrypt the PDF with a random per-document DocumentKey (AES-256-GCM)
+    const documentKey = await CryptoService.generateAESKey();
+    const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, documentKey);
 
-    // 4. Export the AES key as a Base64 string for Lit encryption
-    const aesKeyRaw = await CryptoService.exportAESKey(aesKey);
-    const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyRaw)));
+    // 4. Resolve the patient's PatientMasterKey and wrap the DocumentKey with it
+    const patientMasterKey = await this.medicalDataCryptoService.resolvePatientAesKey(patientId);
+    const encryptedDocumentKey = await this.medicalDataCryptoService.wrapDocumentKey(
+      documentKey,
+      patientMasterKey
+    );
 
-    // 5. Encrypt the AES key via Lit Protocol with patient-bound access control
-    const patientAddress = getAddress(patientWalletAddress);
-    await this.litService.connect();
-    const accs = this.litService.createAccsBuilder(patientAddress);
-    const litResult = await this.litService.encrypt(aesKeyBase64, accs);
-
-    // 6. Build the IPFS payload with Base64-encoded binary fields
+    // 5. Build and upload the IPFS payload — no key material included
     const fileName = `diagnostic_${pdfData.title.replace(/\s+/g, '_').toLowerCase()}.pdf`;
     const payload: EncryptedPayload = {
       encryptedFile: this.arrayBufferToBase64(encrypted),
       iv: this.arrayBufferToBase64(iv.buffer as ArrayBuffer),
-      litMetadata: {
-        ciphertext: litResult.ciphertext,
-        dataToEncryptHash: litResult.dataToEncryptHash,
-      },
       fileName,
       timestamp: Date.now(),
     };
 
-    // 7. Upload encrypted payload to IPFS via the backend proxy
     const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
 
-    // 8. Store the IPFS CID on the blockchain smart contract
+    // 6. Register the wrapped DocumentKey, indexed by the IPFS CID
+    await this.documentKeyService.create({
+      patientId,
+      ipfsCid,
+      encryptedDocumentKey,
+    });
+
+    // 7. Store the IPFS CID on the blockchain smart contract
     const diagnosisId = await this.blockchainService.addDiagnosis(
       pdfData.title,
       ipfsCid,
-      patientAddress,
+      patientWalletAddress,
       doctorName
     );
 

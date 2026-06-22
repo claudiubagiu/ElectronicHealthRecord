@@ -35,7 +35,9 @@ namespace Auth.Api.Controllers
         [HttpGet("medics/pending")]
         public async Task<IActionResult> GetPendingMedics()
         {
-            var allUsers = await _userManager.Users.ToListAsync();
+            var allUsers = await _userManager.Users
+                .Include(u => u.User)
+                .ToListAsync();
             var result = new List<PendingMedicDto>();
 
             foreach (var user in allUsers.Where(u => !u.IsApproved))
@@ -56,7 +58,9 @@ namespace Auth.Api.Controllers
         [HttpGet("medics/approved")]
         public async Task<IActionResult> GetApprovedMedics()
         {
-            var allUsers = await _userManager.Users.ToListAsync();
+            var allUsers = await _userManager.Users
+                .Include(u => u.User)
+                .ToListAsync();
             var result = new List<PendingMedicDto>();
 
             foreach (var user in allUsers.Where(u => u.IsApproved))
@@ -77,7 +81,9 @@ namespace Auth.Api.Controllers
         [HttpPost("medics/{userId}/approve")]
         public async Task<IActionResult> ApproveMedic(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.Users
+                .Include(u => u.User)
+                .FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
                 return NotFound(new ProblemDetails { Title = "User not found", Status = 404 });
 
@@ -100,7 +106,9 @@ namespace Auth.Api.Controllers
         [HttpPost("medics/{userId}/revoke")]
         public async Task<IActionResult> RevokeMedic(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.Users
+                .Include(u => u.User)
+                .FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
                 return NotFound(new ProblemDetails { Title = "User not found", Status = 404 });
 

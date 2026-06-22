@@ -3,6 +3,10 @@ pragma solidity ^0.8.20;
 
 contract EHRAccess {
 
+    // ── Roles (RBAC) ─────────────────────────────────────────────────────────
+
+    enum Role { NONE, DOCTOR, LAB_TECH, PHARMACIST, MEDICAL_ASSISTANT }
+
     // ── Structs ──────────────────────────────────────────────────────────────
 
     struct Diagnosis {
@@ -43,56 +47,30 @@ contract EHRAccess {
         bool    exists;
     }
 
-    struct DiagnosisSummary {
-        uint256 id;
-        string  title;
-        uint256 timestamp;
-        address patientAddr;
-        address doctorAddr;
-        string  doctorName;
-    }
-
-    struct LabAnalysisSummary {
-        uint256 id;
-        string  title;
-        uint256 timestamp;
-        address patientAddr;
-        address labTechAddr;
-        string  labTechName;
-    }
-
-    struct PrescriptionSummary {
-        uint256 id;
-        string  title;
-        uint256 timestamp;
-        address patientAddr;
-        address doctorAddr;
-        string  doctorName;
-        bool    dispensed;
-        uint256 dispensedTimestamp;
-        address dispensedBy;
-    }
-
     // ── Storage ──────────────────────────────────────────────────────────────
 
     address public owner;
-    mapping(address => bool) public approvedMedics;
 
-    mapping(uint256 => Diagnosis)   private _diagnoses;
+    // RBAC
+    mapping(address => Role) private _roles;
+
+    // ABAC — time-limited access grants: _accessExpiry[patient][medic]
+    mapping(address => mapping(address => uint256)) private _accessExpiry;
+
+    mapping(uint256 => Diagnosis)  private _diagnoses;
     uint256 private _nextDiagnosisId;
 
     mapping(uint256 => LabAnalysis) private _labAnalyses;
     uint256 private _nextLabAnalysisId;
 
-    mapping(uint256 => Prescription)  private _prescriptions;
+    mapping(uint256 => Prescription) private _prescriptions;
     uint256 private _nextPrescriptionId = 1;
 
-    mapping(bytes32 => uint256)       private _codeHashToPrescriptionId;
-    mapping(address => uint256[])     private _patientPrescriptions;
-    mapping(address => uint256[])     private _doctorPrescriptions;
-    mapping(address => uint256[])     private _dispensedBy;
+    mapping(bytes32 => uint256)   private _codeHashToPrescriptionId;
+    mapping(address => uint256[]) private _patientPrescriptions;
+    mapping(address => uint256[]) private _doctorPrescriptions;
+    mapping(address => uint256[]) private _dispensedBy;
 
-    mapping(address => mapping(address => uint256)) private _accessExpiry;
     mapping(address => uint256[]) private _patientDiagnoses;
     mapping(address => uint256[]) private _doctorDiagnoses;
 
@@ -102,51 +80,33 @@ contract EHRAccess {
     // ── Events ───────────────────────────────────────────────────────────────
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event MedicApproved(address indexed medic);
-    event MedicRevoked(address indexed medic);
+    event RoleAssigned(address indexed account, Role role);
+    event RoleRevoked(address indexed account);
 
-    event AccessGranted(address indexed patient, address indexed doctor, uint256 expiresAt);
-    event AccessRevoked(address indexed patient, address indexed doctor);
+    event AccessGranted(address indexed patient, address indexed medic, uint256 expiresAt);
+    event AccessRevoked(address indexed patient, address indexed medic);
 
-    event DiagnosisAdded(
-        uint256 indexed diagnosisId,
-        address indexed patient,
-        address indexed doctor,
-        string  ipfsCid,
-        uint256 timestamp
-    );
-
-    event LabAnalysisAdded(
-        uint256 indexed labAnalysisId,
-        address indexed patient,
-        address indexed labTech,
-        string  ipfsCid,
-        uint256 timestamp
-    );
-
-    event PrescriptionAdded(
-        uint256 indexed prescriptionId,
-        address indexed patient,
-        address indexed doctor,
-        string  ipfsCid,
-        uint256 timestamp
-    );
-
-    event PrescriptionDispensed(
-        uint256 indexed prescriptionId,
-        address indexed dispensedBy,
-        uint256 timestamp
-    );
+    event DiagnosisAdded(uint256 indexed id, address indexed patient, address indexed doctor, string ipfsCid, uint256 timestamp);
+    event LabAnalysisAdded(uint256 indexed id, address indexed patient, address indexed labTech, string ipfsCid, uint256 timestamp);
+    event PrescriptionAdded(uint256 indexed id, address indexed patient, address indexed doctor, string ipfsCid, uint256 timestamp);
+    event PrescriptionDispensed(uint256 indexed id, address indexed dispensedBy, uint256 timestamp);
 
     // ── Modifiers ────────────────────────────────────────────────────────────
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "EHRAccess: not owner");
+        require(msg.sender == owner, "not owner");
         _;
     }
 
-    modifier onlyApproved() {
-        require(approvedMedics[msg.sender], "EHRAccess: not an approved medic");
+    /// @dev RBAC check — caller must have the specified role.
+    modifier onlyRole(Role role) {
+        require(_roles[msg.sender] == role, "wrong role");
+        _;
+    }
+
+    /// @dev ABAC check — caller must have a non-expired access grant from patient.
+    modifier hasAccess(address patient) {
+        require(_accessExpiry[patient][msg.sender] > block.timestamp, "no access");
         _;
     }
 
@@ -159,68 +119,66 @@ contract EHRAccess {
 
     // ── Admin ────────────────────────────────────────────────────────────────
 
-    /// @notice Approves a medic (doctor, lab technician, or pharmacist) to write on-chain.
-    /// @param medic The wallet address of the medic to approve.
-    function approveMedic(address medic) external onlyOwner {
-        require(medic != address(0), "EHRAccess: zero address");
-        require(!approvedMedics[medic], "EHRAccess: already approved");
-        approvedMedics[medic] = true;
-        emit MedicApproved(medic);
+    /// @notice Assigns a role to an account (RBAC). Replaces approveMedic.
+    function assignRole(address account, Role role) external onlyOwner {
+        require(account != address(0), "zero address");
+        require(role != Role.NONE, "use revokeRole");
+        _roles[account] = role;
+        emit RoleAssigned(account, role);
     }
 
-    /// @notice Revokes write access from a previously approved medic.
-    /// @param medic The wallet address of the medic to revoke.
-    function revokeMedic(address medic) external onlyOwner {
-        require(approvedMedics[medic], "EHRAccess: not approved");
-        approvedMedics[medic] = false;
-        emit MedicRevoked(medic);
+    /// @notice Revokes any role from an account.
+    function revokeRole(address account) external onlyOwner {
+        require(_roles[account] != Role.NONE, "no role");
+        _roles[account] = Role.NONE;
+        emit RoleRevoked(account);
     }
 
     /// @notice Transfers contract ownership to a new address.
-    /// @param newOwner The wallet address of the new owner.
     function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0), "EHRAccess: zero address");
+        require(newOwner != address(0), "zero address");
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 
-    /// @notice Returns whether a given address is an approved medic.
-    function isApprovedMedic(address medic) external view returns (bool) {
-        return approvedMedics[medic];
+    /// @notice Returns the role of a given account.
+    function getRole(address account) external view returns (Role) {
+        return _roles[account];
     }
 
-    // ── Access Control ───────────────────────────────────────────────────────
+    // ── Access Control (ABAC) ─────────────────────────────────────────────────
 
-    /// @notice Patient grants time-limited access to a doctor or lab technician.
-    function grantAccess(address doctor, uint256 durationSeconds) external {
-        require(doctor != address(0), "EHRAccess: zero address");
-        require(doctor != msg.sender, "EHRAccess: cannot grant access to yourself");
-        require(durationSeconds > 0, "EHRAccess: duration must be positive");
-
+    /// @notice Patient grants time-limited access to a medic.
+    function grantAccess(address medic, uint256 durationSeconds) external {
+        require(medic != address(0), "zero address");
+        require(medic != msg.sender, "self-grant");
+        require(durationSeconds > 0, "zero duration");
         uint256 expiresAt = block.timestamp + durationSeconds;
-        _accessExpiry[msg.sender][doctor] = expiresAt;
-        emit AccessGranted(msg.sender, doctor, expiresAt);
+        _accessExpiry[msg.sender][medic] = expiresAt;
+        emit AccessGranted(msg.sender, medic, expiresAt);
     }
 
-    function revokeAccess(address doctor) external {
-        _accessExpiry[msg.sender][doctor] = 0;
-        emit AccessRevoked(msg.sender, doctor);
+    /// @notice Patient revokes a medic's access.
+    function revokeAccess(address medic) external {
+        _accessExpiry[msg.sender][medic] = 0;
+        emit AccessRevoked(msg.sender, medic);
     }
 
-    /// @notice Returns true only if access exists AND has not expired.
-    function hasAccess(address patient, address doctor) external view returns (bool) {
-        if (doctor == patient) return true;
-        uint256 expiry = _accessExpiry[patient][doctor];
-        return expiry > block.timestamp;
+    /// @notice Returns true if medic has non-expired access to patient's records.
+    function hasAccessView(address patient, address medic) external view returns (bool) {
+        if (medic == patient) return true;
+        return _accessExpiry[patient][medic] > block.timestamp;
     }
 
-    /// @notice Returns the expiry timestamp (0 if no access).
-    function getAccessExpiry(address patient, address doctor) external view returns (uint256) {
-        return _accessExpiry[patient][doctor];
+    /// @notice Returns the expiry timestamp for a patient-medic pair (0 = no access).
+    function getAccessExpiry(address patient, address medic) external view returns (uint256) {
+        return _accessExpiry[patient][medic];
     }
 
     // ── Diagnoses ────────────────────────────────────────────────────────────
 
+    /// @notice Doctor adds a diagnosis for a patient.
+    /// @dev RBAC: caller must be DOCTOR. ABAC: caller must have patient's access grant.
     function addDiagnosis(
         string  calldata title,
         string  calldata ipfsCid,
@@ -228,61 +186,38 @@ contract EHRAccess {
         string  calldata doctorName
     )
         external
-        onlyApproved
+        onlyRole(Role.DOCTOR)
+        hasAccess(patientAddr)
         returns (uint256 id)
     {
-        require(bytes(title).length   > 0, "EHRAccess: empty title");
-        require(bytes(ipfsCid).length > 0, "EHRAccess: empty CID");
-        require(patientAddr != address(0),  "EHRAccess: zero patient address");
-        require(patientAddr != msg.sender,  "EHRAccess: doctor must differ from patient");
-        require(
-            _accessExpiry[patientAddr][msg.sender] > block.timestamp,
-            "EHRAccess: no access to patient profile"
-        );
+        require(bytes(title).length   > 0, "empty title");
+        require(bytes(ipfsCid).length > 0, "empty CID");
+        require(patientAddr != address(0), "zero address");
+        require(patientAddr != msg.sender, "self-diagnosis");
 
         id = _nextDiagnosisId++;
-
-        _diagnoses[id] = Diagnosis({
-            id:          id,
-            title:       title,
-            ipfsCid:     ipfsCid,
-            timestamp:   block.timestamp,
-            doctorAddr:  msg.sender,
-            doctorName:  doctorName,
-            patientAddr: patientAddr,
-            exists:      true
-        });
-
+        _diagnoses[id] = Diagnosis(id, title, ipfsCid, block.timestamp, msg.sender, doctorName, patientAddr, true);
         _patientDiagnoses[patientAddr].push(id);
         _doctorDiagnoses[msg.sender].push(id);
-
         emit DiagnosisAdded(id, patientAddr, msg.sender, ipfsCid, block.timestamp);
     }
 
-    function getDiagnosis(uint256 diagnosisId)
-        external
-        view
-        returns (Diagnosis memory)
-    {
+    function getDiagnosis(uint256 diagnosisId) external view returns (Diagnosis memory) {
         Diagnosis storage d = _diagnoses[diagnosisId];
-        require(d.exists, "EHRAccess: diagnosis not found");
+        require(d.exists, "not found");
         require(
             msg.sender == d.patientAddr ||
-            (_accessExpiry[d.patientAddr][msg.sender] > block.timestamp),
-            "EHRAccess: not authorized"
+            _accessExpiry[d.patientAddr][msg.sender] > block.timestamp,
+            "not authorized"
         );
         return d;
     }
 
-    function getPatientDiagnosisIds(address patient)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function getPatientDiagnosisIds(address patient) external view returns (uint256[] memory) {
         require(
             msg.sender == patient ||
-            (_accessExpiry[patient][msg.sender] > block.timestamp),
-            "EHRAccess: not authorized"
+            _accessExpiry[patient][msg.sender] > block.timestamp,
+            "not authorized"
         );
         return _patientDiagnoses[patient];
     }
@@ -295,34 +230,20 @@ contract EHRAccess {
         return _nextDiagnosisId;
     }
 
-    /// @notice Doctor fetches summaries of all diagnoses they have written.
-    function getDoctorDiagnosesSummary()
-        external
-        view
-        returns (DiagnosisSummary[] memory summaries)
-    {
+    /// @notice Returns full Diagnosis structs for all diagnoses written by the calling doctor.
+    /// @dev Summary fields (id, title, timestamp, addresses) are a subset — frontend maps from full struct.
+    function getDoctorDiagnosesSummary() external view returns (Diagnosis[] memory result) {
         uint256[] storage ids = _doctorDiagnoses[msg.sender];
-        summaries = new DiagnosisSummary[](ids.length);
+        result = new Diagnosis[](ids.length);
         for (uint256 i = 0; i < ids.length; i++) {
-            Diagnosis storage d = _diagnoses[ids[i]];
-            summaries[i] = DiagnosisSummary({
-                id:          d.id,
-                title:       d.title,
-                timestamp:   d.timestamp,
-                patientAddr: d.patientAddr,
-                doctorAddr:  d.doctorAddr,
-                doctorName:  d.doctorName
-            });
+            result[i] = _diagnoses[ids[i]];
         }
     }
 
-    // ── Lab Analyses ─────────────────────────────────────────────────────────
+    // ── Lab Analyses ──────────────────────────────────────────────────────────
 
     /// @notice Lab technician uploads an analysis for a patient.
-    /// @param title Short label for the analysis (e.g. "Complete Blood Count").
-    /// @param ipfsCid IPFS CID of the encrypted PDF.
-    /// @param patientAddr The patient's wallet address.
-    /// @param labTechName Display name of the lab technician.
+    /// @dev RBAC: caller must be LAB_TECH. ABAC: caller must have patient's access grant.
     function addLabAnalysis(
         string  calldata title,
         string  calldata ipfsCid,
@@ -330,62 +251,42 @@ contract EHRAccess {
         string  calldata labTechName
     )
         external
-        onlyApproved
+        onlyRole(Role.LAB_TECH)
+        hasAccess(patientAddr)
         returns (uint256 id)
     {
-        require(bytes(title).length   > 0, "EHRAccess: empty title");
-        require(bytes(ipfsCid).length > 0, "EHRAccess: empty CID");
-        require(patientAddr != address(0),  "EHRAccess: zero patient address");
-        require(patientAddr != msg.sender,  "EHRAccess: lab tech must differ from patient");
+        require(bytes(title).length   > 0, "empty title");
+        require(bytes(ipfsCid).length > 0, "empty CID");
+        require(patientAddr != address(0), "zero address");
+        require(patientAddr != msg.sender, "self-analysis");
 
         id = _nextLabAnalysisId++;
-
-        _labAnalyses[id] = LabAnalysis({
-            id:          id,
-            title:       title,
-            ipfsCid:     ipfsCid,
-            timestamp:   block.timestamp,
-            labTechAddr: msg.sender,
-            labTechName: labTechName,
-            patientAddr: patientAddr,
-            exists:      true
-        });
-
+        _labAnalyses[id] = LabAnalysis(id, title, ipfsCid, block.timestamp, msg.sender, labTechName, patientAddr, true);
         _patientLabAnalyses[patientAddr].push(id);
         _labTechAnalyses[msg.sender].push(id);
-
         emit LabAnalysisAdded(id, patientAddr, msg.sender, ipfsCid, block.timestamp);
     }
 
-    function getLabAnalysis(uint256 labAnalysisId)
-        external
-        view
-        returns (LabAnalysis memory)
-    {
+    function getLabAnalysis(uint256 labAnalysisId) external view returns (LabAnalysis memory) {
         LabAnalysis storage l = _labAnalyses[labAnalysisId];
-        require(l.exists, "EHRAccess: lab analysis not found");
+        require(l.exists, "not found");
         require(
             msg.sender == l.patientAddr ||
-            (_accessExpiry[l.patientAddr][msg.sender] > block.timestamp),
-            "EHRAccess: not authorized"
+            _accessExpiry[l.patientAddr][msg.sender] > block.timestamp,
+            "not authorized"
         );
         return l;
     }
 
-    function getPatientLabAnalysisIds(address patient)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function getPatientLabAnalysisIds(address patient) external view returns (uint256[] memory) {
         require(
             msg.sender == patient ||
-            (_accessExpiry[patient][msg.sender] > block.timestamp),
-            "EHRAccess: not authorized"
+            _accessExpiry[patient][msg.sender] > block.timestamp,
+            "not authorized"
         );
         return _patientLabAnalyses[patient];
     }
 
-    /// @notice Returns all lab analysis IDs submitted by the calling lab technician.
     function getLabTechAnalysisIds() external view returns (uint256[] memory) {
         return _labTechAnalyses[msg.sender];
     }
@@ -394,29 +295,19 @@ contract EHRAccess {
         return _nextLabAnalysisId;
     }
 
-    /// @notice Lab tech fetches summaries of all analyses they have uploaded.
-    function getLabTechAnalysesSummary()
-        external
-        view
-        returns (LabAnalysisSummary[] memory summaries)
-    {
+    /// @notice Returns full LabAnalysis structs for all analyses uploaded by the calling lab tech.
+    function getLabTechAnalysesSummary() external view returns (LabAnalysis[] memory result) {
         uint256[] storage ids = _labTechAnalyses[msg.sender];
-        summaries = new LabAnalysisSummary[](ids.length);
+        result = new LabAnalysis[](ids.length);
         for (uint256 i = 0; i < ids.length; i++) {
-            LabAnalysis storage l = _labAnalyses[ids[i]];
-            summaries[i] = LabAnalysisSummary({
-                id:          l.id,
-                title:       l.title,
-                timestamp:   l.timestamp,
-                patientAddr: l.patientAddr,
-                labTechAddr: l.labTechAddr,
-                labTechName: l.labTechName
-            });
+            result[i] = _labAnalyses[ids[i]];
         }
     }
 
     // ── Prescriptions ─────────────────────────────────────────────────────────
 
+    /// @notice Doctor records a prescription for a patient.
+    /// @dev RBAC: caller must be DOCTOR. ABAC: caller must have patient's access grant.
     function addPrescription(
         string  calldata title,
         string  calldata ipfsCid,
@@ -426,150 +317,94 @@ contract EHRAccess {
         bytes32          salt
     )
         external
-        onlyApproved
+        onlyRole(Role.DOCTOR)
+        hasAccess(patientAddr)
         returns (uint256 id)
     {
-        require(bytes(title).length   > 0, "EHRAccess: empty title");
-        require(bytes(ipfsCid).length > 0, "EHRAccess: empty CID");
-        require(patientAddr != address(0),  "EHRAccess: zero patient address");
-        require(patientAddr != msg.sender,  "EHRAccess: doctor must differ from patient");
-        require(
-            _accessExpiry[patientAddr][msg.sender] > block.timestamp,
-            "EHRAccess: no access to patient profile"
-        );
-        require(
-            _codeHashToPrescriptionId[codeHash] == 0,
-            "EHRAccess: code hash collision"
-        );
+        require(bytes(title).length   > 0, "empty title");
+        require(bytes(ipfsCid).length > 0, "empty CID");
+        require(patientAddr != address(0), "zero address");
+        require(patientAddr != msg.sender, "self-prescription");
+        require(_codeHashToPrescriptionId[codeHash] == 0, "hash collision");
 
         id = _nextPrescriptionId++;
-
-        _prescriptions[id] = Prescription({
-            id:                 id,
-            title:              title,
-            ipfsCid:            ipfsCid,
-            patientAddr:        patientAddr,
-            doctorAddr:         msg.sender,
-            doctorName:         doctorName,
-            timestamp:          block.timestamp,
-            codeHash:           codeHash,
-            salt:               salt,
-            dispensed:          false,
-            dispensedTimestamp: 0,
-            dispensedBy:        address(0),
-            exists:             true
-        });
-
+        _prescriptions[id] = Prescription(
+            id, title, ipfsCid, patientAddr, msg.sender, doctorName,
+            block.timestamp, codeHash, salt,
+            false, 0, address(0), true
+        );
         _codeHashToPrescriptionId[codeHash] = id;
         _patientPrescriptions[patientAddr].push(id);
         _doctorPrescriptions[msg.sender].push(id);
-
         emit PrescriptionAdded(id, patientAddr, msg.sender, ipfsCid, block.timestamp);
     }
 
-    function getPrescriptionByCodeHash(bytes32 codeHash)
-        external
-        view
-        returns (Prescription memory)
-    {
+    /// @notice Pharmacist dispenses a prescription by its code hash.
+    /// @dev RBAC: caller must be PHARMACIST.
+    function dispensePrescription(bytes32 codeHash) external onlyRole(Role.PHARMACIST) {
         uint256 id = _codeHashToPrescriptionId[codeHash];
-        require(id != 0, "EHRAccess: prescription not found");
-        return _prescriptions[id];
-    }
-
-    function dispensePrescription(bytes32 codeHash) external onlyApproved {
-        uint256 id = _codeHashToPrescriptionId[codeHash];
-        require(id != 0, "EHRAccess: prescription not found");
-
+        require(id != 0, "not found");
         Prescription storage p = _prescriptions[id];
-        require(!p.dispensed, "EHRAccess: already dispensed");
-
+        require(!p.dispensed, "already dispensed");
         p.dispensed          = true;
         p.dispensedBy        = msg.sender;
         p.dispensedTimestamp = block.timestamp;
-
         _dispensedBy[msg.sender].push(id);
-
         emit PrescriptionDispensed(id, msg.sender, block.timestamp);
     }
 
-    function getPatientPrescriptionIds(address patient)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        require(
-            msg.sender == patient ||
-            (_accessExpiry[patient][msg.sender] > block.timestamp),
-            "EHRAccess: not authorized"
-        );
-        return _patientPrescriptions[patient];
-    }
-
-    function getPrescription(uint256 prescriptionId)
-        external
-        view
-        returns (Prescription memory)
-    {
-        Prescription storage p = _prescriptions[prescriptionId];
-        require(p.exists, "EHRAccess: prescription not found");
+    function getPrescriptionByCodeHash(bytes32 codeHash) external view returns (Prescription memory) {
+        uint256 id = _codeHashToPrescriptionId[codeHash];
+        require(id != 0, "not found");
+        Prescription storage p = _prescriptions[id];
         require(
             msg.sender == p.patientAddr ||
-            (_accessExpiry[p.patientAddr][msg.sender] > block.timestamp),
-            "EHRAccess: not authorized"
+            _accessExpiry[p.patientAddr][msg.sender] > block.timestamp ||
+            _roles[msg.sender] == Role.PHARMACIST,
+            "not authorized"
         );
         return p;
+    }
+
+    function getPrescription(uint256 prescriptionId) external view returns (Prescription memory) {
+        Prescription storage p = _prescriptions[prescriptionId];
+        require(p.exists, "not found");
+        require(
+            msg.sender == p.patientAddr ||
+            _accessExpiry[p.patientAddr][msg.sender] > block.timestamp,
+            "not authorized"
+        );
+        return p;
+    }
+
+    function getPatientPrescriptionIds(address patient) external view returns (uint256[] memory) {
+        require(
+            msg.sender == patient ||
+            _accessExpiry[patient][msg.sender] > block.timestamp,
+            "not authorized"
+        );
+        return _patientPrescriptions[patient];
     }
 
     function getDoctorPrescriptionIds() external view returns (uint256[] memory) {
         return _doctorPrescriptions[msg.sender];
     }
 
-    /// @notice Doctor fetches summaries of all prescriptions they have written.
-    function getDoctorPrescriptionsSummary()
-        external
-        view
-        returns (PrescriptionSummary[] memory summaries)
-    {
+    /// @notice Returns full Prescription structs for all prescriptions written by the calling doctor.
+    function getDoctorPrescriptionsSummary() external view returns (Prescription[] memory result) {
         uint256[] storage ids = _doctorPrescriptions[msg.sender];
-        summaries = new PrescriptionSummary[](ids.length);
+        result = new Prescription[](ids.length);
         for (uint256 i = 0; i < ids.length; i++) {
-            Prescription storage p = _prescriptions[ids[i]];
-            summaries[i] = PrescriptionSummary({
-                id:                 p.id,
-                title:              p.title,
-                timestamp:          p.timestamp,
-                patientAddr:        p.patientAddr,
-                doctorAddr:         p.doctorAddr,
-                doctorName:         p.doctorName,
-                dispensed:          p.dispensed,
-                dispensedTimestamp: p.dispensedTimestamp,
-                dispensedBy:        p.dispensedBy
-            });
+            result[i] = _prescriptions[ids[i]];
         }
     }
 
-    /// @notice Pharmacist fetches summaries of all prescriptions they have dispensed.
-    function getPharmacistDispensedSummary()
-        external
-        view
-        returns (PrescriptionSummary[] memory summaries)
-    {
+    /// @notice Returns full Prescription structs for all prescriptions dispensed by the calling pharmacist.
+    function getPharmacistDispensedSummary() external view returns (Prescription[] memory result) {
         uint256[] storage ids = _dispensedBy[msg.sender];
-        summaries = new PrescriptionSummary[](ids.length);
+        result = new Prescription[](ids.length);
         for (uint256 i = 0; i < ids.length; i++) {
-            Prescription storage p = _prescriptions[ids[i]];
-            summaries[i] = PrescriptionSummary({
-                id:                 p.id,
-                title:              p.title,
-                timestamp:          p.timestamp,
-                patientAddr:        p.patientAddr,
-                doctorAddr:         p.doctorAddr,
-                doctorName:         p.doctorName,
-                dispensed:          p.dispensed,
-                dispensedTimestamp: p.dispensedTimestamp,
-                dispensedBy:        p.dispensedBy
-            });
+            result[i] = _prescriptions[ids[i]];
         }
     }
 }

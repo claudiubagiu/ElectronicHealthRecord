@@ -27,8 +27,9 @@ namespace Auth.Api.Mappings
             WalletAddress = dto.WalletAddress,
             Challenge = string.Empty,
             EncryptedAesKey = dto.EncryptedAesKey,
+            EccPublicKey = dto.EccPublicKey,
         };
-
+           
         /// <summary>
         /// ApplicationUser → LoginResponseDto.
         /// Token doesn't exist on ApplicationUser; AuthService.Register sets the

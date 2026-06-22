@@ -1,5 +1,5 @@
 {
-  "address": "0xF12d746Ad6B9d57c26b0c0deAAE76678a72ee088",
+  "address": "0x3e147F9FC40f020787FCDC39bc6d2b5F6e3c06aF",
   "abi": [
     {
       "inputs": [],
@@ -18,7 +18,7 @@
         {
           "indexed": true,
           "internalType": "address",
-          "name": "doctor",
+          "name": "medic",
           "type": "address"
         },
         {
@@ -43,7 +43,7 @@
         {
           "indexed": true,
           "internalType": "address",
-          "name": "doctor",
+          "name": "medic",
           "type": "address"
         }
       ],
@@ -56,7 +56,7 @@
         {
           "indexed": true,
           "internalType": "uint256",
-          "name": "diagnosisId",
+          "name": "id",
           "type": "uint256"
         },
         {
@@ -93,7 +93,7 @@
         {
           "indexed": true,
           "internalType": "uint256",
-          "name": "labAnalysisId",
+          "name": "id",
           "type": "uint256"
         },
         {
@@ -130,32 +130,6 @@
         {
           "indexed": true,
           "internalType": "address",
-          "name": "medic",
-          "type": "address"
-        }
-      ],
-      "name": "MedicApproved",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "medic",
-          "type": "address"
-        }
-      ],
-      "name": "MedicRevoked",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
           "name": "previousOwner",
           "type": "address"
         },
@@ -175,7 +149,7 @@
         {
           "indexed": true,
           "internalType": "uint256",
-          "name": "prescriptionId",
+          "name": "id",
           "type": "uint256"
         },
         {
@@ -212,7 +186,7 @@
         {
           "indexed": true,
           "internalType": "uint256",
-          "name": "prescriptionId",
+          "name": "id",
           "type": "uint256"
         },
         {
@@ -229,6 +203,38 @@
         }
       ],
       "name": "PrescriptionDispensed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum EHRAccess.Role",
+          "name": "role",
+          "type": "uint8"
+        }
+      ],
+      "name": "RoleAssigned",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "RoleRevoked",
       "type": "event"
     },
     {
@@ -347,32 +353,18 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "medic",
+          "name": "account",
           "type": "address"
+        },
+        {
+          "internalType": "enum EHRAccess.Role",
+          "name": "role",
+          "type": "uint8"
         }
       ],
-      "name": "approveMedic",
+      "name": "assignRole",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "approvedMedics",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -397,7 +389,7 @@
         },
         {
           "internalType": "address",
-          "name": "doctor",
+          "name": "medic",
           "type": "address"
         }
       ],
@@ -490,14 +482,14 @@
               "type": "string"
             },
             {
+              "internalType": "string",
+              "name": "ipfsCid",
+              "type": "string"
+            },
+            {
               "internalType": "uint256",
               "name": "timestamp",
               "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "patientAddr",
-              "type": "address"
             },
             {
               "internalType": "address",
@@ -508,10 +500,20 @@
               "internalType": "string",
               "name": "doctorName",
               "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "patientAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
             }
           ],
-          "internalType": "struct EHRAccess.DiagnosisSummary[]",
-          "name": "summaries",
+          "internalType": "struct EHRAccess.Diagnosis[]",
+          "name": "result",
           "type": "tuple[]"
         }
       ],
@@ -561,9 +563,9 @@
               "type": "string"
             },
             {
-              "internalType": "uint256",
-              "name": "timestamp",
-              "type": "uint256"
+              "internalType": "string",
+              "name": "ipfsCid",
+              "type": "string"
             },
             {
               "internalType": "address",
@@ -581,6 +583,21 @@
               "type": "string"
             },
             {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "codeHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            },
+            {
               "internalType": "bool",
               "name": "dispensed",
               "type": "bool"
@@ -594,10 +611,15 @@
               "internalType": "address",
               "name": "dispensedBy",
               "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
             }
           ],
-          "internalType": "struct EHRAccess.PrescriptionSummary[]",
-          "name": "summaries",
+          "internalType": "struct EHRAccess.Prescription[]",
+          "name": "result",
           "type": "tuple[]"
         }
       ],
@@ -682,14 +704,14 @@
               "type": "string"
             },
             {
+              "internalType": "string",
+              "name": "ipfsCid",
+              "type": "string"
+            },
+            {
               "internalType": "uint256",
               "name": "timestamp",
               "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "patientAddr",
-              "type": "address"
             },
             {
               "internalType": "address",
@@ -700,10 +722,20 @@
               "internalType": "string",
               "name": "labTechName",
               "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "patientAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
             }
           ],
-          "internalType": "struct EHRAccess.LabAnalysisSummary[]",
-          "name": "summaries",
+          "internalType": "struct EHRAccess.LabAnalysis[]",
+          "name": "result",
           "type": "tuple[]"
         }
       ],
@@ -797,9 +829,9 @@
               "type": "string"
             },
             {
-              "internalType": "uint256",
-              "name": "timestamp",
-              "type": "uint256"
+              "internalType": "string",
+              "name": "ipfsCid",
+              "type": "string"
             },
             {
               "internalType": "address",
@@ -817,6 +849,21 @@
               "type": "string"
             },
             {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "codeHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            },
+            {
               "internalType": "bool",
               "name": "dispensed",
               "type": "bool"
@@ -830,10 +877,15 @@
               "internalType": "address",
               "name": "dispensedBy",
               "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
             }
           ],
-          "internalType": "struct EHRAccess.PrescriptionSummary[]",
-          "name": "summaries",
+          "internalType": "struct EHRAccess.Prescription[]",
+          "name": "result",
           "type": "tuple[]"
         }
       ],
@@ -1016,7 +1068,26 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "doctor",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "getRole",
+      "outputs": [
+        {
+          "internalType": "enum EHRAccess.Role",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "medic",
           "type": "address"
         },
         {
@@ -1039,30 +1110,11 @@
         },
         {
           "internalType": "address",
-          "name": "doctor",
-          "type": "address"
-        }
-      ],
-      "name": "hasAccess",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
           "name": "medic",
           "type": "address"
         }
       ],
-      "name": "isApprovedMedic",
+      "name": "hasAccessView",
       "outputs": [
         {
           "internalType": "bool",
@@ -1090,7 +1142,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "doctor",
+          "name": "medic",
           "type": "address"
         }
       ],
@@ -1103,11 +1155,11 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "medic",
+          "name": "account",
           "type": "address"
         }
       ],
-      "name": "revokeMedic",
+      "name": "revokeRole",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

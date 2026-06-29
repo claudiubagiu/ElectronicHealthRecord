@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PastDiagnosesDialog } from './past-diagnoses-dialog';
+import { PastDiagnosesDialogComponent } from './past-diagnoses-dialog';
 
 describe('PastDiagnosesDialog', () => {
-  let component: PastDiagnosesDialog;
-  let fixture: ComponentFixture<PastDiagnosesDialog>;
+  let component: PastDiagnosesDialogComponent;
+  let fixture: ComponentFixture<PastDiagnosesDialogComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PastDiagnosesDialog]
-    })
-    .compileComponents();
+      imports: [PastDiagnosesDialogComponent],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(PastDiagnosesDialog);
+    fixture = TestBed.createComponent(PastDiagnosesDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

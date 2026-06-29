@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ResetKeysDialog } from './reset-keys-dialog';
+import { ResetKeysDialogComponent } from './reset-keys-dialog';
 
 describe('ResetKeysDialog', () => {
-  let component: ResetKeysDialog;
-  let fixture: ComponentFixture<ResetKeysDialog>;
+  let component: ResetKeysDialogComponent;
+  let fixture: ComponentFixture<ResetKeysDialogComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ResetKeysDialog]
-    })
-    .compileComponents();
+      imports: [ResetKeysDialogComponent],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(ResetKeysDialog);
+    fixture = TestBed.createComponent(ResetKeysDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

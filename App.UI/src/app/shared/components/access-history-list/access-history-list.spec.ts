@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AccessHistoryList } from './access-history-list';
+import { AccessHistoryListComponent } from './access-history-list';
 
 describe('AccessHistoryList', () => {
-  let component: AccessHistoryList;
-  let fixture: ComponentFixture<AccessHistoryList>;
+  let component: AccessHistoryListComponent;
+  let fixture: ComponentFixture<AccessHistoryListComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AccessHistoryList]
-    })
-    .compileComponents();
+      imports: [AccessHistoryListComponent],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(AccessHistoryList);
+    fixture = TestBed.createComponent(AccessHistoryListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

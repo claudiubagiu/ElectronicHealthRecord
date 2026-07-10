@@ -12,8 +12,6 @@ contract EHRAccessTest {
         ehrAccess = new EHRAccess();
     }
 
-    // ── assignRole ────────────────────────────────────────────────────────
-
     function testAssignDoctorRoleSucceeds() public {
         address doctor = address(0x1);
         ehrAccess.assignRole(doctor, EHRAccess.Role.DOCTOR);
@@ -51,8 +49,6 @@ contract EHRAccessTest {
         }
     }
 
-    // ── revokeRole ────────────────────────────────────────────────────────
-
     function testRevokeRoleSucceeds() public {
         address doctor = address(0x1);
         ehrAccess.assignRole(doctor, EHRAccess.Role.DOCTOR);
@@ -73,8 +69,6 @@ contract EHRAccessTest {
         }
     }
 
-    // ── getRole ───────────────────────────────────────────────────────────
-
     function testGetRoleReturnNoneByDefault() public {
         address anyone = address(0x5);
         Assert.equal(
@@ -83,8 +77,6 @@ contract EHRAccessTest {
             "Role should be NONE by default"
         );
     }
-
-    // ── transferOwnership ─────────────────────────────────────────────────
 
     function testTransferOwnershipSucceeds() public {
         address newOwner = address(0x9);
@@ -104,8 +96,6 @@ contract EHRAccessTest {
         }
     }
 
-    // ── hasAccessView ─────────────────────────────────────────────────────
-
     function testHasAccessViewReturnsFalseByDefault() public {
         address doctor = address(0x1);
         address patient = address(0x2);
@@ -124,8 +114,6 @@ contract EHRAccessTest {
             "Patient should have access to themselves"
         );
     }
-
-    // ── grantAccess ───────────────────────────────────────────────────────
 
     function testGrantAccessToZeroAddressFails() public {
         try ehrAccess.grantAccess(address(0), 86400) {

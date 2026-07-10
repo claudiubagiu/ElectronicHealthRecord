@@ -6,8 +6,6 @@ namespace Users.Api.Mappings
 {
     public static class Mapper
     {
-        // ───────────────────────── IdentityCreatedEvent → domain ─────────────────────────
-
         public static Patient ToPatient(IdentityCreatedEvent evt) => new()
         {
             Id = Guid.NewGuid(),
@@ -69,8 +67,6 @@ namespace Users.Api.Mappings
             PublicKey = evt.PublicKey,
         };
 
-        // ───────────────────────── domain → UserCreatedResponseEvent ─────────────────────────
-
         public static UserCreatedResponseEvent ToUserCreatedResponseEvent(Patient p) => new()
         {
             Id = p.Id.ToString(),
@@ -110,8 +106,6 @@ namespace Users.Api.Mappings
             FirstName = m.FirstName,
             LastName = m.LastName,
         };
-
-        // ───────────────────────── domain → UserCreatedEvent ─────────────────────────
         public static UserCreatedEvent ToUserCreatedEvent(Patient p) => new()
         {
             Id = p.Id.ToString(),
@@ -166,9 +160,6 @@ namespace Users.Api.Mappings
             PublicKey = m.PublicKey,
             EncryptedAesKey = null,
         };
-
-        // ───────────────────────── domain → Dto ─────────────────────────
-
         public static PatientDto ToPatientDto(Patient p) => new()
         {
             Id = p.Id,
@@ -229,9 +220,6 @@ namespace Users.Api.Mappings
             EntityAffiliation = m.EntityAffiliation,
             PublicKey = m.PublicKey,
         };
-
-        // ───────────────────────── IReadOnlyList<Patient> → IReadOnlyList<PatientDto> ─────────────────────────
-
         public static IReadOnlyList<PatientDto> ToPatientDtoList(IEnumerable<Patient> patients) =>
             patients.Select(ToPatientDto).ToList();
     }

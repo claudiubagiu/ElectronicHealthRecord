@@ -3,11 +3,7 @@ pragma solidity ^0.8.20;
 
 contract EHRAccess {
 
-    // ── Roles (RBAC) ─────────────────────────────────────────────────────────
-
     enum Role { NONE, DOCTOR, LAB_TECH, PHARMACIST, MEDICAL_ASSISTANT }
-
-    // ── Structs ──────────────────────────────────────────────────────────────
 
     struct Diagnosis {
         uint256 id;
@@ -47,14 +43,10 @@ contract EHRAccess {
         bool    exists;
     }
 
-    // ── Storage ──────────────────────────────────────────────────────────────
-
     address public owner;
 
-    // RBAC
     mapping(address => Role) private _roles;
 
-    // ABAC — time-limited access grants: _accessExpiry[patient][medic]
     mapping(address => mapping(address => uint256)) private _accessExpiry;
 
     mapping(uint256 => Diagnosis)  private _diagnoses;
@@ -77,8 +69,6 @@ contract EHRAccess {
     mapping(address => uint256[]) private _patientLabAnalyses;
     mapping(address => uint256[]) private _labTechAnalyses;
 
-    // ── Events ───────────────────────────────────────────────────────────────
-
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event RoleAssigned(address indexed account, Role role);
     event RoleRevoked(address indexed account);
@@ -91,35 +81,26 @@ contract EHRAccess {
     event PrescriptionAdded(uint256 indexed id, address indexed patient, address indexed doctor, string ipfsCid, uint256 timestamp);
     event PrescriptionDispensed(uint256 indexed id, address indexed dispensedBy, uint256 timestamp);
 
-    // ── Modifiers ────────────────────────────────────────────────────────────
-
     modifier onlyOwner() {
         require(msg.sender == owner, "not owner");
         _;
     }
 
-    /// @dev RBAC check — caller must have the specified role.
     modifier onlyRole(Role role) {
         require(_roles[msg.sender] == role, "wrong role");
         _;
     }
 
-    /// @dev ABAC check — caller must have a non-expired access grant from patient.
     modifier hasAccess(address patient) {
         require(_accessExpiry[patient][msg.sender] > block.timestamp, "no access");
         _;
     }
-
-    // ── Constructor ──────────────────────────────────────────────────────────
 
     constructor() {
         owner = msg.sender;
         emit OwnershipTransferred(address(0), msg.sender);
     }
 
-    // ── Admin ────────────────────────────────────────────────────────────────
-
-    /// @notice Assigns a role to an account (RBAC). Replaces approveMedic.
     function assignRole(address account, Role role) external onlyOwner {
         require(account != address(0), "zero address");
         require(role != Role.NONE, "use revokeRole");
@@ -127,28 +108,22 @@ contract EHRAccess {
         emit RoleAssigned(account, role);
     }
 
-    /// @notice Revokes any role from an account.
     function revokeRole(address account) external onlyOwner {
         require(_roles[account] != Role.NONE, "no role");
         _roles[account] = Role.NONE;
         emit RoleRevoked(account);
     }
 
-    /// @notice Transfers contract ownership to a new address.
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "zero address");
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 
-    /// @notice Returns the role of a given account.
     function getRole(address account) external view returns (Role) {
         return _roles[account];
     }
 
-    // ── Access Control (ABAC) ─────────────────────────────────────────────────
-
-    /// @notice Patient grants time-limited access to a medic.
     function grantAccess(address medic, uint256 durationSeconds) external {
         require(medic != address(0), "zero address");
         require(medic != msg.sender, "self-grant");
@@ -158,27 +133,20 @@ contract EHRAccess {
         emit AccessGranted(msg.sender, medic, expiresAt);
     }
 
-    /// @notice Patient revokes a medic's access.
     function revokeAccess(address medic) external {
         _accessExpiry[msg.sender][medic] = 0;
         emit AccessRevoked(msg.sender, medic);
     }
-
-    /// @notice Returns true if medic has non-expired access to patient's records.
+ 
     function hasAccessView(address patient, address medic) external view returns (bool) {
         if (medic == patient) return true;
         return _accessExpiry[patient][medic] > block.timestamp;
     }
 
-    /// @notice Returns the expiry timestamp for a patient-medic pair (0 = no access).
     function getAccessExpiry(address patient, address medic) external view returns (uint256) {
         return _accessExpiry[patient][medic];
     }
 
-    // ── Diagnoses ────────────────────────────────────────────────────────────
-
-    /// @notice Doctor adds a diagnosis for a patient.
-    /// @dev RBAC: caller must be DOCTOR. ABAC: caller must have patient's access grant.
     function addDiagnosis(
         string  calldata title,
         string  calldata ipfsCid,
@@ -230,8 +198,6 @@ contract EHRAccess {
         return _nextDiagnosisId;
     }
 
-    /// @notice Returns full Diagnosis structs for all diagnoses written by the calling doctor.
-    /// @dev Summary fields (id, title, timestamp, addresses) are a subset — frontend maps from full struct.
     function getDoctorDiagnosesSummary() external view returns (Diagnosis[] memory result) {
         uint256[] storage ids = _doctorDiagnoses[msg.sender];
         result = new Diagnosis[](ids.length);
@@ -240,10 +206,6 @@ contract EHRAccess {
         }
     }
 
-    // ── Lab Analyses ──────────────────────────────────────────────────────────
-
-    /// @notice Lab technician uploads an analysis for a patient.
-    /// @dev RBAC: caller must be LAB_TECH. ABAC: caller must have patient's access grant.
     function addLabAnalysis(
         string  calldata title,
         string  calldata ipfsCid,
@@ -295,7 +257,6 @@ contract EHRAccess {
         return _nextLabAnalysisId;
     }
 
-    /// @notice Returns full LabAnalysis structs for all analyses uploaded by the calling lab tech.
     function getLabTechAnalysesSummary() external view returns (LabAnalysis[] memory result) {
         uint256[] storage ids = _labTechAnalyses[msg.sender];
         result = new LabAnalysis[](ids.length);
@@ -304,10 +265,6 @@ contract EHRAccess {
         }
     }
 
-    // ── Prescriptions ─────────────────────────────────────────────────────────
-
-    /// @notice Doctor records a prescription for a patient.
-    /// @dev RBAC: caller must be DOCTOR. ABAC: caller must have patient's access grant.
     function addPrescription(
         string  calldata title,
         string  calldata ipfsCid,
@@ -339,8 +296,6 @@ contract EHRAccess {
         emit PrescriptionAdded(id, patientAddr, msg.sender, ipfsCid, block.timestamp);
     }
 
-    /// @notice Pharmacist dispenses a prescription by its code hash.
-    /// @dev RBAC: caller must be PHARMACIST.
     function dispensePrescription(bytes32 codeHash) external onlyRole(Role.PHARMACIST) {
         uint256 id = _codeHashToPrescriptionId[codeHash];
         require(id != 0, "not found");
@@ -390,7 +345,6 @@ contract EHRAccess {
         return _doctorPrescriptions[msg.sender];
     }
 
-    /// @notice Returns full Prescription structs for all prescriptions written by the calling doctor.
     function getDoctorPrescriptionsSummary() external view returns (Prescription[] memory result) {
         uint256[] storage ids = _doctorPrescriptions[msg.sender];
         result = new Prescription[](ids.length);
@@ -399,7 +353,6 @@ contract EHRAccess {
         }
     }
 
-    /// @notice Returns full Prescription structs for all prescriptions dispensed by the calling pharmacist.
     function getPharmacistDispensedSummary() external view returns (Prescription[] memory result) {
         uint256[] storage ids = _dispensedBy[msg.sender];
         result = new Prescription[](ids.length);

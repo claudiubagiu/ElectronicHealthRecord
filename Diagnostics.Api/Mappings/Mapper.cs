@@ -6,8 +6,6 @@ namespace Diagnostics.Api.Mappings
 {
     public static class Mapper
     {
-        // ───────────────────────── UserCreatedEvent → User ─────────────────────────
-
         public static User ToUser(UserCreatedEvent evt) => new()
         {
             Id = evt.Id,
@@ -18,8 +16,6 @@ namespace Diagnostics.Api.Mappings
             PublicKey = evt.PublicKey,
             EncryptedAesKey = evt.EncryptedAesKey,
         };
-
-        // ───────────────────────── DiagnosticDraft → DiagnosticDraftDto ─────────────────────────
 
         public static DiagnosticDraftDto ToDiagnosticDraftDto(DiagnosticDraft draft, string? assistantName) => new()
         {

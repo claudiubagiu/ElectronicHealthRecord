@@ -46,7 +46,6 @@ export class DispensePrescription implements OnInit {
     const ctrl = this.form.get('code')!;
     const upper = ctrl.value?.toUpperCase() ?? '';
     ctrl.setValue(upper, { emitEvent: false });
-    // Reset result when user types a new code
     this.prescription = null;
     this.lookupError = null;
     this.dispensedSuccess = false;
@@ -92,7 +91,6 @@ export class DispensePrescription implements OnInit {
     try {
       await this.dispenseService.dispense(this.codeValue);
       this.dispensedSuccess = true;
-      // Reload prescription to show updated dispensed status
       const result = await this.dispenseService.lookupByCode(this.codeValue);
       this.prescription = result.prescription;
     } catch (error) {

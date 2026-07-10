@@ -7,18 +7,6 @@ using FluentResults;
 
 namespace AccessRequests.Api.Services.Implementation
 {
-    /// <summary>
-    /// Manages DocumentKey records — the per-document AES key (DocumentKey),
-    /// wrapped with the patient's PatientMasterKey, for files stored on IPFS.
-    ///
-    /// Authorization mirrors Envelope access: a caller may create or read a
-    /// DocumentKey for a given patient if they ARE that patient, or if they
-    /// hold an active Envelope for that patient (i.e. an approved
-    /// AccessRequest — doctor, lab technician, pharmacist, medical assistant,
-    /// etc.). There is no separate read/write distinction: anyone authorized
-    /// to act on a patient's behalf can both register new DocumentKeys and
-    /// read existing ones, the same way they already can with Envelopes.
-    /// </summary>
     public class DocumentKeyService : IDocumentKeyService
     {
         private readonly IDocumentKeyRepository _documentKeyRepository;
@@ -91,10 +79,6 @@ namespace AccessRequests.Api.Services.Implementation
 
         public async Task<Result<IReadOnlyList<DocumentKeyDto>>> GetByPatientIdAsync(Guid patientId, Guid callerId)
         {
-            // Only the patient themselves can list every DocumentKey they
-            // own — needed for PatientMasterKey rotation. Authorized users
-            // (doctors, lab techs, etc.) only ever fetch a single
-            // DocumentKey by IpfsCid, via GetByIpfsCidAsync above.
             if (callerId != patientId)
                 return Result.Fail<IReadOnlyList<DocumentKeyDto>>(
                     new Error("Only the patient can list their full set of document keys.")
@@ -104,12 +88,6 @@ namespace AccessRequests.Api.Services.Implementation
             return Result.Ok<IReadOnlyList<DocumentKeyDto>>(documentKeys.Select(Mapper.ToDocumentKeyDto).ToList());
         }
 
-        /// <summary>
-        /// Batch re-wraps every entry's EncryptedDocumentKey for the calling
-        /// patient's own documents, after the patient has generated a new
-        /// PatientMasterKey client-side and re-wrapped each DocumentKey
-        /// under it. The underlying IPFS file is never re-sent here.
-        /// </summary>
         public async Task<Result<int>> RotateAsync(Guid patientId, RotateDocumentKeysDto dto)
         {
             if (dto.Entries == null || dto.Entries.Count == 0)
@@ -126,11 +104,6 @@ namespace AccessRequests.Api.Services.Implementation
             return Result.Ok(updatedCount);
         }
 
-        /// <summary>
-        /// True if the caller IS the patient, or holds an active Envelope
-        /// for that patient (i.e. has approved access). Mirrors the
-        /// authorization already used for GetEnvelope.
-        /// </summary>
         private async Task<bool> IsAuthorizedAsync(Guid callerId, Guid patientId)
         {
             if (callerId == patientId) return true;

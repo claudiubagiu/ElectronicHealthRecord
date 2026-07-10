@@ -7,8 +7,6 @@
   overflow: hidden;
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-
 .dialog-header {
   display: flex;
   align-items: center;
@@ -37,8 +35,6 @@
   font-weight: 700;
   color: #212121;
 }
-
-// ── Body ──────────────────────────────────────────────────────────────────────
 
 .dialog-body {
   padding: 20px;
@@ -87,8 +83,6 @@
     margin-bottom: 4px;
   }
 }
-
-// ── Footer ────────────────────────────────────────────────────────────────────
 
 .dialog-footer {
   display: flex;

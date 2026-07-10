@@ -62,12 +62,6 @@ namespace MedicalData.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        /// <summary>
-        /// Batch-rotates EncryptedDocumentKey for the caller's own records,
-        /// after the caller (the patient) has generated a new
-        /// PatientMasterKey client-side and re-wrapped each DocumentKey
-        /// under it. Document content is never re-sent here.
-        /// </summary>
         [HttpPatch("rotate-keys")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> RotateDocumentKeys([FromBody] RotateDocumentKeysDto dto)

@@ -17,22 +17,8 @@ using System.Security.Cryptography;
 
 namespace Auth.Api.Services.Implementation
 {
-    /// <summary>
-    /// Implements ECC challenge-response authentication.
-    /// The user signs a server-issued challenge with a secp256k1 private key
-    /// derived from their MetaMask wallet, and the backend verifies the
-    /// signature using the stored ECC public key and Nethereum's EthECKey.
-    ///
-    /// Medical staff roles (Doctor, LaboratoryTechnician, Pharmacist) are created
-    /// with IsApproved = false and cannot log in until an Administrator approves them.
-    /// Patients and Medical Assistants are approved automatically on registration.
-    /// </summary>
     public class AuthService : IAuthService
     {
-        /// <summary>
-        /// Roles that require explicit administrator approval before the user
-        /// is permitted to log in. All other roles are auto-approved.
-        /// </summary>
         private static readonly HashSet<string> RolesThatRequireApproval = new(StringComparer.OrdinalIgnoreCase)
         {
             "Doctor",
@@ -60,15 +46,6 @@ namespace Auth.Api.Services.Implementation
             this.aesKeyRotatedRabbitMQService = aesKeyRotatedRabbitMQService;
             this.cache = cache;
         }
-
-        /// <summary>
-        /// Registers a new user by verifying the ECC signature of the challenge,
-        /// storing the ECC public key, creating the identity record, publishing
-        /// a domain event via RabbitMQ, and returning a JWT token.
-        ///
-        /// Medical staff roles are created with IsApproved = false.
-        /// Patients and Medical Assistants are created with IsApproved = true.
-        /// </summary>
         public async Task<Result<LoginResponseDto>> Register(RegisterRequestDto registerRequestDto)
         {
             var walletAddress = registerRequestDto.WalletAddress.ToLower();
@@ -151,13 +128,6 @@ namespace Auth.Api.Services.Implementation
             return Result.Fail<LoginResponseDto>(
                 new Error("User creation failed").WithMetadata("StatusCode", 500));
         }
-
-        /// <summary>
-        /// Generates a cryptographically secure challenge for the specified wallet.
-        /// If the wallet belongs to an existing user, the challenge is stored on the
-        /// user record. Otherwise it is placed in a 5-minute memory cache entry for
-        /// pre-registration verification.
-        /// </summary>
         public async Task<string?> GenerateChallengeAsync(string walletAddress)
         {
             walletAddress = walletAddress.ToLower();
@@ -181,15 +151,6 @@ namespace Auth.Api.Services.Implementation
 
             return challenge;
         }
-
-        /// <summary>
-        /// Verifies the ECC signature of the given challenge for an existing user.
-        /// Uses the stored ECC public key to recover the signer address from the
-        /// secp256k1 signature and compares it with the claimed wallet address.
-        /// On success, rotates the challenge and issues a JWT token.
-        ///
-        /// Returns 403 Forbidden if the user has not yet been approved by an Administrator.
-        /// </summary>
         public async Task<Result<LoginResponseDto>> VerifyEccSignatureAsync(
             string walletAddress, string eccSignature, string challenge)
         {
@@ -236,23 +197,6 @@ namespace Auth.Api.Services.Implementation
 
             return Result.Ok(new LoginResponseDto { Token = jwtToken });
         }
-
-        /// <summary>
-        /// Rotates the caller's PatientMasterKey. Auth.Api is the system of
-        /// record for EncryptedAesKey, so this update happens first (and
-        /// synchronously) here, then propagates asynchronously to every
-        /// other service holding a denormalized copy via AesKeyRotatedEvent.
-        ///
-        /// identityId is the ApplicationUser.Id taken from the caller's JWT
-        /// (the "identityId" claim) — never trust a caller-supplied id here.
-        ///
-        /// Loads the linked Auth.Api.Models.Domain.User (via .Include) to
-        /// resolve UserId — the Guid that AccessRequests.Api, MedicalData.Api
-        /// and Diagnostics.Api actually key their local User copies by. That
-        /// link is populated when Users.Api echoes back UserCreatedResponseEvent
-        /// at registration time, so it should always be present for a fully
-        /// registered patient.
-        /// </summary>
         public async Task<Result> RotateAesKeyAsync(string identityId, string encryptedAesKey)
         {
             if (string.IsNullOrWhiteSpace(encryptedAesKey))
@@ -300,11 +244,6 @@ namespace Auth.Api.Services.Implementation
 
             return Result.Ok();
         }
-
-        /// <summary>
-        /// Generates a 32-byte cryptographically secure random hex string
-        /// used as a one-time challenge for authentication.
-        /// </summary>
         private static string GenerateSecureChallenge()
         {
             var randomBytes = RandomNumberGenerator.GetBytes(32);

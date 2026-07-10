@@ -1,8 +1,5 @@
 ﻿namespace Auth.Api.Models.DTOs
 {
-    /// <summary>
-    /// Represents a medical staff user awaiting administrator approval.
-    /// </summary>
     public class PendingMedicDto
     {
         public required string Id { get; set; }

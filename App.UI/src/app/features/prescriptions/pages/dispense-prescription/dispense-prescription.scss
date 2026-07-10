@@ -16,8 +16,6 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-// ── Header ───────────────────────────────────────────────────────────────────
-
 .card-header {
   display: flex;
   flex-direction: column;
@@ -56,8 +54,6 @@
     color: #7b1fa2;
   }
 }
-
-// ── Code input ───────────────────────────────────────────────────────────────
 
 .search-section {
   margin-bottom: 24px;
@@ -104,15 +100,12 @@
   ::ng-deep circle { stroke: white; }
 }
 
-// ── Result boxes ─────────────────────────────────────────────────────────────
-
 .result-box {
   border-radius: 12px;
   padding: 20px 24px;
   margin-top: 8px;
 }
 
-// Error
 .error-box {
   display: flex;
   align-items: flex-start;
@@ -130,7 +123,6 @@
   margin-top: 2px;
 }
 
-// Dispensed
 .dispensed-box {
   background: rgba(0, 0, 0, 0.03);
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -152,14 +144,11 @@
   margin-top: 2px;
 }
 
-// Active
 .active-box {
   background: white;
   border: 1px solid rgba(123, 31, 162, 0.15);
   box-shadow: 0 2px 10px rgba(123, 31, 162, 0.06);
 }
-
-// ── Result text ──────────────────────────────────────────────────────────────
 
 .result-icon {
   flex-shrink: 0;
@@ -183,8 +172,6 @@
   font-size: 0.85rem;
   color: rgba(0, 0, 0, 0.5);
 }
-
-// ── Active header ────────────────────────────────────────────────────────────
 
 .active-header {
   display: flex;
@@ -215,8 +202,6 @@
   font-size: 0.78rem;
   color: rgba(0, 0, 0, 0.4);
 }
-
-// ── Meta rows ────────────────────────────────────────────────────────────────
 
 .prescription-meta,
 .dispensed-meta {
@@ -253,8 +238,6 @@
 .inner-divider {
   margin: 14px 0 !important;
 }
-
-// ── PDF row ──────────────────────────────────────────────────────────────────
 
 .pdf-row {
   display: flex;
@@ -298,8 +281,6 @@
   ::ng-deep circle { stroke: #7b1fa2; }
 }
 
-// ── Dispense button ──────────────────────────────────────────────────────────
-
 .dispense-btn {
   width: 100%;
   height: 52px;
@@ -320,8 +301,6 @@
   }
 }
 
-// ── Warning ──────────────────────────────────────────────────────────────────
-
 .dispense-warning {
   display: flex;
   align-items: center;
@@ -338,8 +317,6 @@
     flex-shrink: 0;
   }
 }
-
-// ── Success banner ───────────────────────────────────────────────────────────
 
 .success-banner {
   display: flex;
@@ -361,8 +338,6 @@
     color: #2e7d32;
   }
 }
-
-// ── Responsive ───────────────────────────────────────────────────────────────
 
 @media (max-width: 480px) {
   .dispense-card {

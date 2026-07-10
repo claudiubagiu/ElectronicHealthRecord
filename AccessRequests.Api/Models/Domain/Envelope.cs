@@ -19,14 +19,7 @@
         public Guid Id { get; set; }
         public required Guid PatientId { get; set; }
         public required Guid UserId { get; set; }
-
-        /// <summary>
-        /// The patient's AES key, ECIES-encrypted with the authorized user's
-        /// public key. Opaque to the backend — only that user's private key
-        /// (held client-side) can decrypt it.
-        /// </summary>
         public required string EncryptedAesKey { get; set; }
-
         public DateTime CreatedAt { get; set; }
 
         public User? Patient { get; set; }

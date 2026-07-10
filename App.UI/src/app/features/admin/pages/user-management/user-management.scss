@@ -12,8 +12,6 @@
   max-width: 760px;
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-
 .card-header {
   display: flex;
   flex-direction: column;
@@ -52,8 +50,6 @@ h1 {
   font-size: 0.9rem;
   color: rgba(0, 0, 0, 0.5);
 }
-
-// ── Tabs ──────────────────────────────────────────────────────────────────────
 
 .access-tabs {
   ::ng-deep .mat-mdc-tab-header {
@@ -96,8 +92,6 @@ h1 {
   padding: 24px 0 8px;
 }
 
-// ── States ────────────────────────────────────────────────────────────────────
-
 .loading-state {
   display: flex;
   justify-content: center;
@@ -123,8 +117,6 @@ h1 {
     font-size: 0.9rem;
   }
 }
-
-// ── Rows ──────────────────────────────────────────────────────────────────────
 
 .rows-list {
   display: flex;
@@ -236,8 +228,6 @@ h1 {
   height: 13px;
 }
 
-// ── Actions ───────────────────────────────────────────────────────────────────
-
 .row-actions {
   display: flex;
   align-items: center;
@@ -286,8 +276,6 @@ h1 {
     color: #2e7d32;
   }
 }
-
-// ── Responsive ────────────────────────────────────────────────────────────────
 
 @media (max-width: 560px) {
   .medic-row {

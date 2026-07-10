@@ -18,12 +18,6 @@ namespace AccessRequests.Api.Controllers
             _documentKeyService = documentKeyService;
         }
 
-        /// <summary>
-        /// Registers a new DocumentKey right after a file has been encrypted
-        /// client-side and uploaded to IPFS. The caller must be the patient,
-        /// or hold an active Envelope for the patient (e.g. a doctor or lab
-        /// technician with approved access).
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateDocumentKeyDto dto)
         {
@@ -50,11 +44,6 @@ namespace AccessRequests.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        /// <summary>
-        /// Lists every DocumentKey owned by the given patient. Only the
-        /// patient themselves may call this — used to drive PatientMasterKey
-        /// rotation, where every DocumentKey must be re-wrapped locally.
-        /// </summary>
         [HttpGet("patient/{patientId}")]
         public async Task<IActionResult> GetByPatientId(Guid patientId)
         {
@@ -66,12 +55,6 @@ namespace AccessRequests.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        /// <summary>
-        /// Batch-rotates EncryptedDocumentKey for the caller's own documents,
-        /// after the caller (the patient) has generated a new PatientMasterKey
-        /// client-side and re-wrapped each DocumentKey under it. The
-        /// underlying IPFS files are never touched.
-        /// </summary>
         [HttpPatch("rotate")]
         public async Task<IActionResult> Rotate([FromBody] RotateDocumentKeysDto dto)
         {

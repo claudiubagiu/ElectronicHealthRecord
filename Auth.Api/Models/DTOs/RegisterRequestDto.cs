@@ -2,12 +2,6 @@
 
 namespace Auth.Api.Models.DTOs
 {
-    /// <summary>
-    /// Payload sent by the frontend during registration.
-    /// Includes personal information, an ECC public key for future challenge-response
-    /// authentication, the user's self-encrypted AES data key (patients only), and
-    /// the signed challenge to prove key ownership.
-    /// </summary>
     public class RegisterRequestDto
     {
         [EmailAddress]

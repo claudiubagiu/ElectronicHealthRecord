@@ -13,8 +13,6 @@
   max-width: 720px;
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-
 .card-header {
   display: flex;
   flex-direction: column;
@@ -62,8 +60,6 @@ h1 {
   color: rgba(0, 0, 0, 0.5);
 }
 
-// ── States ────────────────────────────────────────────────────────────────────
-
 .state-container {
   display: flex;
   flex-direction: column;
@@ -83,15 +79,11 @@ h1 {
   }
 }
 
-// ── List ──────────────────────────────────────────────────────────────────────
-
 .diagnostics-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
-// ── Responsive ────────────────────────────────────────────────────────────────
 
 @media (max-width: 600px) {
   .diagnostics-page {

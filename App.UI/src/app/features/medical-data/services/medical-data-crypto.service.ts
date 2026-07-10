@@ -13,28 +13,6 @@ import {
 import { AccessManagementService } from '../../access-management/services/access-management.service';
 import { DecryptedMedicalRecord } from '../../../shared/components/medical-records-panel/medical-records-panel';
 
-/**
- * Handles E2EE for medical records under a two-level key hierarchy:
- *
- *   - Every patient has exactly one personal PatientMasterKey (AES-256-GCM),
- *     generated at registration, ECIES-encrypted with their own public key,
- *     stored as User.EncryptedAesKey.
- *   - Every medical record is encrypted with its own random DocumentKey
- *     (AES-256-GCM). The DocumentKey itself is encrypted with the
- *     PatientMasterKey (also AES-GCM, via CryptoService.encryptString /
- *     decryptString) and stored on the record as EncryptedDocumentKey.
- *   - A doctor (or other authorized user) recovers the PatientMasterKey via
- *     the envelope issued by AccessRequests.Api when access was approved
- *     (one envelope per (patient, user) pair, not per document), then uses
- *     it to unwrap each record's DocumentKey individually.
- *
- * This means: revoking/rotating access only requires re-wrapping the small
- * EncryptedDocumentKey blobs (see rotateDocumentKeys), never re-encrypting
- * the (potentially large) EncryptedData payloads themselves.
- *
- * `resolvePatientAesKey` resolves the PatientMasterKey and is public —
- * also used by DiagnosticDraftService, which shares this same model.
- */
 @Injectable({ providedIn: 'root' })
 export class MedicalDataCryptoService {
   private e2eeService = inject(E2eeKeyService);
@@ -124,20 +102,6 @@ export class MedicalDataCryptoService {
     return JSON.parse(jsonString) as MedicalRecordFormData;
   }
 
-  /**
-   * Resolves a usable AES-GCM CryptoKey (the PatientMasterKey) for the
-   * given patient, regardless of who is currently logged in:
-   *
-   *   - If the caller IS the patient: decrypts their own EncryptedAesKey
-   *     (from their profile) with their own private key.
-   *   - Otherwise: fetches the envelope AccessRequests.Api issued for this
-   *     (patient, caller) pair on approval, and decrypts it with the
-   *     caller's private key. Throws if no envelope exists (access not
-   *     approved, revoked, or expired).
-   *
-   * Public — also used by DiagnosticDraftService, which shares the same
-   * two-level key model.
-   */
   async resolvePatientAesKey(patientId: string): Promise<CryptoKey> {
     const privateKey = this.requirePrivateKey();
     const currentUser = this.authService.getDecodedToken();
@@ -180,26 +144,12 @@ export class MedicalDataCryptoService {
     );
   }
 
-  /**
-   * Encrypts (wraps) a DocumentKey with the patient's PatientMasterKey.
-   * Returns a combined string: base64(iv) + ":" + base64(ciphertext) — the
-   * same format CryptoService.encryptString already uses, so backends can
-   * store it as a single opaque string (EncryptedDocumentKey).
-   *
-   * Public — also used by DiagnosticDraftService.
-   */
   async wrapDocumentKey(documentKey: CryptoKey, patientMasterKey: CryptoKey): Promise<string> {
     const rawDocumentKey = await CryptoService.exportAESKey(documentKey);
     const rawKeyBase64 = this.arrayBufferToBase64(rawDocumentKey);
     return CryptoService.encryptString(rawKeyBase64, patientMasterKey);
   }
 
-  /**
-   * Decrypts (unwraps) a DocumentKey using the patient's PatientMasterKey,
-   * returning a usable CryptoKey for the underlying document.
-   *
-   * Public — also used by DiagnosticDraftService.
-   */
   async unwrapDocumentKey(
     encryptedDocumentKey: string,
     patientMasterKey: CryptoKey
@@ -213,14 +163,6 @@ export class MedicalDataCryptoService {
     ]);
   }
 
-  /**
-   * Like {@link unwrapDocumentKey}, but imports the resulting DocumentKey as
-   * extractable. Used exclusively by KeyRotationService, which needs to
-   * immediately re-export the key in order to re-wrap it under a new
-   * PatientMasterKey. unwrapDocumentKey itself stays non-extractable —
-   * every other call site only ever decrypts with the key, never exports
-   * it, so the stricter default is the right one everywhere else.
-   */
   async unwrapDocumentKeyExtractable(
     encryptedDocumentKey: string,
     patientMasterKey: CryptoKey

@@ -63,13 +63,6 @@ namespace MedicalData.Api.Repositories.Implementation
             await _dbContext.SaveChangesAsync();
             return true;
         }
-
-        /// <summary>
-        /// Batch-updates only EncryptedDocumentKey for the given records,
-        /// scoped to patientId for safety (a caller can only rotate keys for
-        /// their own records). Used during PatientMasterKey rotation —
-        /// EncryptedData/Iv are never touched here.
-        /// </summary>
         public async Task<int> UpdateDocumentKeysAsync(
             Guid patientId,
             IReadOnlyDictionary<Guid, string> recordIdToEncryptedDocumentKey)

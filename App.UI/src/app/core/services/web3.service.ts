@@ -11,14 +11,11 @@ export class Web3Service implements OnDestroy {
   private provider?: BrowserProvider;
   private signer?: JsonRpcSigner;
 
-  // Event handlers references for cleanup
   private accountsChangedHandler?: (accounts: string[]) => void;
   private chainChangedHandler?: (chainId: string) => void;
 
-  // Initialization promise to avoid race conditions
   private initPromise: Promise<void>;
 
-  // State management
   private stateSubject = new BehaviorSubject<Web3State>({
     address: null,
     isConnected: false,
@@ -26,7 +23,6 @@ export class Web3Service implements OnDestroy {
     chainId: null,
   });
 
-  // Public observables
   public state$: Observable<Web3State> = this.stateSubject.asObservable();
   public walletAddress$: Observable<string | null> = new Observable((observer) => {
     const subscription = this.state$.subscribe((state) => observer.next(state.address));
@@ -44,8 +40,6 @@ export class Web3Service implements OnDestroy {
   ngOnDestroy(): void {
     this.cleanup();
   }
-
-  // ==================== Initialization ====================
 
   private async initialize(): Promise<void> {
     if (!this.isMetaMaskInstalled()) {
@@ -97,16 +91,12 @@ export class Web3Service implements OnDestroy {
     }
   }
 
-  // ==================== Event Listeners ====================
-
   private setupEventListeners(): void {
     if (!window.ethereum) return;
 
-    // Handle account changes
     this.accountsChangedHandler = (accounts: string[]) => {
       if (accounts.length > 0) {
         this.updateState({ address: accounts[0], isConnected: true });
-        // Re-get signer for new account
         this.refreshSigner();
       } else {
         this.updateState({ address: null, isConnected: false });
@@ -114,11 +104,9 @@ export class Web3Service implements OnDestroy {
       }
     };
 
-    // Handle chain changes
     this.chainChangedHandler = (chainId: string) => {
       console.log('Chain changed to:', chainId);
       this.updateState({ chainId });
-      // Reload to avoid state inconsistencies
       window.location.reload();
     };
 
@@ -149,14 +137,7 @@ export class Web3Service implements OnDestroy {
     this.stateSubject.complete();
   }
 
-  // ==================== Public Methods ====================
-
-  /**
-   * Connect to MetaMask wallet
-   * @throws {Web3Error} If MetaMask is not installed or user rejects connection
-   */
   async connectWallet(): Promise<string> {
-    // Wait for initialization
     await this.initPromise;
 
     if (!this.isMetaMaskInstalled()) {
@@ -174,7 +155,6 @@ export class Web3Service implements OnDestroy {
       this.signer = await this.provider!.getSigner();
       const address = await this.signer.getAddress();
 
-      // Get chain ID
       const network = await this.provider!.getNetwork();
 
       this.updateState({
@@ -187,7 +167,6 @@ export class Web3Service implements OnDestroy {
     } catch (error: any) {
       console.error('Failed to connect wallet:', error);
 
-      // Handle user rejection
       if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
         throw new AppError({
           message: 'The connection request was rejected by the user.',
@@ -206,21 +185,11 @@ export class Web3Service implements OnDestroy {
     }
   }
 
-  /**
-   * Disconnect wallet (clears local state only)
-   * Note: MetaMask doesn't have a true "disconnect" API
-   */
   disconnectWallet(): void {
     this.updateState({ address: null, isConnected: false });
     this.signer = undefined;
   }
 
-  /**
-   * Sign a message with the connected wallet
-   * @param message Message to sign
-   * @returns Signature string
-   * @throws {Web3Error} If wallet is not connected
-   */
   async signMessage(message: string): Promise<string> {
     if (!this.signer) {
       throw new AppError({
@@ -254,10 +223,6 @@ export class Web3Service implements OnDestroy {
     }
   }
 
-  /**
-   * Switch to a specific network
-   * @param chainId Chain ID in hex format (e.g., '0x1' for mainnet)
-   */
   async switchNetwork(chainId: string): Promise<void> {
     if (!window.ethereum) {
       throw new AppError({
@@ -277,7 +242,6 @@ export class Web3Service implements OnDestroy {
     } catch (error: any) {
       console.error('Failed to switch network:', error);
 
-      // Chain not added to MetaMask
       if (error.code === 4902) {
         throw new AppError({
           message: 'The selected network is not added to MetaMask.',
@@ -296,9 +260,6 @@ export class Web3Service implements OnDestroy {
     }
   }
 
-  /**
-   * Add a custom network to MetaMask
-   */
   async addNetwork(params: {
     chainId: string;
     chainName: string;
@@ -331,19 +292,10 @@ export class Web3Service implements OnDestroy {
     }
   }
 
-  /**
-   * Returns a promise that resolves when Web3 initialization is complete.
-   */
   waitForInit(): Promise<void> {
     return this.initPromise;
   }
 
-  // ==================== Getters ====================
-
-  /**
-   * Get current wallet address
-   * @throws {Web3Error} If wallet is not connected
-   */
   getAddress(): string {
     const { address } = this.stateSubject.value;
     if (!address) {
@@ -357,65 +309,39 @@ export class Web3Service implements OnDestroy {
     return address;
   }
 
-  /**
-   * Get current wallet address or null if not connected
-   */
   getAddressOrNull(): string | null {
     return this.stateSubject.value.address;
   }
 
-  /**
-   * Get shortened address format (0x1234...5678)
-   */
   getShortAddress(address?: string): string {
     const addr = address || this.getAddressOrNull();
     if (!addr) return '';
     return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
   }
 
-  /**
-   * Get current chain ID
-   */
   getChainId(): string | null {
     return this.stateSubject.value.chainId;
   }
 
-  /**
-   * Check if wallet is connected
-   */
   isConnected(): boolean {
     return this.stateSubject.value.isConnected;
   }
 
-  /**
-   * Check if MetaMask is installed
-   */
   isMetaMaskInstalled(): boolean {
     return typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask === true;
   }
 
-  /**
-   * Get current state snapshot
-   */
   getState(): Web3State {
     return { ...this.stateSubject.value };
   }
 
-  /**
-   * Get provider instance (use with caution)
-   */
   getProvider(): BrowserProvider | undefined {
     return this.provider;
   }
 
-  /**
-   * Get signer instance (use with caution)
-   */
   getSigner(): JsonRpcSigner | undefined {
     return this.signer;
   }
-
-  // ==================== Private Helpers ====================
 
   private updateState(partial: Partial<Web3State>): void {
     this.stateSubject.next({

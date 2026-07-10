@@ -8,11 +8,6 @@ import {
 } from '../models/medical-data.model';
 import { environment } from '../../../../environments/environment';
 
-/**
- * One entry in a batch DocumentKey-rotation request — re-wraps a single
- * record's DocumentKey under a new PatientMasterKey. EncryptedData/Iv are
- * untouched, only EncryptedDocumentKey changes.
- */
 export interface RotateDocumentKeyEntry {
   recordId: string;
   encryptedDocumentKey: string;

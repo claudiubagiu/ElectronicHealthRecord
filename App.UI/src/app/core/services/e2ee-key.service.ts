@@ -8,10 +8,6 @@ import { environment } from '../../../environments/environment';
 import { SigningKey, hashMessage } from 'ethers';
 import { CryptoService } from './crypto.service';
 
-/**
- * Deterministic derivation message — must be identical every time
- * so the same wallet always produces the same derived private key.
- */
 const DERIVATION_MESSAGE = 'EHR-E2EE-key-derivation-v1';
 const LS_PRIVATE_KEY = 'ecc_private_key';
 const LS_PUBLIC_KEY = 'ecc_public_key';
@@ -22,51 +18,22 @@ export class E2eeKeyService {
   private http = inject(HttpClient);
   private web3Service = inject(Web3Service);
 
-  /**
-   * The wallet's secp256k1 private key derived from a deterministic MetaMask
-   * signature. Kept in memory for the session duration.
-   * Never persisted to localStorage or sent to the server.
-   */
   private eccPrivateKey: string | null = null;
-
-  /**
-   * The wallet's uncompressed secp256k1 public key (hex, 0x04...).
-   * Derived alongside the private key from the same signature.
-   */
   private eccPublicKey: string | null = null;
 
-  // ==================== Key Derivation ====================
-
-  /**
-   * Derives a deterministic secp256k1 key pair from a single MetaMask signature.
-   *
-   * This is the only MetaMask popup in the entire authentication flow.
-   * The user signs a fixed derivation message, producing a deterministic
-   * signature that is then hashed (SHA-256) to produce 32 bytes of key
-   * material used as a secp256k1 private key.
-   *
-   * Because the same wallet + message always produce the same signature,
-   * this yields a deterministic ECC key pair tied to the user's wallet.
-   * The private key never leaves memory and is never sent to any server.
-   *
-   * @returns An object with the hex-encoded privateKey and publicKey.
-   */
   async deriveEccKeyPairFromWallet(): Promise<{ privateKey: string; publicKey: string }> {
     try {
       const signature = await this.web3Service.signMessage(DERIVATION_MESSAGE);
 
-      // Hash the signature to get 32 bytes suitable as a secp256k1 private key
       const sigBytes = CryptoService.hexToBytes(signature);
       const hashBuffer = await crypto.subtle.digest('SHA-256', sigBytes.buffer as ArrayBuffer);
 
-      // Use the 32-byte hash as the private key
       const privateKeyHex =
         '0x' +
         Array.from(new Uint8Array(hashBuffer))
           .map((b) => b.toString(16).padStart(2, '0'))
           .join('');
 
-      // Derive the corresponding public key
       const signingKey = new SigningKey(privateKeyHex);
       const publicKeyHex = signingKey.publicKey; // uncompressed, 0x04...
 
@@ -83,8 +50,6 @@ export class E2eeKeyService {
       });
     }
   }
-
-  // ==================== Login Flow ====================
 
   async recoverPrivateKey(): Promise<void> {
     try {
@@ -107,8 +72,6 @@ export class E2eeKeyService {
       });
     }
   }
-
-  // ==================== Key Access ====================
 
   getPrivateKey(): string | null {
     if (!this.eccPrivateKey) {
@@ -135,20 +98,6 @@ export class E2eeKeyService {
     localStorage.removeItem(LS_PUBLIC_KEY);
   }
 
-  // ==================== Challenge Signing ====================
-
-  /**
-   * Signs a challenge string using the derived ECC private key, entirely in
-   * JavaScript (no MetaMask popup). The challenge is hashed with keccak256
-   * before signing, producing a compact secp256k1 signature.
-   *
-   * This is used for the challenge-response authentication flow where the
-   * backend verifies the signature against the stored ECC public key.
-   *
-   * @param challenge - The challenge string received from the backend.
-   * @returns The hex-encoded secp256k1 signature of the challenge.
-   * @throws {AppError} If the ECC private key is not available in memory.
-   */
   signChallenge(challenge: string): string {
     const privateKey = this.getPrivateKey();
     if (!privateKey) {
@@ -176,20 +125,6 @@ export class E2eeKeyService {
     }
   }
 
-  // ==================== Register Flow ====================
-
-  /**
-   * Called BEFORE sending the register request.
-   *
-   * Derives a deterministic secp256k1 key pair from the wallet signature,
-   * stores the private key in memory, and returns the public key to be
-   * sent to the backend for storage.
-   *
-   * No encrypted private key is generated or sent — the private key lives
-   * only in memory and is re-derived from the wallet on each login.
-   *
-   * @returns The hex-encoded uncompressed ECC public key for registration.
-   */
   async getPublicKeyForRegistration(): Promise<string> {
     try {
       const { privateKey, publicKey } = await this.deriveEccKeyPairFromWallet();
@@ -213,22 +148,6 @@ export class E2eeKeyService {
     }
   }
 
-  /**
-   * Called BEFORE sending the register request, immediately after
-   * {@link getPublicKeyForRegistration}.
-   *
-   * Generates a fresh random AES-256-GCM key — this becomes the user's
-   * personal "data key", used to encrypt their own medical records.
-   * It is encrypted (wrapped) with the user's own ECC public key via
-   * ECIES, so only the user (via their wallet-derived private key) can
-   * ever recover it. The raw AES key never leaves the browser and is
-   * never sent to any server.
-   *
-   * @returns The base64-encoded ECIES ciphertext of the wrapped AES key,
-   *          ready to be sent to the backend for storage.
-   * @throws {AppError} If the ECC public key is not available, or key
-   *         generation/encryption fails.
-   */
   async generateEncryptedAesKeyForRegistration(): Promise<string> {
     const publicKey = this.getPublicKey();
     if (!publicKey) {
@@ -258,11 +177,6 @@ export class E2eeKeyService {
     }
   }
 
-  // ==================== Public Key Retrieval ====================
-
-  /**
-   * Fetches the ECC public key for a given user from the server.
-   */
   async getPublicKey_remote(userId: string): Promise<PublicKeyResponse> {
     try {
       return await firstValueFrom(
@@ -281,9 +195,6 @@ export class E2eeKeyService {
     }
   }
 
-  /**
-   * Fetches ECC public keys for multiple users in a single request.
-   */
   async getPublicKeysBulk(userIds: string[]): Promise<PublicKeyResponse[]> {
     try {
       return await firstValueFrom(

@@ -74,8 +74,6 @@ export class DoctorPatientProfile implements OnInit {
     this.loadActiveDraft();
   }
 
-  // ── Getter ────────────────────────────────────────────────────────
-
   get profileDetails(): ProfileDetailRow[] {
     return [
       {
@@ -85,8 +83,6 @@ export class DoctorPatientProfile implements OnInit {
       },
     ];
   }
-
-  // ── Load ──────────────────────────────────────────────────────────
 
   async loadDiagnoses(): Promise<void> {
     if (!this.patientWalletAddress) return;
@@ -140,8 +136,6 @@ export class DoctorPatientProfile implements OnInit {
     }
   }
 
-  // ── Actions ───────────────────────────────────────────────────────
-
   async onOpenDiagnosis(diagnosis: Diagnosis): Promise<void> {
     this.openingDiagnosisId = diagnosis.id;
     try {
@@ -174,8 +168,6 @@ export class DoctorPatientProfile implements OnInit {
       this.openingLabAnalysisId = null;
     }
   }
-
-  // ── Navigation ────────────────────────────────────────────────────
 
   goBack(): void {
     this.router.navigate(['/patient-access']);
@@ -240,8 +232,6 @@ export class DoctorPatientProfile implements OnInit {
       },
     });
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────
 
   formatTimestamp(timestamp: bigint): Date {
     return new Date(Number(timestamp) * 1000);

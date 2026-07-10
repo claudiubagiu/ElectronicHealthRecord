@@ -25,7 +25,7 @@ export interface DiagnosticPdfData {
   personalHistory?: string;
   familyHistory?: string;
 
-  // Clinical examination — toate optionale
+  // Clinical examination
   bloodPressure?: string;
   pulse?: string;
   temperature?: string;
@@ -75,7 +75,6 @@ export class DiagnosticPdfService {
 
     this.renderSection(ctx, 'ANAMNESIS', () => this.renderAnamnesis(ctx, data));
 
-    // Sectiunea Clinical Examination apare doar daca are cel putin un camp completat
     const hasClinicalData =
       data.bloodPressure ||
       data.pulse ||
@@ -95,8 +94,6 @@ export class DiagnosticPdfService {
 
     return doc.output('blob');
   }
-
-  // ── Header ────────────────────────────────────────────────────────────────
 
   private renderHeader(ctx: RenderContext, data: DiagnosticPdfData): void {
     const doc = ctx.doc;
@@ -128,8 +125,6 @@ export class DiagnosticPdfService {
 
     ctx.y = 33;
   }
-
-  // ── Patient info ──────────────────────────────────────────────────────────
 
   private renderPatientInfo(ctx: RenderContext, data: DiagnosticPdfData): void {
     const doc = ctx.doc;
@@ -163,8 +158,6 @@ export class DiagnosticPdfService {
     ctx.y += 23;
   }
 
-  // ── Medical Data ──────────────────────────────────────────────────────────
-
   private renderMedicalData(ctx: RenderContext, data: DiagnosticPdfData): void {
     const records = data.selectedMedicalRecords!;
     const groups = new Map<string, string[]>();
@@ -179,8 +172,6 @@ export class DiagnosticPdfService {
     }
     ctx.y += 2;
   }
-
-  // ── Section wrapper ───────────────────────────────────────────────────────
 
   private renderSection(ctx: RenderContext, title: string, content: () => void): void {
     ctx.ensureSpace(20);
@@ -199,8 +190,6 @@ export class DiagnosticPdfService {
     content();
   }
 
-  // ── Anamnesis ─────────────────────────────────────────────────────────────
-
   private renderAnamnesis(ctx: RenderContext, data: DiagnosticPdfData): void {
     this.field(ctx, 'Chief Complaint', data.chiefComplaint);
     if (data.personalHistory) this.field(ctx, 'Personal History', data.personalHistory);
@@ -208,8 +197,6 @@ export class DiagnosticPdfService {
     this.renderCustomFields(ctx, data.customAnamnesis);
     ctx.y += 2;
   }
-
-  // ── Clinical Examination ──────────────────────────────────────────────────
 
   private renderClinicalExam(ctx: RenderContext, data: DiagnosticPdfData): void {
     const vitals: string[] = [
@@ -224,8 +211,6 @@ export class DiagnosticPdfService {
     this.renderCustomFields(ctx, data.customClinicalExam);
     ctx.y += 2;
   }
-
-  // ── Diagnosis & Treatment ─────────────────────────────────────────────────
 
   private renderDiagnosisTreatment(ctx: RenderContext, data: DiagnosticPdfData): void {
     this.field(
@@ -247,8 +232,6 @@ export class DiagnosticPdfService {
     this.renderCustomFields(ctx, data.customDiagnosis);
     ctx.y += 2;
   }
-
-  // ── Footer ────────────────────────────────────────────────────────────────
 
   private renderFooter(ctx: RenderContext, data: DiagnosticPdfData): void {
     const doc = ctx.doc;
@@ -283,8 +266,6 @@ export class DiagnosticPdfService {
       }
     }
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   private field(ctx: RenderContext, label: string, value: string): void {
     const doc = ctx.doc;

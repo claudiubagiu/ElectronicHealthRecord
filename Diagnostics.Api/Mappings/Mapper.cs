@@ -4,12 +4,6 @@ using Diagnostics.Api.Models.Messages;
 
 namespace Diagnostics.Api.Mappings
 {
-    /// <summary>
-    /// Central manual mapping for Diagnostics.Api.
-    /// Covers both the former AutoMapper-based mapping (UserCreatedEvent → User)
-    /// and the mapping previously written by hand inline in DiagnosticDraftService
-    /// (DiagnosticDraft → DiagnosticDraftDto), consolidated here for consistency.
-    /// </summary>
     public static class Mapper
     {
         // ───────────────────────── UserCreatedEvent → User ─────────────────────────

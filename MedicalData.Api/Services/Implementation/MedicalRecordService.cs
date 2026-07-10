@@ -97,17 +97,6 @@ namespace MedicalData.Api.Services.Implementation
             return Result.Ok();
         }
 
-        /// <summary>
-        /// Batch re-wraps DocumentKeys under a new PatientMasterKey, used
-        /// when the patient rotates their master key (e.g. revoking a
-        /// compromised doctor). Only EncryptedDocumentKey changes — document
-        /// content (EncryptedData/Iv) is left untouched, keeping the
-        /// operation cheap regardless of document size.
-        ///
-        /// requestingUserId must equal patientId: only the patient (who
-        /// holds the old and new PatientMasterKey client-side) can produce
-        /// valid re-wrapped keys.
-        /// </summary>
         public async Task<Result<int>> RotateDocumentKeysAsync(Guid patientId, RotateDocumentKeysDto dto)
         {
             if (dto.Entries == null || dto.Entries.Count == 0)

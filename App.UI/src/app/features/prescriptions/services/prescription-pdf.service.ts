@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 
-// ─── Types (re-exported so prescription-submission.service can import from here) ──
-
 export interface MedicationEntry {
   name: string;
   dose: string;
@@ -24,8 +22,6 @@ export interface PrescriptionPayload {
   timestamp: number;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
 const PAGE_W = 210;
 const PAGE_H = 297;
 const MARGIN_L = 18;
@@ -33,8 +29,6 @@ const MARGIN_R = 18;
 const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
 const LINE_H = 5.5;
 const LABEL_W = 52;
-
-// ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class PrescriptionPdfService {
@@ -54,50 +48,41 @@ export class PrescriptionPdfService {
     return doc.output('blob');
   }
 
-  // ── Header ───────────────────────────────────────────────────────────────────
-
   private renderHeader(ctx: RenderContext, payload: PrescriptionPayload): void {
     const doc = ctx.doc;
 
-    // Top rule
     doc.setDrawColor(30, 30, 30);
     doc.setLineWidth(0.8);
     doc.line(MARGIN_L, 14, PAGE_W - MARGIN_R, 14);
 
-    // Document type label
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(100, 100, 100);
     doc.text('MEDICAL PRESCRIPTION', MARGIN_L, 11);
 
-    // Date & doctor — right-aligned
     const dateLabel = this.formatDate(new Date(payload.timestamp).toISOString().split('T')[0]);
     doc.setFontSize(8.5);
     doc.setTextColor(60, 60, 60);
     doc.text(`Date: ${dateLabel}`, PAGE_W - MARGIN_R, 18, { align: 'right' });
     doc.text(`Doctor: ${payload.doctorName}`, PAGE_W - MARGIN_R, 23, { align: 'right' });
 
-    // Title label
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(20, 20, 20);
     doc.text('PRESCRIPTION', MARGIN_L, 24);
 
-    // Prescription title (from form)
     if (payload.prescription.title?.trim()) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
       doc.text(payload.prescription.title, MARGIN_L, 30);
 
-      // Thin rule under prescription title
       doc.setDrawColor(180, 180, 180);
       doc.setLineWidth(0.3);
       doc.line(MARGIN_L, 33, PAGE_W - MARGIN_R, 33);
 
       ctx.y = 39;
     } else {
-      // Thin rule under title
       doc.setDrawColor(180, 180, 180);
       doc.setLineWidth(0.3);
       doc.line(MARGIN_L, 27, PAGE_W - MARGIN_R, 27);
@@ -105,8 +90,6 @@ export class PrescriptionPdfService {
       ctx.y = 33;
     }
   }
-
-  // ── Patient block ─────────────────────────────────────────────────────────────
 
   private renderPatientBlock(ctx: RenderContext, payload: PrescriptionPayload): void {
     const doc = ctx.doc;
@@ -127,13 +110,10 @@ export class PrescriptionPdfService {
     ctx.y += 19;
   }
 
-  // ── Medications ───────────────────────────────────────────────────────────────
-
   private renderMedications(ctx: RenderContext, payload: PrescriptionPayload): void {
     const doc = ctx.doc;
     const meds = payload.prescription.medications;
 
-    // Section header
     ctx.ensureSpace(20);
     doc.setDrawColor(30, 30, 30);
     doc.setLineWidth(0.5);
@@ -149,7 +129,6 @@ export class PrescriptionPdfService {
     meds.forEach((med, index) => {
       ctx.ensureSpace(28);
 
-      // Medication number badge — just a plain bold number
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.setTextColor(60, 60, 60);
@@ -158,14 +137,12 @@ export class PrescriptionPdfService {
       const col = MARGIN_L + 7;
       const colW = CONTENT_W - 7;
 
-      // Medication name
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10.5);
       doc.setTextColor(20, 20, 20);
       doc.text(med.name, col, ctx.y + LINE_H - 1);
       ctx.y += LINE_H + 1;
 
-      // Dose / Frequency / Duration — inline row
       const details: Array<{ label: string; value: string }> = [
         { label: 'Dose', value: med.dose },
         { label: 'Frequency', value: med.frequency },
@@ -191,7 +168,6 @@ export class PrescriptionPdfService {
 
       ctx.y += LINE_H + 1;
 
-      // Separator between medications (not after the last one)
       if (index < meds.length - 1) {
         doc.setDrawColor(220, 220, 220);
         doc.setLineWidth(0.2);
@@ -202,8 +178,6 @@ export class PrescriptionPdfService {
       }
     });
   }
-
-  // ── Notes ─────────────────────────────────────────────────────────────────────
 
   private renderNotes(ctx: RenderContext, notes: string): void {
     const doc = ctx.doc;
@@ -229,14 +203,11 @@ export class PrescriptionPdfService {
     ctx.y += lines.length * LINE_H + 4;
   }
 
-  // ── Short code block ──────────────────────────────────────────────────────────
-
   private renderShortCode(ctx: RenderContext, shortCode: string): void {
     const doc = ctx.doc;
 
     ctx.ensureSpace(28);
 
-    // Some breathing room
     ctx.y += 4;
 
     doc.setDrawColor(30, 30, 30);
@@ -250,7 +221,6 @@ export class PrescriptionPdfService {
     doc.text('DISPENSING CODE', MARGIN_L, ctx.y);
     ctx.y += 6;
 
-    // Code box — outlined rectangle, large monospace-style text
     const boxW = 60;
     const boxH = 14;
     const boxX = MARGIN_L;
@@ -263,7 +233,6 @@ export class PrescriptionPdfService {
     doc.setTextColor(20, 20, 20);
     doc.text(shortCode, boxX + boxW / 2, ctx.y + boxH / 2 + 3, { align: 'center' });
 
-    // Hint text to the right of the box
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(100, 100, 100);
@@ -277,8 +246,6 @@ export class PrescriptionPdfService {
 
     ctx.y += boxH + 6;
   }
-
-  // ── Footer ────────────────────────────────────────────────────────────────────
 
   private renderFooter(ctx: RenderContext, payload: PrescriptionPayload): void {
     const doc = ctx.doc;
@@ -299,7 +266,6 @@ export class PrescriptionPdfService {
       doc.text(`Page ${i} of ${pageCount}`, PAGE_W / 2, PAGE_H - 10, { align: 'center' });
       doc.text('Confidential medical document', PAGE_W - MARGIN_R, PAGE_H - 10, { align: 'right' });
 
-      // Signature line on last page
       if (i === pageCount) {
         const sigY = PAGE_H - 22;
         doc.setDrawColor(60, 60, 60);
@@ -311,8 +277,6 @@ export class PrescriptionPdfService {
       }
     }
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────────
 
   private formatDate(dateStr: string): string {
     if (!dateStr) return '';
@@ -327,8 +291,6 @@ export class PrescriptionPdfService {
     }
   }
 }
-
-// ─── Render Context ───────────────────────────────────────────────────────────
 
 class RenderContext {
   y = 0;

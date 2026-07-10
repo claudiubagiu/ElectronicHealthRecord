@@ -1,6 +1,5 @@
 <div class="dialog-container">
 
-  <!-- Header -->
   <div class="dialog-header">
     <div class="dialog-header-left">
       <mat-icon class="header-icon">history</mat-icon>
@@ -11,7 +10,6 @@
     </button>
   </div>
 
-  <!-- Search -->
   <div class="dialog-search">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>Search diagnoses</mat-label>
@@ -20,7 +18,6 @@
     </mat-form-field>
   </div>
 
-  <!-- List -->
   <div class="dialog-list">
     @if (filteredDiagnoses.length === 0) {
       <div class="empty-state">
@@ -45,7 +42,6 @@
     }
   </div>
 
-  <!-- Footer -->
   <div class="dialog-footer">
     <span class="selected-count">
       @if (selectedCount > 0) {

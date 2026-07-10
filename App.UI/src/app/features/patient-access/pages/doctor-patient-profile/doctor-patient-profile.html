@@ -1,5 +1,4 @@
 <div class="doctor-patient-profile-page">
-  <!-- ===== PROFILE CARD ===== -->
   <app-profile-card
     [name]="patientName"
     role="Patient"
@@ -12,7 +11,6 @@
   >
   </app-profile-card>
 
-  <!-- ===== DRAFT BANNER ===== -->
   @if (!isLoadingDraft && activeDraft) {
   <div class="draft-banner">
     <div class="draft-banner-icon">
@@ -32,7 +30,6 @@
   </div>
   }
 
-  <!-- ===== DIAGNOSTICS ===== -->
   <app-carousel-section
     title="Diagnostics"
     icon="folder_shared"
@@ -64,7 +61,6 @@
     </app-view-all-card>
   </app-carousel-section>
 
-  <!-- ===== PRESCRIPTIONS ===== -->
   <app-carousel-section
     title="Prescriptions"
     icon="receipt_long"
@@ -95,7 +91,6 @@
     </app-view-all-card>
   </app-carousel-section>
 
-  <!-- ===== LAB ANALYSES ===== -->
   <app-carousel-section
     title="Lab Analyses"
     icon="biotech"
@@ -123,7 +118,6 @@
     </app-view-all-card>
   </app-carousel-section>
 
-  <!-- ===== QUICK ACTIONS ===== -->
   <div class="quick-actions-section">
     @if (activeDraft) {
     <app-quick-action-card

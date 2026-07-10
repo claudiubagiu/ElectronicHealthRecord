@@ -78,8 +78,6 @@ export class PatientProfile implements OnInit {
     this.loadLabAnalyses();
   }
 
-  // ── Getters ───────────────────────────────────────────────────────
-
   get profileDetails(): ProfileDetailRow[] {
     if (!this.patient) return [];
     return [
@@ -98,8 +96,6 @@ export class PatientProfile implements OnInit {
       },
     ];
   }
-
-  // ── Load ──────────────────────────────────────────────────────────
 
   async loadProfile(): Promise<void> {
     this.isLoadingProfile = true;
@@ -169,8 +165,6 @@ export class PatientProfile implements OnInit {
       this.isLoadingLabAnalyses = false;
     }
   }
-
-  // ── Actions ───────────────────────────────────────────────────────
 
   async onRevoke(request: AccessRequestDto): Promise<void> {
     this.revokingId = request.id;
@@ -246,8 +240,6 @@ export class PatientProfile implements OnInit {
     }
   }
 
-  // ── Navigation ────────────────────────────────────────────────────
-
   goToDiagnostics(): void {
     this.router.navigate(['/diagnostics']);
   }
@@ -263,8 +255,6 @@ export class PatientProfile implements OnInit {
   goToMedicalData(): void {
     this.router.navigate(['/medical-data']);
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────
 
   formatTimestamp(timestamp: bigint): Date {
     return new Date(Number(timestamp) * 1000);

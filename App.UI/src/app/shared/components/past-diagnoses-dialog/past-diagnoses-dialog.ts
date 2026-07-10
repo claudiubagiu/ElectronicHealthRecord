@@ -32,7 +32,6 @@ export class PastDiagnosesDialogComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Pre-select already selected
     this.data.alreadySelected.forEach((d) => this.selectedIds.add(d.id));
     this.filteredDiagnoses = this.data.diagnoses;
 

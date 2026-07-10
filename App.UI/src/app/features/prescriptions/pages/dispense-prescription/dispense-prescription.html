@@ -1,6 +1,5 @@
 <div class="dispense-page">
   <div class="dispense-card">
-    <!-- Header -->
     <div class="card-header">
       <div class="icon-wrapper">
         <mat-icon>local_pharmacy</mat-icon>
@@ -11,7 +10,6 @@
       </p>
     </div>
 
-    <!-- Code input -->
     <div class="search-section">
       <form [formGroup]="form" (ngSubmit)="onSearch()">
         <div class="code-input-row">
@@ -54,7 +52,6 @@
       </form>
     </div>
 
-    <!-- Error: not found -->
     @if (lookupError) {
     <div class="result-box error-box">
       <mat-icon class="result-icon error-icon">error_outline</mat-icon>
@@ -65,7 +62,6 @@
     </div>
     }
 
-    <!-- Result: already dispensed -->
     @if (prescription && prescription.dispensed) {
     <div class="result-box dispensed-box">
       <div class="dispensed-header">
@@ -113,10 +109,8 @@
     </div>
     }
 
-    <!-- Result: active prescription -->
     @if (prescription && !prescription.dispensed) {
     <div class="result-box active-box">
-      <!-- Success banner after dispense -->
       @if (dispensedSuccess) {
       <div class="success-banner">
         <mat-icon>check_circle</mat-icon>
@@ -136,7 +130,6 @@
 
       <mat-divider class="inner-divider"></mat-divider>
 
-      <!-- Prescription meta -->
       <div class="prescription-meta">
         <div class="meta-row">
           <mat-icon class="meta-icon">medical_services</mat-icon>
@@ -152,7 +145,6 @@
 
       <mat-divider class="inner-divider"></mat-divider>
 
-      <!-- View PDF -->
       <div class="pdf-row" (click)="onOpenPdf()">
         <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
         <span class="pdf-label">View prescription PDF</span>
@@ -165,7 +157,6 @@
 
       <mat-divider class="inner-divider"></mat-divider>
 
-      <!-- Dispense button -->
       <button
         mat-flat-button
         class="dispense-btn"

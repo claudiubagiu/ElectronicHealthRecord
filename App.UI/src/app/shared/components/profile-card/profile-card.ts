@@ -21,7 +21,6 @@ export class ProfileCard {
   @Input() name!: string;
   @Input() role!: string;
   @Input() roleIcon!: string;
-  /** 'blue' = patient, 'orange' = pacient văzut de doctor */
   @Input() avatarColor: 'blue' | 'orange' = 'blue';
   @Input() details: ProfileDetailRow[] = [];
   @Input() showBackButton = false;

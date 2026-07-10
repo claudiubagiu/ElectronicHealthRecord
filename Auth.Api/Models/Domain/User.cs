@@ -8,7 +8,6 @@ namespace Auth.Api.Models.Domain
         public required string IdentityId { get; set; }
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
-
         public ApplicationUser? ApplicationUser { get; set; }
     }
 }

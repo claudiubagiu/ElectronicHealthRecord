@@ -50,7 +50,7 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
   isLoading = false;
   isInitialLoading = true;
 
-  // Existing draft (if any) — drives create vs. update
+  // Existing draft
   existingDraft: DiagnosticDraftDto | null = null;
 
   // Lab analyses
@@ -105,8 +105,6 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ── Form setup ────────────────────────────────────────────────────────────
-
   buildForm(): void {
     const today = new Date().toISOString().split('T')[0];
 
@@ -129,8 +127,6 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
     });
   }
 
-  // ── Load existing draft (if any) ──────────────────────────────────────────
-
   async loadExistingDraftAndPrefill(): Promise<void> {
     if (!this.selectedPatient) {
       this.isInitialLoading = false;
@@ -148,7 +144,6 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
       const payload = await this.draftService.decrypt(draft);
       this.prefillFormFromPayload(payload);
 
-      // Linked medical records come from the draft-level JSON column
       try {
         const ids = JSON.parse(draft.linkedMedicalRecordIds || '[]');
         if (Array.isArray(ids)) this.linkedMedicalRecordIds = ids;
@@ -180,20 +175,16 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
     this.customAnamnesis = payload.customAnamnesis ?? [];
     this.customClinicalExam = payload.customClinicalExam ?? [];
 
-    // Restore linked lab analysis, if any
     if (payload.linkedLabAnalysis) {
       const match = this.labAnalyses.find((a) => String(a.id) === payload.linkedLabAnalysis!.id);
       if (match) this.selectedAnalysis = match;
     }
 
-    // Restore linked past diagnoses (match by id; titles may differ in the chain)
     if (payload.linkedPastDiagnosisIds?.length) {
       const ids = new Set(payload.linkedPastDiagnosisIds);
       this.selectedPastDiagnoses = this.pastDiagnoses.filter((d) => ids.has(String(d.id)));
     }
   }
-
-  // ── Past diagnoses ────────────────────────────────────────────────────────
 
   async loadPastDiagnoses(): Promise<void> {
     if (!this.selectedPatient?.walletAddress) return;
@@ -247,13 +238,9 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
       .join('; ');
   }
 
-  // ── Medical records ───────────────────────────────────────────────────────
-
   onMedicalRecordSelectionChanged(ids: string[]): void {
     this.linkedMedicalRecordIds = ids;
   }
-
-  // ── Lab analyses ──────────────────────────────────────────────────────────
 
   async loadPatientLabAnalyses(): Promise<void> {
     if (!this.selectedPatient?.walletAddress) return;
@@ -297,8 +284,6 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
     });
   }
 
-  // ── Custom fields ─────────────────────────────────────────────────────────
-
   addCustomField(category: 'generalInfo' | 'anamnesis' | 'clinicalExam'): void {
     const labelKey = `newLabel_${category}` as const;
     const valueKey = `newValue_${category}` as const;
@@ -335,8 +320,6 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
     }
   }
 
-  // ── Validation ────────────────────────────────────────────────────────────
-
   get isCategoryGeneralInfoValid(): boolean {
     return !!this.form.get('title')?.valid && !!this.form.get('consultationDate')?.valid;
   }
@@ -366,8 +349,6 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
     );
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-
   async onSubmit(): Promise<void> {
     if (!this.isFormReady) {
       this.form.markAllAsTouched();
@@ -380,8 +361,6 @@ export class CreateDiagnosticDraft implements OnInit, OnDestroy {
     try {
       const v = this.form.value;
 
-      // Include lab analysis in customGeneralInfo the same way AddDiagnostic does
-      // so that the final PDF (once the doctor finalizes) carries that line.
       const extraGeneralInfo: CustomField[] = this.selectedAnalysis
         ? [
             ...this.customGeneralInfo,

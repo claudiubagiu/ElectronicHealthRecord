@@ -4,13 +4,6 @@ using AccessRequests.Api.Repositories.Interface;
 
 namespace AccessRequests.Api.Infrastructure.RabbitMQ.Implementation
 {
-    /// <summary>
-    /// Consumes AesKeyRotatedEvent fanned out by Users.Api after a patient
-    /// rotates their PatientMasterKey. Updates this service's own
-    /// denormalized User.EncryptedAesKey copy by UserId — this service
-    /// never saw the patient's IdentityId (Auth.Api's id), only the UserId
-    /// originally assigned by Users.Api.
-    /// </summary>
     public class AesKeyRotatedConsumerWorker : BackgroundService
     {
         private readonly IGenericRabbitMQConsumer<AesKeyRotatedEvent> _consumer;

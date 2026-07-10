@@ -39,7 +39,6 @@
     </div>
     } @else {
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <!-- Patient banner -->
       <div class="patient-section">
         <p class="section-label">Patient</p>
         <div class="patient-preselected-banner">
@@ -55,7 +54,6 @@
       </div>
 
       <mat-accordion class="categories-accordion" multi>
-        <!-- ═══ 1. GENERAL INFORMATION ══════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel" [expanded]="true">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -171,7 +169,6 @@
           </div>
         </mat-expansion-panel>
 
-        <!-- ═══ 2. ANAMNESIS ════════════════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -202,7 +199,6 @@
 
             <div class="optional-label">Optional fields</div>
 
-            <!-- Personal history — modal -->
             <div class="past-diagnoses-section">
               <p class="field-label">Personal medical history</p>
 
@@ -249,7 +245,6 @@
               } }
             </div>
 
-            <!-- Family history -->
             <mat-form-field appearance="outline" class="full optional-field">
               <mat-label>Family history</mat-label>
               <textarea
@@ -305,7 +300,6 @@
           </div>
         </mat-expansion-panel>
 
-        <!-- ═══ 3. MEDICAL DATA ══════════════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -332,7 +326,6 @@
           </div>
         </mat-expansion-panel>
 
-        <!-- ═══ 4. CLINICAL EXAMINATION ══════════════════════════════════════ -->
         <mat-expansion-panel class="category-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -437,7 +430,6 @@
           </div>
         </mat-expansion-panel>
 
-        <!-- ═══ 5. DIAGNOSIS & TREATMENT (doctor-only) ══════════════════════ -->
         <mat-expansion-panel class="category-panel doctor-only-panel" [expanded]="true">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -609,7 +601,6 @@
         </mat-expansion-panel>
       </mat-accordion>
 
-      <!-- Submit -->
       <div class="submit-section">
         @if (!isFormReady && form.touched) {
         <div class="form-status">

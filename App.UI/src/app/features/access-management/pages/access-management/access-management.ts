@@ -78,17 +78,6 @@ export class AccessManagement implements OnInit {
     }
   }
 
-  /**
-   * Approving access now does two things beyond the on-chain grant:
-   *   1. Build an envelope for the requesting user — decrypt the patient's
-   *      own AES key (with the patient's private key) and re-encrypt it
-   *      with the requesting user's public key (ECIES). This never leaves
-   *      plaintext key material outside the browser.
-   *   2. Send that envelope to AccessRequests.Api as part of the approve
-   *      call, so it can be stored (one envelope per patient/user pair)
-   *      and later retrieved by the authorized user to decrypt medical
-   *      data and diagnostics.
-   */
   async onApprove(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
@@ -127,11 +116,6 @@ export class AccessManagement implements OnInit {
     }
   }
 
-  /**
-   * Revoking access removes the on-chain grant and flips the request status.
-   * The envelope itself is deleted server-side by AccessRequests.Api as part
-   * of the revoke call — no separate cleanup call needed here anymore.
-   */
   async onRevoke(request: AccessRequestDto): Promise<void> {
     this.actioningId = request.id;
     try {
@@ -149,11 +133,6 @@ export class AccessManagement implements OnInit {
     }
   }
 
-  /**
-   * Builds the envelope payload for a newly-approved user: the patient's
-   * own AES key, decrypted with the patient's private key and re-encrypted
-   * (ECIES) with the target user's public key.
-   */
   private async buildEnvelopeForUser(userId: string): Promise<{ encryptedAesKey: string }> {
     const privateKey = this.e2eeService.getPrivateKey();
     if (!privateKey) {

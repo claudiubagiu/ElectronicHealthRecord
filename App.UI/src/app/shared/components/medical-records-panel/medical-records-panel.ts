@@ -101,8 +101,6 @@ export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
     }
   }
 
-  // ── Load ──────────────────────────────────────────────────────────────────
-
   async loadRecords(): Promise<void> {
     if (!this.patientId) return;
     this.isLoading = true;
@@ -147,8 +145,6 @@ export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
     validIds.forEach((id) => this.selectedIds.add(id));
     this.selectionChanged.emit(Array.from(this.selectedIds));
   }
-
-  // ── Detail expand ─────────────────────────────────────────────────────────
 
   toggleDetail(id: string): void {
     this.expandedDetailId = this.expandedDetailId === id ? null : id;
@@ -196,8 +192,6 @@ export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
     return rows;
   }
 
-  // ── Selection ─────────────────────────────────────────────────────────────
-
   toggleSelection(id: string): void {
     if (this.selectedIds.has(id)) {
       this.selectedIds.delete(id);
@@ -210,8 +204,6 @@ export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
   isSelected(id: string): boolean {
     return this.selectedIds.has(id);
   }
-
-  // ── Summary ───────────────────────────────────────────────────────────────
 
   getSummary(record: DecryptedMedicalRecord): string {
     const d = record.data;
@@ -230,8 +222,6 @@ export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
         return '';
     }
   }
-
-  // ── Edit ──────────────────────────────────────────────────────────────────
 
   toggleEdit(record: DecryptedMedicalRecord): void {
     if (this.expandedEditId === record.id) {
@@ -278,8 +268,6 @@ export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
     }
   }
 
-  // ── Delete ────────────────────────────────────────────────────────────────
-
   async onDelete(record: DecryptedMedicalRecord): Promise<void> {
     const confirmed = window.confirm(
       `Are you sure you want to permanently delete this ${record.recordType} record?`
@@ -299,8 +287,6 @@ export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
       this.isDeletingId = null;
     }
   }
-
-  // ── Add ───────────────────────────────────────────────────────────────────
 
   toggleAdd(type: MedicalRecordType): void {
     const current = this.isAddExpandedForType[type] ?? false;
@@ -346,8 +332,6 @@ export class MedicalRecordsPanelComponent implements OnInit, OnChanges {
       this.isSavingAdd = { ...this.isSavingAdd, [type]: false };
     }
   }
-
-  // ── Form helpers ──────────────────────────────────────────────────────────
 
   buildFormForType(type: MedicalRecordType, prefill: MedicalRecordFormData | null): FormGroup {
     switch (type) {

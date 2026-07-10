@@ -7,8 +7,6 @@
   gap: 28px;
 }
 
-/* ===== DRAFT BANNER ===== */
-
 .draft-banner {
   display: flex;
   align-items: center;
@@ -80,8 +78,6 @@
   }
 }
 
-/* ===== QUICK ACTIONS ===== */
-
 .quick-actions-section {
   display: flex;
   flex-direction: column;
@@ -106,8 +102,6 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
-
-/* ===== RESPONSIVE ===== */
 
 @media (max-width: 600px) {
   .doctor-patient-profile-page {

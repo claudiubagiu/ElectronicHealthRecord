@@ -1,6 +1,5 @@
 <div class="patient-medical-data-page">
   <div class="patient-medical-data-card">
-    <!-- Header -->
     <div class="card-header">
       <button
         mat-icon-button
@@ -17,7 +16,6 @@
       <p class="subtitle">Medical data — allergies, conditions, immunizations and more</p>
     </div>
 
-    <!-- Panel cu CRUD complet -->
     @if (patientId) {
     <app-medical-records-panel [patientId]="patientId" [selectionMode]="false">
     </app-medical-records-panel>

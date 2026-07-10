@@ -41,15 +41,6 @@ namespace AccessRequests.Api.Repositories.Implementation
             return await _dbContext.DocumentKeys
                 .AnyAsync(d => d.IpfsCid == ipfsCid);
         }
-
-        /// <summary>
-        /// Batch re-wraps DocumentKeys under a new PatientMasterKey, used
-        /// during PatientMasterKey rotation. Only EncryptedDocumentKey
-        /// changes — the underlying IPFS file is never touched, keeping
-        /// the operation cheap and independent of file size or count.
-        /// Scoped to patientId for safety: a caller can only rotate keys
-        /// for their own documents.
-        /// </summary>
         public async Task<int> UpdateEncryptedKeysAsync(Guid patientId, Dictionary<string, string> ipfsCidToEncryptedDocumentKey)
         {
             var cids = ipfsCidToEncryptedDocumentKey.Keys.ToList();

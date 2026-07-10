@@ -5,10 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Auth.Api.Controllers
 {
-    /// <summary>
-    /// Handles all authentication endpoints: challenge generation,
-    /// login via ECC signature verification, and user registration.
-    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -20,11 +16,6 @@ namespace Auth.Api.Controllers
             this.authService = authService;
         }
 
-        /// <summary>
-        /// Authenticates an existing user by verifying the ECC signature
-        /// of a previously issued challenge against the stored public key.
-        /// Returns a JWT token on success.
-        /// </summary>
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
@@ -60,11 +51,6 @@ namespace Auth.Api.Controllers
             });
         }
 
-        /// <summary>
-        /// Generates a one-time cryptographic challenge for the given wallet address.
-        /// The frontend must sign this challenge with the derived ECC key and send
-        /// it back via the login or register endpoint.
-        /// </summary>
         [HttpGet]
         [Route("challenge/{walletAddress}")]
         public async Task<IActionResult> GetChallenge(string walletAddress)
@@ -76,11 +62,7 @@ namespace Auth.Api.Controllers
             return Ok(new { challenge });
         }
 
-        /// <summary>
-        /// Registers a new user. Verifies the ECC signature of the challenge
-        /// against the provided public key, creates the user identity, stores
-        /// the ECC public key for future logins, and returns a JWT token.
-        /// </summary>
+
         [HttpPost]
         [Route("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
@@ -104,17 +86,6 @@ namespace Auth.Api.Controllers
             });
         }
 
-        /// <summary>
-        /// Rotates the calling patient's PatientMasterKey. Must be called
-        /// LAST in the client-side rotation flow — after every DocumentKey
-        /// (medical records, diagnostic drafts) and every access envelope
-        /// has already been re-wrapped under the new key — so that a failed
-        /// or interrupted rotation always leaves the old key fully valid
-        /// and retryable, never a half-migrated state.
-        ///
-        /// Restricted to Patients: other roles don't hold a personal
-        /// PatientMasterKey (they recover one via an access envelope).
-        /// </summary>
         [HttpPatch]
         [Route("me/aes-key")]
         [Authorize(Roles = "Patient")]

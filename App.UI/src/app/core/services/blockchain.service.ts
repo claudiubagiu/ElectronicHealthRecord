@@ -29,8 +29,6 @@ export class BlockchainService {
     this.initProvider();
   }
 
-  // ── Initialization ─────────────────────────────────────────────────────────
-
   private initProvider(): void {
     if (!window.ethereum) {
       console.warn('[Blockchain] MetaMask not detected. Provider will be initialized on demand.');
@@ -76,8 +74,6 @@ export class BlockchainService {
       });
     }
   }
-
-  // ── Access Control (ABAC) ──────────────────────────────────────────────────
 
   async grantAccess(doctorAddress: string, durationSeconds: number): Promise<void> {
     try {
@@ -147,14 +143,6 @@ export class BlockchainService {
     }
   }
 
-  // ── Admin (RBAC) ───────────────────────────────────────────────────────────
-
-  /**
-   * Assigns a role to a medic on-chain.
-   * Replaces the old approveMedic.
-   *
-   * Role enum: NONE=0, DOCTOR=1, LAB_TECH=2, PHARMACIST=3, MEDICAL_ASSISTANT=4
-   */
   async assignRole(medicAddress: string, role: number): Promise<void> {
     try {
       const signed = await this.getSigned();
@@ -181,10 +169,6 @@ export class BlockchainService {
     }
   }
 
-  /**
-   * Revokes a medic's role on-chain (sets to NONE).
-   * Replaces the old revokeMedic.
-   */
   async revokeRole(medicAddress: string): Promise<void> {
     try {
       const signed = await this.getSigned();
@@ -211,11 +195,6 @@ export class BlockchainService {
     }
   }
 
-  /**
-   * Returns the numeric role of an address on-chain.
-   * Replaces the old isApprovedMedic.
-   * 0=NONE, 1=DOCTOR, 2=LAB_TECH, 3=PHARMACIST, 4=MEDICAL_ASSISTANT
-   */
   async getRole(address: string): Promise<number> {
     this.ensureProvider();
 
@@ -232,8 +211,6 @@ export class BlockchainService {
       });
     }
   }
-
-  // ── Diagnosis Registry ─────────────────────────────────────────────────────
 
   async addDiagnosis(
     title: string,
@@ -254,7 +231,6 @@ export class BlockchainService {
             return parsed.args['diagnosisId'] as bigint;
           }
         } catch {
-          // skip unrelated logs
         }
       }
 
@@ -370,8 +346,6 @@ export class BlockchainService {
     }
   }
 
-  // ── Lab Analyses ───────────────────────────────────────────────────────────
-
   async addLabAnalysis(
     title: string,
     ipfsCid: string,
@@ -391,7 +365,6 @@ export class BlockchainService {
             return parsed.args['labAnalysisId'] as bigint;
           }
         } catch {
-          // skip unrelated logs
         }
       }
 
@@ -487,8 +460,6 @@ export class BlockchainService {
     }
   }
 
-  // ── Prescriptions ──────────────────────────────────────────────────────────
-
   async addPrescription(
     title: string,
     ipfsCid: string,
@@ -517,7 +488,6 @@ export class BlockchainService {
             return parsed.args['prescriptionId'] as bigint;
           }
         } catch {
-          // skip unrelated logs
         }
       }
 
@@ -659,12 +629,6 @@ export class BlockchainService {
     }
   }
 
-  // ── Backward-compatibility aliases ─────────────────────────────────────────
-
-  /**
-   * Kept for backward compatibility — components that call getPatientPrescriptionIds
-   * expect bigint[] so they can fetch each prescription individually.
-   */
   async getPatientPrescriptionIds(patientAddress: string): Promise<bigint[]> {
     try {
       const signed = await this.getSigned();
@@ -680,15 +644,9 @@ export class BlockchainService {
     }
   }
 
-  /**
-   * Hashes a short prescription code using keccak256.
-   * Used by pharmacist lookup and dispense flows.
-   */
   hashShortCode(shortCode: string): string {
     return keccak256(toUtf8Bytes(shortCode));
   }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
 
   generatePrescriptionCode(): { code: string; codeHash: string; salt: string } {
     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -696,8 +654,6 @@ export class BlockchainService {
     const codeHash = keccak256(toUtf8Bytes(code + salt));
     return { code, codeHash, salt };
   }
-
-  // ── Mappers ────────────────────────────────────────────────────────────────
 
   private mapDiagnosis(raw: any): Diagnosis {
     return {

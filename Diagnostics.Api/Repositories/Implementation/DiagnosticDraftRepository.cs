@@ -68,11 +68,6 @@ namespace Diagnostics.Api.Repositories.Implementation
             return true;
         }
 
-        /// <summary>
-        /// Batch-updates only EncryptedDocumentKey for the given drafts,
-        /// scoped to patientId for safety. Used during PatientMasterKey
-        /// rotation — EncryptedData/Iv are never touched here.
-        /// </summary>
         public async Task<int> UpdateDocumentKeysAsync(
             Guid patientId,
             IReadOnlyDictionary<Guid, string> draftIdToEncryptedDocumentKey)

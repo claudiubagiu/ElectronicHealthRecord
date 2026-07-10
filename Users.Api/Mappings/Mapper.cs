@@ -4,10 +4,6 @@ using Users.Api.Models.Messages;
 
 namespace Users.Api.Mappings
 {
-    /// <summary>
-    /// Manual replacement for the old AutoMapper-based AutoMapperProfiles.
-    /// Maps between events, domain models, and DTOs for Users.Api.
-    /// </summary>
     public static class Mapper
     {
         // ───────────────────────── IdentityCreatedEvent → domain ─────────────────────────
@@ -74,7 +70,6 @@ namespace Users.Api.Mappings
         };
 
         // ───────────────────────── domain → UserCreatedResponseEvent ─────────────────────────
-        // Id on UserCreatedResponseEvent is a string; domain Id is a Guid.
 
         public static UserCreatedResponseEvent ToUserCreatedResponseEvent(Patient p) => new()
         {
@@ -117,9 +112,6 @@ namespace Users.Api.Mappings
         };
 
         // ───────────────────────── domain → UserCreatedEvent ─────────────────────────
-        // Id on UserCreatedEvent (Users.Api.Models.Messages) is a string;
-        // Role is set by the caller right after, same as with the old AutoMapper profile.
-
         public static UserCreatedEvent ToUserCreatedEvent(Patient p) => new()
         {
             Id = p.Id.ToString(),

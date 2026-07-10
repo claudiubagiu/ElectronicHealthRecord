@@ -16,8 +16,6 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-// ── Header ──
-
 .card-header {
   display: flex;
   flex-direction: column;
@@ -64,8 +62,6 @@
   }
 }
 
-// ── States ──
-
 .state-container {
   display: flex;
   flex-direction: column;
@@ -82,8 +78,6 @@
     color: rgba(0, 0, 0, 0.18);
   }
 }
-
-// ── Group section ──
 
 .group-section {
   margin-bottom: 32px;
@@ -135,8 +129,6 @@
   color: var(--group-color, #00796b);
 }
 
-// ── Records list ──
-
 .records-list {
   display: flex;
   flex-direction: column;
@@ -156,8 +148,6 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
   }
 }
-
-// ── Record header ──
 
 .record-header {
   display: flex;
@@ -188,8 +178,6 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
-
-// ── Detail rows ──
 
 .record-details {
   display: flex;
@@ -222,8 +210,6 @@
   color: #212121;
 }
 
-// ── Footer ──
-
 .record-footer {
   display: flex;
   align-items: center;
@@ -239,8 +225,6 @@
     height: 14px;
   }
 }
-
-// ── Responsive ──
 
 @media (max-width: 600px) {
   .get-medical-data-card {

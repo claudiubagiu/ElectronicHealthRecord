@@ -4,17 +4,8 @@ using AccessRequests.Api.Models.Messages;
 
 namespace AccessRequests.Api.Mappings
 {
-    /// <summary>
-    /// Central manual mapping for AccessRequests.Api.
-    /// Covers both the former AutoMapper-based mapping (UserCreatedEvent → User)
-    /// and the mappings previously written by hand inline in services
-    /// (AccessRequest/AccessRequestHistory/Envelope/DocumentKey → their DTOs),
-    /// consolidated here for consistency.
-    /// </summary>
     public static class Mapper
     {
-        // ───────────────────────── UserCreatedEvent → User ─────────────────────────
-
         public static User ToUser(UserCreatedEvent evt) => new()
         {
             Id = evt.Id,
@@ -25,8 +16,6 @@ namespace AccessRequests.Api.Mappings
             PublicKey = evt.PublicKey,
             EncryptedAesKey = evt.EncryptedAesKey,
         };
-
-        // ───────────────────────── AccessRequest → AccessRequestDto ─────────────────────────
 
         public static AccessRequestDto ToAccessRequestDto(AccessRequest r) => new()
         {
@@ -43,8 +32,6 @@ namespace AccessRequests.Api.Mappings
             ExpiresAt = r.ExpiresAt
         };
 
-        // ───────────────────────── AccessRequestHistory → AccessRequestHistoryDto ─────────────────────────
-
         public static AccessRequestHistoryDto ToAccessRequestHistoryDto(AccessRequestHistory h) => new()
         {
             Id = h.Id,
@@ -60,9 +47,6 @@ namespace AccessRequests.Api.Mappings
                 : string.Empty,
             Timestamp = h.Timestamp
         };
-
-        // ───────────────────────── Envelope → EnvelopeDto ─────────────────────────
-
         public static EnvelopeDto ToEnvelopeDto(Envelope e) => new()
         {
             Id = e.Id,
@@ -71,9 +55,6 @@ namespace AccessRequests.Api.Mappings
             EncryptedAesKey = e.EncryptedAesKey,
             CreatedAt = e.CreatedAt
         };
-
-        // ───────────────────────── DocumentKey → DocumentKeyDto ─────────────────────────
-
         public static DocumentKeyDto ToDocumentKeyDto(DocumentKey d) => new()
         {
             Id = d.Id,

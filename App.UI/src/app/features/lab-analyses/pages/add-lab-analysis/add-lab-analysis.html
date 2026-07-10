@@ -1,6 +1,5 @@
 <div class="add-lab-analysis-page">
   <div class="add-lab-analysis-card">
-    <!-- Header -->
     <div class="card-header">
       <div class="icon-wrapper">
         <mat-icon>biotech</mat-icon>
@@ -24,7 +23,6 @@
     </div>
     } @else {
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <!-- Patient banner -->
       <div class="patient-section">
         <p class="section-label">Patient</p>
         <div class="patient-preselected-banner">
@@ -37,7 +35,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- PDF Upload -->
       <div class="section">
         <p class="section-label">Analysis PDF *</p>
 
@@ -70,7 +67,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- Submit -->
       <div class="submit-section">
         @if (!isFormReady) {
         <div class="form-status">

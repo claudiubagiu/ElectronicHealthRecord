@@ -13,11 +13,6 @@ export class PrescriptionDispenseService {
   private blockchainService = inject(BlockchainService);
   private decryptionService = inject(PrescriptionDecryptionService);
 
-  /**
-   * Looks up a prescription by short code.
-   * Returns the on-chain struct. Does NOT decrypt yet —
-   * decryption happens separately on user confirmation.
-   */
   async lookupByCode(shortCode: string): Promise<DispenseLookupResult> {
     const normalizedCode = shortCode.trim().toUpperCase();
 
@@ -36,17 +31,11 @@ export class PrescriptionDispenseService {
     return { prescription };
   }
 
-  /**
-   * Decrypts and opens the prescription PDF for the pharmacist.
-   */
   async decryptAndOpen(shortCode: string, prescription: Prescription): Promise<void> {
     const normalizedCode = shortCode.trim().toUpperCase();
     await this.decryptionService.decryptAndOpenForPharmacist(normalizedCode, prescription);
   }
 
-  /**
-   * Marks the prescription as dispensed on-chain.
-   */
   async dispense(shortCode: string): Promise<void> {
     const normalizedCode = shortCode.trim().toUpperCase();
     const codeHash = this.blockchainService.hashShortCode(normalizedCode);

@@ -1,6 +1,5 @@
 <div class="dialog-container">
 
-  <!-- Header -->
   <div class="dialog-header">
     <div class="dialog-header-left">
       <mat-icon class="header-icon">vpn_key</mat-icon>
@@ -13,7 +12,6 @@
     }
   </div>
 
-  <!-- Body -->
   <div class="dialog-body">
 
     @if (step === 'confirm') {
@@ -49,7 +47,6 @@
 
   </div>
 
-  <!-- Footer -->
   <div class="dialog-footer">
     @if (step === 'confirm') {
       <button mat-stroked-button type="button" (click)="onCancel()">Cancel</button>

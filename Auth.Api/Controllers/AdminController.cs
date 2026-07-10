@@ -8,10 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Auth.Api.Controllers
 {
-    /// <summary>
-    /// Provides administrator endpoints for managing medical staff approval.
-    /// All endpoints require the Administrator role.
-    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Administrator")]
@@ -29,9 +25,6 @@ namespace Auth.Api.Controllers
             _userManager = userManager;
         }
 
-        /// <summary>
-        /// Returns all medical staff users who are pending approval.
-        /// </summary>
         [HttpGet("medics/pending")]
         public async Task<IActionResult> GetPendingMedics()
         {
@@ -52,9 +45,6 @@ namespace Auth.Api.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Returns all medical staff users who have already been approved.
-        /// </summary>
         [HttpGet("medics/approved")]
         public async Task<IActionResult> GetApprovedMedics()
         {
@@ -75,9 +65,6 @@ namespace Auth.Api.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Approves a medical staff user, allowing them to log in.
-        /// </summary>
         [HttpPost("medics/{userId}/approve")]
         public async Task<IActionResult> ApproveMedic(string userId)
         {
@@ -100,9 +87,6 @@ namespace Auth.Api.Controllers
             return Ok(Mapper.ToPendingMedicDto(user, roles));
         }
 
-        /// <summary>
-        /// Revokes approval from a medical staff user, preventing future logins.
-        /// </summary>
         [HttpPost("medics/{userId}/revoke")]
         public async Task<IActionResult> RevokeMedic(string userId)
         {

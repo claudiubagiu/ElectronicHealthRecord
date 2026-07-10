@@ -28,9 +28,6 @@ export class AddLabAnalysis implements OnInit {
   selectedFile: File | null = null;
   isLoading = false;
 
-  /** True when the page was opened without a patient in the query params
-   *  (e.g. direct URL access) — the patient is always pre-selected from
-   *  Patient Access > Active Access, never searched here. */
   patientMissing = false;
 
   ngOnInit(): void {
@@ -42,11 +39,6 @@ export class AddLabAnalysis implements OnInit {
     this.form = this.fb.group({});
   }
 
-  /**
-   * The patient is always pre-selected via query params (from Patient
-   * Access > Active Access). If they're missing, the lab tech navigated
-   * here directly and must be sent back to pick a patient first.
-   */
   private hydratePatientFromQueryParams(): void {
     const patientId = this.route.snapshot.queryParamMap.get('patientId');
     const patientName = this.route.snapshot.queryParamMap.get('patientName');

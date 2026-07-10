@@ -6,11 +6,7 @@ import { AppError } from '../errors/app.error';
   providedIn: 'root',
 })
 export class CryptoService {
-  // ==================== AES Key Management ====================
 
-  /**
-   * Generates a 256-bit AES-GCM symmetric encryption key.
-   */
   static async generateAESKey(): Promise<CryptoKey> {
     try {
       return await window.crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
@@ -29,9 +25,6 @@ export class CryptoService {
     }
   }
 
-  /**
-   * Exports an AES key as raw bytes (ArrayBuffer).
-   */
   static async exportAESKey(aesKey: CryptoKey): Promise<ArrayBuffer> {
     try {
       return await window.crypto.subtle.exportKey('raw', aesKey);
@@ -46,10 +39,6 @@ export class CryptoService {
     }
   }
 
-  /**
-   * Imports a decrypted raw AES key back into a CryptoKey object.
-   * The key is configured for decryption usage only.
-   */
   static async importAESKey(rawKey: ArrayBuffer): Promise<CryptoKey> {
     try {
       return await window.crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, [
@@ -66,12 +55,6 @@ export class CryptoService {
     }
   }
 
-  // ==================== AES File Encryption/Decryption ====================
-
-  /**
-   * Encrypts a file (ArrayBuffer) using AES-GCM.
-   * A random 12-byte IV is generated for each encryption to ensure uniqueness.
-   */
   static async encryptFileWithAES(
     file: ArrayBuffer,
     aesKey: CryptoKey
@@ -97,9 +80,6 @@ export class CryptoService {
     }
   }
 
-  /**
-   * Decrypts an AES-GCM encrypted file using the provided key and IV.
-   */
   static async decryptFileWithAES(
     encryptedFile: ArrayBuffer,
     aesKey: CryptoKey,
@@ -119,16 +99,6 @@ export class CryptoService {
     }
   }
 
-  // ==================== AES String Encryption/Decryption ====================
-
-  /**
-   * Encrypts a plaintext string with AES-GCM using the provided key.
-   * A random 12-byte IV is generated per call to ensure uniqueness.
-   *
-   * @param plaintext - The string to encrypt.
-   * @param aesKey - The AES-GCM CryptoKey to use for encryption.
-   * @returns A combined string in the format: base64(iv) + ":" + base64(ciphertext).
-   */
   static async encryptString(plaintext: string, aesKey: CryptoKey): Promise<string> {
     try {
       const encoder = new TextEncoder();
@@ -156,13 +126,6 @@ export class CryptoService {
     }
   }
 
-  /**
-   * Decrypts a string previously encrypted with {@link encryptString}.
-   *
-   * @param combined - The combined string in the format: base64(iv) + ":" + base64(ciphertext).
-   * @param aesKey - The AES-GCM CryptoKey to use for decryption (must match the encryption key).
-   * @returns The original plaintext string.
-   */
   static async decryptString(combined: string, aesKey: CryptoKey): Promise<string> {
     try {
       const [ivBase64, encryptedBase64] = combined.split(':');
@@ -197,21 +160,6 @@ export class CryptoService {
     }
   }
 
-  // ==================== ECC Envelope Operations (secp256k1 via eciesjs) ====================
-
-  /**
-   * Encrypts a raw AES key using ECIES with a recipient's secp256k1 public key.
-   *
-   * Uses the eciesjs library which internally handles:
-   * - Ephemeral key pair generation
-   * - ECDH shared secret computation
-   * - HKDF key derivation
-   * - AES-256-GCM encryption
-   *
-   * @param aesKeyRaw - The raw AES key bytes to encrypt (typically 32 bytes).
-   * @param recipientPublicKeyHex - The recipient's secp256k1 public key (hex string, with or without 0x prefix).
-   * @returns A Uint8Array containing the ECIES ciphertext (ephemeral pubkey + encrypted data).
-   */
   static encryptAESKeyWithECIES(aesKeyRaw: ArrayBuffer, recipientPublicKeyHex: string): Uint8Array {
     try {
       const cleanHex = recipientPublicKeyHex.startsWith('0x')
@@ -230,19 +178,6 @@ export class CryptoService {
     }
   }
 
-  /**
-   * Decrypts an ECIES-encrypted AES key using the wallet's secp256k1 private key.
-   *
-   * Uses the eciesjs library which internally handles:
-   * - Parsing the ephemeral public key from the ciphertext
-   * - ECDH shared secret computation
-   * - HKDF key derivation
-   * - AES-256-GCM decryption
-   *
-   * @param encryptedEnvelope - The ECIES ciphertext (as produced by encryptAESKeyWithECIES).
-   * @param walletPrivateKeyHex - The user's secp256k1 private key (hex string, with or without 0x prefix).
-   * @returns The decrypted raw AES key bytes as a Uint8Array.
-   */
   static decryptAESKeyWithECIES(
     encryptedEnvelope: ArrayBuffer,
     walletPrivateKeyHex: string
@@ -264,11 +199,6 @@ export class CryptoService {
     }
   }
 
-  // ==================== Encoding Utilities ====================
-
-  /**
-   * Converts an ArrayBuffer to a base64-encoded string.
-   */
   static arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
     let binary = '';
@@ -276,9 +206,6 @@ export class CryptoService {
     return btoa(binary);
   }
 
-  /**
-   * Converts a base64-encoded string back to a Uint8Array.
-   */
   static base64ToUint8Array(base64: string): Uint8Array {
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
@@ -288,9 +215,6 @@ export class CryptoService {
     return bytes;
   }
 
-  /**
-   * Converts a hex string (with or without "0x" prefix) to a Uint8Array.
-   */
   static hexToBytes(hex: string): Uint8Array {
     const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
     const bytes = new Uint8Array(cleanHex.length / 2);

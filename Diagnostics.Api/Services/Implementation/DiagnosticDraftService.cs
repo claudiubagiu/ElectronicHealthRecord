@@ -106,14 +106,6 @@ namespace Diagnostics.Api.Services.Implementation
 
             return Result.Ok();
         }
-
-        /// <summary>
-        /// Batch re-wraps DocumentKeys under a new PatientMasterKey, used
-        /// when the patient rotates their master key. Only
-        /// EncryptedDocumentKey changes — EncryptedData/Iv are left
-        /// untouched. requestingUserId (patientId here) must be the patient
-        /// themselves — only they hold the old and new PatientMasterKey.
-        /// </summary>
         public async Task<Result<int>> RotateDocumentKeysAsync(Guid patientId, RotateDocumentKeysDto dto)
         {
             if (dto.Entries == null || dto.Entries.Count == 0)

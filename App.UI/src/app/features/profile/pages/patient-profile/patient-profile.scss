@@ -7,8 +7,6 @@
   gap: 28px;
 }
 
-/* ===== DOCTOR CARD ===== */
-
 .carousel-card {
   min-width: 280px;
   max-width: 280px;
@@ -105,15 +103,11 @@
   &:hover:not([disabled]) { background: rgba(198, 40, 40, 0.05); }
 }
 
-/* ===== QUICK ACTIONS ===== */
-
 .quick-actions-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
 }
-
-/* ===== STATES ===== */
 
 .state-container {
   display: flex;
@@ -136,8 +130,6 @@
     }
   }
 }
-
-/* ===== RESPONSIVE ===== */
 
 @media (max-width: 600px) {
   .patient-profile-page {

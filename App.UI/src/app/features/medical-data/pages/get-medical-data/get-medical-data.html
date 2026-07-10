@@ -1,7 +1,6 @@
 <div class="get-medical-data-page">
   <div class="get-medical-data-card">
 
-    <!-- Header -->
     <div class="card-header">
       <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Back to profile">
         <mat-icon>arrow_back</mat-icon>
@@ -13,7 +12,6 @@
       <p class="subtitle">Your allergies, conditions, immunizations and more — end-to-end encrypted</p>
     </div>
 
-    <!-- Loading -->
     @if (isLoading) {
       <div class="state-container">
         <mat-spinner diameter="40"></mat-spinner>
@@ -21,7 +19,6 @@
       </div>
     }
 
-    <!-- Empty -->
     @if (!isLoading && records.length === 0) {
       <div class="state-container empty">
         <mat-icon class="empty-icon">health_and_safety</mat-icon>
@@ -29,12 +26,10 @@
       </div>
     }
 
-    <!-- Grouped records -->
     @if (!isLoading && records.length > 0) {
       @for (group of groupedRecords; track group.type) {
         <div class="group-section">
 
-          <!-- Group header -->
           <div class="group-header" [style.--group-color]="getConfig(group.type).color">
             <div class="group-icon-wrapper">
               <mat-icon>{{ getConfig(group.type).icon }}</mat-icon>
@@ -43,7 +38,6 @@
             <span class="group-count">{{ group.items.length }}</span>
           </div>
 
-          <!-- Records in group -->
           <div class="records-list">
             @for (record of group.items; track record.id) {
               <div class="record-item">

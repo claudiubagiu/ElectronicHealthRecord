@@ -21,14 +21,6 @@
         public Guid Id { get; set; }
         public required Guid PatientId { get; set; }
         public required string IpfsCid { get; set; }
-
-        /// <summary>
-        /// The DocumentKey (raw AES-256 key), AES-GCM-encrypted with the
-        /// patient's PatientMasterKey. Format: base64(iv) + ":" + base64(ciphertext),
-        /// matching CryptoService.encryptString on the frontend. Opaque to
-        /// this API — only a holder of the matching PatientMasterKey can
-        /// decrypt it client-side.
-        /// </summary>
         public required string EncryptedDocumentKey { get; set; }
 
         public DateTime CreatedAt { get; set; }

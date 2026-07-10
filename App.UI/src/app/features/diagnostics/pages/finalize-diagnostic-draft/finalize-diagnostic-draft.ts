@@ -61,7 +61,7 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
   isLoading = false;
   isInitialLoading = true;
 
-  // Existing draft (required here — the page makes no sense without one)
+  // Existing draft
   existingDraft: DiagnosticDraftDto | null = null;
   draftNotFound = false;
 
@@ -114,8 +114,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
       dateOfBirth: '',
     };
 
-    // Load everything in the right order: we need past diagnoses + lab analyses
-    // already loaded before we can hydrate the selected values from the draft.
     this.bootstrap();
 
     this.setupIcdSearch();
@@ -128,15 +126,12 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
 
   private async bootstrap(): Promise<void> {
     try {
-      // Load reference data in parallel so hydration has everything it needs
       await Promise.all([this.loadPatientLabAnalyses(), this.loadPastDiagnoses()]);
       await this.loadExistingDraftAndPrefill();
     } finally {
       this.isInitialLoading = false;
     }
   }
-
-  // ── Form setup ────────────────────────────────────────────────────────────
 
   buildForm(): void {
     const today = new Date().toISOString().split('T')[0];
@@ -171,8 +166,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
     });
   }
 
-  // ── Load existing draft (required) ────────────────────────────────────────
-
   async loadExistingDraftAndPrefill(): Promise<void> {
     if (!this.selectedPatient) return;
 
@@ -187,7 +180,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
       const payload = await this.draftService.decrypt(draft);
       this.prefillFormFromPayload(payload);
 
-      // Linked medical records come from the draft-level JSON column
       try {
         const ids = JSON.parse(draft.linkedMedicalRecordIds || '[]');
         if (Array.isArray(ids)) this.linkedMedicalRecordIds = ids;
@@ -215,9 +207,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
       clinicalNotes: payload.clinicalNotes ?? '',
     });
 
-    // The assistant stores the lab-analysis link as a synthetic entry in
-    // customGeneralInfo. We strip it here so the doctor's UI can re-derive it
-    // from `selectedAnalysis` (preventing duplicates when the final PDF is built).
     const customGeneralInfoWithoutLabLink = (payload.customGeneralInfo ?? []).filter(
       (f) => f.label !== 'Based on Lab Analysis'
     );
@@ -235,8 +224,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
       this.selectedPastDiagnoses = this.pastDiagnoses.filter((d) => ids.has(String(d.id)));
     }
   }
-
-  // ── Past diagnoses ────────────────────────────────────────────────────────
 
   async loadPastDiagnoses(): Promise<void> {
     if (!this.selectedPatient?.walletAddress) return;
@@ -289,8 +276,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
       .map((d) => `${d.title} (${this.formatTimestampFull(d.timestamp)})`)
       .join('; ');
   }
-
-  // ── ICD-10 ────────────────────────────────────────────────────────────────
 
   setupIcdSearch(): void {
     this.form
@@ -353,13 +338,9 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
     return value ?? '';
   }
 
-  // ── Medical records ───────────────────────────────────────────────────────
-
   onMedicalRecordSelectionChanged(ids: string[]): void {
     this.linkedMedicalRecordIds = ids;
   }
-
-  // ── Lab analyses ──────────────────────────────────────────────────────────
 
   async loadPatientLabAnalyses(): Promise<void> {
     if (!this.selectedPatient?.walletAddress) return;
@@ -402,8 +383,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
       year: 'numeric',
     });
   }
-
-  // ── Custom fields ─────────────────────────────────────────────────────────
 
   addCustomField(category: 'generalInfo' | 'anamnesis' | 'clinicalExam' | 'diagnosis'): void {
     const labelKey = `newLabel_${category}` as const;
@@ -450,8 +429,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
     }
   }
 
-  // ── Validation ────────────────────────────────────────────────────────────
-
   get isCategoryGeneralInfoValid(): boolean {
     return !!this.form.get('title')?.valid && !!this.form.get('consultationDate')?.valid;
   }
@@ -488,8 +465,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
     );
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-
   async onSubmit(): Promise<void> {
     if (!this.isFormReady) {
       this.form.markAllAsTouched();
@@ -516,7 +491,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
           ]
         : this.customGeneralInfo;
 
-      // 1. Publish the full diagnosis on-chain
       await this.submissionService.submit({
         pdfData: {
           title: v.title,
@@ -552,9 +526,6 @@ export class FinalizeDiagnosticDraft implements OnInit, OnDestroy {
         patientId: this.selectedPatient.id,
       });
 
-      // 2. After on-chain success, delete the draft.
-      //    If this fails we don't roll back the diagnosis — it's published.
-      //    We just surface a non-blocking warning.
       try {
         await this.draftService.deleteDraft(this.existingDraft.id);
       } catch (cleanupErr) {

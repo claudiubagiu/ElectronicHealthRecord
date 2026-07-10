@@ -4,12 +4,6 @@ using MedicalData.Api.Models.Messages;
 
 namespace MedicalData.Api.Mappings
 {
-    /// <summary>
-    /// Central manual mapping for MedicalData.Api.
-    /// Covers both the former AutoMapper-based mappings (UserCreatedEvent → User)
-    /// and the mappings previously written by hand inline in services
-    /// (MedicalRecord → MedicalRecordDto), consolidated here for consistency.
-    /// </summary>
     public static class Mapper
     {
         public static User ToUser(UserCreatedEvent evt) => new()

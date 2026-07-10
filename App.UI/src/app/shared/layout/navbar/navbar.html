@@ -1,8 +1,6 @@
 <mat-sidenav-container class="sidenav-container">
-  <!-- ==================== Sidenav (mobile) ==================== -->
   <mat-sidenav #sidenav mode="over" [(opened)]="isSidenavOpen" class="sidenav">
     <mat-nav-list>
-      <!-- Navigation links -->
       <a
         mat-list-item
         routerLink="/"
@@ -16,7 +14,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- Sidenav: Authenticated -->
       @if (isAuthenticated$ | async) { @if (user$ | async; as user) {
       <div class="sidenav-user-info">
         <mat-icon class="sidenav-avatar-icon">account_circle</mat-icon>
@@ -24,7 +21,6 @@
       </div>
       }
 
-      <!-- Role-based links (data-driven) -->
       @if (roles$ | async; as roles) { @for (item of getVisibleItems(roles); track item.route) {
       <a
         mat-list-item
@@ -56,7 +52,6 @@
         <span matListItemTitle>Sign out</span>
       </a>
       } @else {
-      <!-- Sidenav: Unauthenticated -->
       <a mat-list-item (click)="onLogin(); sidenav.close()" [class.disabled]="isLoggingIn">
         <mat-icon matListItemIcon>login</mat-icon>
         <span matListItemTitle>{{ isLoggingIn ? 'Connecting...' : 'Sign in' }}</span>
@@ -74,28 +69,21 @@
     </mat-nav-list>
   </mat-sidenav>
 
-  <!-- ==================== Main content ==================== -->
   <mat-sidenav-content>
-    <!-- ==================== Toolbar / Navbar ==================== -->
     <mat-toolbar color="primary" class="toolbar">
-      <!-- Hamburger menu button (mobile only) -->
       <button mat-icon-button class="menu-button" (click)="toggleSidenav()">
         <mat-icon>menu</mat-icon>
       </button>
 
-      <!-- Logo -->
       <a routerLink="/" class="logo">
         <mat-icon>local_hospital</mat-icon>
         <span class="app-name">MedChain</span>
       </a>
 
-      <!-- Spacer -->
       <span class="spacer"></span>
 
-      <!-- Navigation links (desktop) -->
       <nav class="nav-links"></nav>
 
-      <!-- ===== Desktop: Authenticated => Profile with menu ===== -->
       @if (isAuthenticated$ | async) {
       <button
         mat-icon-button
@@ -119,7 +107,6 @@
           <span>Profile</span>
         </button>
 
-        <!-- Role-based menu items (data-driven) -->
         @if (roles$ | async; as roles) { @for (item of getVisibleItems(roles); track item.route) {
         <button mat-menu-item [routerLink]="item.route">
           <mat-icon>{{ item.icon }}</mat-icon>
@@ -139,7 +126,6 @@
         </button>
       </mat-menu>
       } @else {
-      <!-- ===== Desktop: Unauthenticated => Login + Register ===== -->
       <div class="auth-buttons">
         <button mat-stroked-button class="login-btn" (click)="onLogin()" [disabled]="isLoggingIn">
           <mat-icon>{{ isLoggingIn ? 'hourglass_empty' : 'login' }}</mat-icon>
@@ -153,7 +139,6 @@
       }
     </mat-toolbar>
 
-    <!-- Page content -->
     <div class="content">
       <ng-content></ng-content>
     </div>

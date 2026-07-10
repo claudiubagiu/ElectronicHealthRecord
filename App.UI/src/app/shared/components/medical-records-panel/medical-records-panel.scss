@@ -1,5 +1,3 @@
-// ── Panel wrapper ─────────────────────────────────────────────────────────────
-
 .records-panel {
   display: flex;
   flex-direction: column;
@@ -14,8 +12,6 @@
   color: rgba(0, 0, 0, 0.5);
   font-size: 0.9rem;
 }
-
-// ── Group ─────────────────────────────────────────────────────────────────────
 
 .record-group {
   display: flex;
@@ -59,8 +55,6 @@
   margin: 0 0 4px 4px;
 }
 
-// ── Card wrapper ──────────────────────────────────────────────────────────────
-
 .record-card {
   display: flex;
   flex-direction: column;
@@ -80,8 +74,6 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
 }
-
-// ── Main row ──────────────────────────────────────────────────────────────────
 
 .record-row {
   display: flex;
@@ -113,8 +105,6 @@
   }
 }
 
-// ── See details label ─────────────────────────────────────────────────────────
-
 .see-details {
   display: flex;
   align-items: center;
@@ -136,8 +126,6 @@
     }
   }
 }
-
-// ── Action buttons ────────────────────────────────────────────────────────────
 
 .action-btn {
   width: 32px !important;
@@ -173,8 +161,6 @@
     color: #c62828;
   }
 }
-
-// ── Detail panel ──────────────────────────────────────────────────────────────
 
 .detail-panel {
   display: flex;
@@ -232,8 +218,6 @@
   }
 }
 
-// ── Inline form (edit & add) ──────────────────────────────────────────────────
-
 .inline-form {
   width: 100%;
   display: flex;
@@ -267,8 +251,6 @@
   gap: 8px;
   margin-top: 4px;
 }
-
-// ── Add button ────────────────────────────────────────────────────────────────
 
 .add-record-btn {
   align-self: flex-start;

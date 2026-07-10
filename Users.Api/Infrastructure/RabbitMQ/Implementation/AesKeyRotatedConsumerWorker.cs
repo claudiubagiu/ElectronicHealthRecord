@@ -4,13 +4,6 @@ using Users.Api.Repositories.Interface;
 
 namespace Users.Api.Infrastructure.RabbitMQ.Implementation
 {
-    /// <summary>
-    /// Consumes AesKeyRotatedEvent from Auth.Api (the system of record for
-    /// EncryptedAesKey). Updates the local Patient copy, then fans the same
-    /// event out to every other service that holds a denormalized copy —
-    /// AccessRequests.Api, MedicalData.Api, Diagnostics.Api — exactly like
-    /// IdentityCreatedConsumerWorker does for new-user creation.
-    /// </summary>
     public class AesKeyRotatedConsumerWorker : BackgroundService
     {
         private readonly IGenericRabbitMQConsumer<AesKeyRotatedEvent> _consumer;

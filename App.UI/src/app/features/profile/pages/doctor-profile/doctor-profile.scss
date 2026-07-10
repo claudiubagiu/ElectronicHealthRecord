@@ -7,16 +7,12 @@
   gap: 28px;
 }
 
-/* ===== LOADING STATE ===== */
-
 .state-container {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 48px 0;
 }
-
-/* ===== RESPONSIVE ===== */
 
 @media (max-width: 600px) {
   .doctor-profile-page {

@@ -46,13 +46,6 @@ namespace AccessRequests.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        /// <summary>
-        /// Approves a pending access request. The patient's frontend must include
-        /// the patient's AES key, ECIES-encrypted with the requesting user's
-        /// public key — this becomes the envelope that user (doctor, lab
-        /// technician, pharmacist, medical assistant, etc.) uses to decrypt
-        /// medical data and diagnostics for this patient.
-        /// </summary>
         [HttpPatch("{id}/approve")]
         public async Task<IActionResult> Approve(Guid id, [FromBody] CreateEnvelopeDto envelope)
         {

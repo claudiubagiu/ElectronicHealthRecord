@@ -121,11 +121,6 @@ export class AddDiagnostic implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  /**
-   * Fetches the patient's full record (including CNP) from Users.Api.
-   * The query params used to land on this page only carry name/wallet,
-   * never the CNP — it's sensitive data and shouldn't travel in a URL.
-   */
   private async loadPatientCnp(patientId: string): Promise<void> {
     if (!patientId) return;
     try {
@@ -134,8 +129,6 @@ export class AddDiagnostic implements OnInit, OnDestroy {
         this.selectedPatient = { ...this.selectedPatient, cnp: fullPatient.cnp };
       }
     } catch {
-      // Non-blocking: if this fails, the form still works, the PDF will
-      // just show an empty CNP field as before.
     }
   }
 
@@ -171,8 +164,6 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       newValue_diagnosis: [''],
     });
   }
-
-  // ── Past diagnoses ────────────────────────────────────────────────────────
 
   async loadPastDiagnoses(): Promise<void> {
     if (!this.selectedPatient?.walletAddress) return;
@@ -225,8 +216,6 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       .map((d) => `${d.title} (${this.formatTimestampFull(d.timestamp)})`)
       .join('; ');
   }
-
-  // ── ICD-10 ────────────────────────────────────────────────────────────────
 
   setupIcdSearch(): void {
     this.form
@@ -289,13 +278,9 @@ export class AddDiagnostic implements OnInit, OnDestroy {
     return value ?? '';
   }
 
-  // ── Medical records ───────────────────────────────────────────────────────
-
   onMedicalRecordSelectionChanged(ids: string[]): void {
     this.linkedMedicalRecordIds = ids;
   }
-
-  // ── Lab analyses ──────────────────────────────────────────────────────────
 
   async loadPatientLabAnalyses(): Promise<void> {
     if (!this.selectedPatient?.walletAddress) return;
@@ -337,8 +322,6 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       year: 'numeric',
     });
   }
-
-  // ── Custom fields ─────────────────────────────────────────────────────────
 
   addCustomField(category: 'generalInfo' | 'anamnesis' | 'clinicalExam' | 'diagnosis'): void {
     const labelKey = `newLabel_${category}` as const;
@@ -385,8 +368,6 @@ export class AddDiagnostic implements OnInit, OnDestroy {
     }
   }
 
-  // ── Validation ────────────────────────────────────────────────────────────
-
   get isCategoryGeneralInfoValid(): boolean {
     return !!this.form.get('title')?.valid && !!this.form.get('consultationDate')?.valid;
   }
@@ -422,8 +403,6 @@ export class AddDiagnostic implements OnInit, OnDestroy {
       this.isCategoryDiagnosisValid
     );
   }
-
-  // ── Submit ────────────────────────────────────────────────────────────────
 
   async onSubmit(): Promise<void> {
     if (!this.isFormReady) {

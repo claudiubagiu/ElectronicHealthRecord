@@ -1,18 +1,5 @@
 ﻿namespace MedicalData.Api.Models.Domain
 {
-    /// <summary>
-    /// A medical record document, encrypted with a per-document AES key
-    /// (DocumentKey, AES-GCM). The DocumentKey itself is encrypted with the
-    /// patient's PatientMasterKey (also AES-GCM) and stored here as
-    /// EncryptedDocumentKey. The PatientMasterKey is recovered via the
-    /// envelope stored in AccessRequests.Api (one envelope per
-    /// patient/authorized-user pair) — see Envelope.cs.
-    ///
-    /// Two-level key hierarchy:
-    ///   PatientMasterKey (per patient, via envelope)
-    ///     -> decrypts EncryptedDocumentKey -> DocumentKey (per document)
-    ///       -> decrypts EncryptedData
-    /// </summary>
     public class MedicalRecord
     {
         public Guid Id { get; set; }

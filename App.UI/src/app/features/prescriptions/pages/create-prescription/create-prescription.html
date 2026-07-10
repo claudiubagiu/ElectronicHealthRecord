@@ -1,6 +1,5 @@
 <div class="create-prescription-page">
   <div class="create-prescription-card">
-    <!-- Header -->
     <div class="card-header">
       <div class="icon-wrapper">
         <mat-icon>receipt_long</mat-icon>
@@ -13,7 +12,6 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <!-- ── Patient banner ────────────────────────────────────────────── -->
       <div class="section">
         <p class="section-label">Patient</p>
         <div class="patient-preselected-banner">
@@ -26,7 +24,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- Prescription Title -->
       <div class="section">
         <p class="section-label">Title *</p>
         <mat-form-field appearance="outline" class="full">
@@ -45,7 +42,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- Medications List -->
       <div class="section">
         <p class="section-label">Medications *</p>
 
@@ -115,7 +111,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- Notes -->
       <div class="section">
         <p class="section-label">Notes (optional)</p>
         <mat-form-field appearance="outline" class="full">
@@ -132,7 +127,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- Submit -->
       <div class="section submit-section">
         <button
           mat-flat-button
@@ -157,7 +151,6 @@
   </div>
 </div>
 
-<!-- Success Modal -->
 @if (showSuccessModal) {
 <div class="modal-overlay" (click)="closeSuccessModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">

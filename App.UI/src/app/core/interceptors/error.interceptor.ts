@@ -2,10 +2,6 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 import { AppError } from '../errors/app.error';
 
-/**
- * Error Interceptor
- * Transforms HttpErrorResponse into AppError
- */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {

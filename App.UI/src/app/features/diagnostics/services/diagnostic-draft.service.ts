@@ -13,9 +13,6 @@ import {
   UpdateDiagnosticDraftDto,
 } from '../models/diagnostic-draft.model';
 
-/**
- * Input required by the service to save/update a draft.
- */
 export interface DiagnosticDraftSubmissionInput {
   patientId: string;
   patientWalletAddress: string;
@@ -23,25 +20,6 @@ export interface DiagnosticDraftSubmissionInput {
   linkedMedicalRecordIds: string[];
 }
 
-/**
- * Facade service for DiagnosticDraft CRUD + E2EE pipeline.
- *
- * Pipeline on save:
- *   1. Serialize the DiagnosticDraftPayload as JSON.
- *   2. Generate a random per-draft DocumentKey (AES-256-GCM) and encrypt
- *      the JSON with it.
- *   3. Wrap the DocumentKey with the patient's PatientMasterKey (resolved
- *      via MedicalDataCryptoService — same two-level key model used for
- *      medical records) and store it as EncryptedDocumentKey.
- *   4. POST (or PUT) to Diagnostics.Api.
- *
- * A doctor (or assistant) recovers the PatientMasterKey via the envelope
- * AccessRequests.Api issued on access approval, exactly as for medical
- * records, then unwraps this draft's DocumentKey to decrypt it.
- *
- * No IPFS, no blockchain, no PDF — a draft is off-chain by design and can be
- * edited any number of times before a doctor finalizes it.
- */
 @Injectable({ providedIn: 'root' })
 export class DiagnosticDraftService {
   private readonly API = `${environment.apiUrls.diagnostics.replace(
@@ -52,8 +30,6 @@ export class DiagnosticDraftService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private medicalDataCryptoService = inject(MedicalDataCryptoService);
-
-  // ── HTTP endpoints ───────────────────────────────────────────────────────
 
   getActiveByPatient(patientId: string): Promise<DiagnosticDraftDto | null> {
     return firstValueFrom(
@@ -73,14 +49,6 @@ export class DiagnosticDraftService {
     return firstValueFrom(this.http.delete<void>(`${this.API}/${id}`));
   }
 
-  // ── High-level: create or update with full E2EE pipeline ─────────────────
-
-  /**
-   * Either creates a new draft, or — if one already exists for the patient —
-   * updates it in place.
-   *
-   * Returns the DTO the backend persisted.
-   */
   async saveDraft(
     input: DiagnosticDraftSubmissionInput,
     existingDraftId: string | null
@@ -132,12 +100,6 @@ export class DiagnosticDraftService {
     });
   }
 
-  /**
-   * Decrypts a draft payload using the patient's PatientMasterKey, resolved
-   * the same way as for medical records (own key if caller is the patient,
-   * envelope from AccessRequests.Api otherwise), then unwraps this draft's
-   * DocumentKey before decrypting the payload itself.
-   */
   async decrypt(draft: DiagnosticDraftDto): Promise<DiagnosticDraftPayload> {
     const currentUser = this.authService.getDecodedToken();
     if (!currentUser) {

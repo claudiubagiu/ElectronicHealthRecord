@@ -12,8 +12,6 @@ import { PrescriptionPdfService } from './prescription-pdf.service';
 export interface PrescriptionSubmissionInput {
   formData: PrescriptionFormData;
   patientWalletAddress: string;
-  /** The patient's user ID (GUID) — required to resolve the PatientMasterKey
-   *  and to register the new DocumentKey in AccessRequests.Api. */
   patientId: string;
   patientName: string;
   doctorName: string;
@@ -27,20 +25,6 @@ export interface PrescriptionSubmissionResult {
 
 const SHORT_CODE_CHARSET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
-/**
- * Prescriptions support TWO independent decryption paths, both wrapping
- * the same per-document AES key (DocumentKey) used to encrypt the PDF:
- *
- *   - Patient path: DocumentKey wrapped with the patient's PatientMasterKey
- *     (registered as a DocumentKey record in AccessRequests.Api, same as
- *     diagnoses and lab analyses) — the patient and any authorized doctor
- *     can recover it the standard way.
- *   - Pharmacist path: DocumentKey wrapped with a PBKDF2 key derived from
- *     the prescription's short code + salt — lets a pharmacist who only
- *     has the short code (no wallet, no envelope) decrypt and dispense it.
- *     This path is independent of PatientMasterKey/Envelope entirely and
- *     is NOT affected by key rotation.
- */
 @Injectable({ providedIn: 'root' })
 export class PrescriptionSubmissionService {
   private blockchainService = inject(BlockchainService);
@@ -61,11 +45,9 @@ export class PrescriptionSubmissionService {
       });
     }
 
-    // 1. Generate short code and salt
     const shortCode = this.generateShortCode();
     const saltBytes = window.crypto.getRandomValues(new Uint8Array(32));
 
-    // 2. Build the prescription payload (shortCode is embedded in the PDF)
     const prescriptionPayload: PrescriptionPayload = {
       prescription: formData,
       shortCode,
@@ -74,33 +56,24 @@ export class PrescriptionSubmissionService {
       timestamp: Date.now(),
     };
 
-    // 3. Generate PDF from prescription data
     const pdfBlob = await this.pdfService.generatePrescriptionPdf(prescriptionPayload);
     const fileBuffer = await pdfBlob.arrayBuffer();
 
-    // 4. Encrypt the PDF with a random per-document DocumentKey (AES-256-GCM)
     const documentKey = await CryptoService.generateAESKey();
     const { encrypted, iv } = await CryptoService.encryptFileWithAES(fileBuffer, documentKey);
 
-    // 5. Export the DocumentKey as raw bytes (needed for both wrap paths below)
     const documentKeyRaw = await CryptoService.exportAESKey(documentKey);
 
-    // 6. Patient path — resolve the PatientMasterKey and wrap the DocumentKey with it
     const patientMasterKey = await this.medicalDataCryptoService.resolvePatientAesKey(patientId);
     const encryptedDocumentKey = await this.medicalDataCryptoService.wrapDocumentKey(
       documentKey,
       patientMasterKey
     );
 
-    // 7. Pharmacist path — wrap the DocumentKey with a PBKDF2 key derived from shortCode+salt
     const pbkdf2Key = await this.deriveKeyFromCode(shortCode, saltBytes);
     const { encrypted: encryptedDocKeyForPharmacist, iv: docKeyIv } =
       await CryptoService.encryptFileWithAES(documentKeyRaw, pbkdf2Key);
 
-    // 8. Build the IPFS payload.
-    //    fileName stores: "prescription_XXXX.pdf|base64(salt)|base64(encDocKey)|base64(iv)"
-    //    This lets the pharmacist recover the DocumentKey without ever
-    //    touching PatientMasterKey/Envelope.
     const saltB64 = this.arrayBufferToBase64(saltBytes.buffer as ArrayBuffer);
     const encDocKeyB64 = this.arrayBufferToBase64(encryptedDocKeyForPharmacist);
     const docKeyIvB64 = this.arrayBufferToBase64(docKeyIv.buffer as ArrayBuffer);
@@ -115,17 +88,14 @@ export class PrescriptionSubmissionService {
       timestamp: prescriptionPayload.timestamp,
     };
 
-    // 9. Upload to IPFS
     const ipfsCid = await this.ipfsService.uploadEncryptedData(payload);
 
-    // 10. Register the patient-path wrapped DocumentKey, indexed by the IPFS CID
     await this.documentKeyService.create({
       patientId,
       ipfsCid,
       encryptedDocumentKey,
     });
 
-    // 11. Call smart contract
     const codeHash = this.blockchainService.hashShortCode(shortCode);
     const saltHex =
       '0x' +
@@ -144,8 +114,6 @@ export class PrescriptionSubmissionService {
 
     return { prescriptionId, ipfsCid, shortCode };
   }
-
-  // ── PBKDF2 key derivation (shared with decryption service) ───────────────
 
   async deriveKeyFromCode(shortCode: string, salt: Uint8Array): Promise<CryptoKey> {
     try {
@@ -180,8 +148,6 @@ export class PrescriptionSubmissionService {
       });
     }
   }
-
-  // ── Helpers ──────────────────────────────────────────────────────────────
 
   private generateShortCode(): string {
     const array = window.crypto.getRandomValues(new Uint8Array(6));

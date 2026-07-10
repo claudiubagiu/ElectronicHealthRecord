@@ -4,43 +4,11 @@ using FluentResults;
 
 namespace Auth.Api.Services.Interface
 {
-    /// <summary>
-    /// Defines the contract for the authentication service, handling
-    /// challenge generation, ECC signature verification, registration, and login.
-    /// </summary>
     public interface IAuthService
     {
-        /// <summary>
-        /// Registers a new user with ECC-based authentication.
-        /// Verifies the ECC signature against the provided public key,
-        /// creates the identity, and returns a JWT token.
-        /// </summary>
         Task<Result<LoginResponseDto>> Register(RegisterRequestDto registerRequestDto);
-
-        /// <summary>
-        /// Generates a cryptographically secure random challenge for the given wallet address.
-        /// For existing users the challenge is persisted on the user record.
-        /// For new users (pre-registration) it is stored in a short-lived memory cache.
-        /// </summary>
         Task<string?> GenerateChallengeAsync(string walletAddress);
-
-        /// <summary>
-        /// Verifies the ECC signature of the challenge for an existing user.
-        /// On success, rotates the challenge and returns a JWT token.
-        /// </summary>
         Task<Result<LoginResponseDto>> VerifyEccSignatureAsync(string walletAddress, string eccSignature, string challenge);
-
-        /// <summary>
-        /// Rotates the PatientMasterKey for the given identity: persists the
-        /// new EncryptedAesKey as the system of record on Auth.Api, then
-        /// publishes an AesKeyRotatedEvent so downstream services (which hold
-        /// their own denormalized copy) can update theirs too.
-        ///
-        /// Called LAST in the client-side rotation flow, after every
-        /// DocumentKey and access envelope has already been re-wrapped under
-        /// the new key — so a failure here just means the patient retries
-        /// with the old key still valid everywhere.
-        /// </summary>
         Task<Result> RotateAesKeyAsync(string identityId, string encryptedAesKey);
     }
 }

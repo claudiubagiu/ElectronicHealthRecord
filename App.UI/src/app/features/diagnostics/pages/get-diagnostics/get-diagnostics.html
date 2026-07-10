@@ -1,7 +1,6 @@
 <div class="diagnostics-page">
   <div class="diagnostics-card">
 
-    <!-- Header -->
     <div class="card-header">
       <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Back to profile">
         <mat-icon>arrow_back</mat-icon>
@@ -14,7 +13,6 @@
       <p class="subtitle">Your medical diagnoses stored on the blockchain</p>
     </div>
 
-    <!-- Loading -->
     @if (isLoading) {
       <div class="state-container">
         <mat-spinner diameter="40"></mat-spinner>
@@ -22,7 +20,6 @@
       </div>
     }
 
-    <!-- Empty -->
     @if (!isLoading && diagnoses.length === 0) {
       <div class="state-container empty">
         <mat-icon class="empty-icon">inventory_2</mat-icon>
@@ -30,7 +27,6 @@
       </div>
     }
 
-    <!-- List -->
     @if (!isLoading && diagnoses.length > 0) {
       <div class="diagnostics-list">
         @for (d of diagnoses; track d.id) {

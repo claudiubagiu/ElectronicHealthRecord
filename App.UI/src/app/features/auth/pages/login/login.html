@@ -1,15 +1,12 @@
 <div class="login-page">
   <div class="login-content">
-    <!-- Icon -->
     <div class="icon-wrapper">
       <mat-icon>account_balance_wallet</mat-icon>
     </div>
 
-    <!-- Title -->
     <h1>Welcome back!</h1>
     <p class="subtitle">Connect your MetaMask wallet to sign in</p>
 
-    <!-- Button -->
     <button mat-flat-button class="login-button" (click)="onLogin()" [disabled]="isLoading">
       @if (!isLoading) {
       <ng-container>
@@ -24,7 +21,6 @@
       }
     </button>
 
-    <!-- Register link -->
     <p class="register-text">
       Don't have an account?
       <a routerLink="/register">Create one now</a>

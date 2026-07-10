@@ -1,5 +1,3 @@
-// ── Page & card ───────────────────────────────────────────────────────────────
-
 .add-diagnostic-page {
   display: flex;
   align-items: flex-start;
@@ -19,8 +17,6 @@
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
 }
-
-// ── Header ────────────────────────────────────────────────────────────────────
 
 .card-header {
   display: flex;
@@ -62,8 +58,6 @@ h1 {
   max-width: 480px;
 }
 
-// ── Patient section ───────────────────────────────────────────────────────────
-
 .patient-section {
   margin-bottom: 20px;
 }
@@ -101,8 +95,6 @@ h1 {
   }
 }
 
-// ── Layout helpers ────────────────────────────────────────────────────────────
-
 .full {
   width: 100%;
   margin-bottom: 4px;
@@ -117,8 +109,6 @@ h1 {
   display: flex;
   gap: 12px;
 }
-
-// ── Accordion ─────────────────────────────────────────────────────────────────
 
 .categories-accordion {
   display: flex;
@@ -196,8 +186,6 @@ h1 {
   margin-left: 6px;
 }
 
-// ── Panel content ─────────────────────────────────────────────────────────────
-
 .panel-content {
   display: flex;
   flex-direction: column;
@@ -255,8 +243,6 @@ h1 {
   }
 }
 
-// ── Custom fields ─────────────────────────────────────────────────────────────
-
 .custom-fields-list {
   display: flex;
   flex-direction: column;
@@ -313,8 +299,6 @@ h1 {
   }
 }
 
-// ── Add field row ─────────────────────────────────────────────────────────────
-
 .add-field-row {
   display: flex;
   gap: 8px;
@@ -363,8 +347,6 @@ h1 {
   }
 }
 
-// ── Selected lab analysis ─────────────────────────────────────────────────────
-
 .selected-analysis {
   display: flex;
   align-items: center;
@@ -402,8 +384,6 @@ h1 {
   }
 }
 
-// ── Lab option ────────────────────────────────────────────────────────────────
-
 .lab-option {
   display: flex;
   flex-direction: column;
@@ -420,8 +400,6 @@ h1 {
     color: rgba(0, 0, 0, 0.45);
   }
 }
-
-// ── Past diagnoses section ────────────────────────────────────────────────────
 
 .past-diagnoses-section {
   margin-bottom: 12px;
@@ -537,8 +515,6 @@ h1 {
   }
 }
 
-// ── ICD-10 ────────────────────────────────────────────────────────────────────
-
 .icd-code {
   font-weight: 700;
   color: #1565c0;
@@ -550,8 +526,6 @@ h1 {
   font-size: 0.85rem;
   color: #212121;
 }
-
-// ── Submit section ────────────────────────────────────────────────────────────
 
 .submit-section {
   margin-top: 24px;
@@ -607,8 +581,6 @@ h1 {
     }
   }
 }
-
-// ── Responsive ────────────────────────────────────────────────────────────────
 
 @media (max-width: 600px) {
   .add-diagnostic-card {

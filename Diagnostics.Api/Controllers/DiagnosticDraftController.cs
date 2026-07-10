@@ -17,9 +17,6 @@ namespace Diagnostics.Api.Controllers
             _draftService = draftService;
         }
 
-        /// <summary>
-        /// Creates a new diagnostic draft. Called by MedicalAssistant or Doctor.
-        /// </summary>
         [HttpPost]
         [Authorize(Roles = "MedicalAssistant,Doctor")]
         public async Task<IActionResult> Create([FromBody] CreateDiagnosticDraftDto dto)
@@ -32,9 +29,6 @@ namespace Diagnostics.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        /// <summary>
-        /// Returns the active draft for a given patient, if any.
-        /// </summary>
         [HttpGet("patient/{patientId:guid}")]
         [Authorize(Roles = "MedicalAssistant,Doctor,Patient")]
         public async Task<IActionResult> GetActiveByPatient(Guid patientId)
@@ -51,9 +45,6 @@ namespace Diagnostics.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        /// <summary>
-        /// Updates an existing draft (assistant saves progress or doctor completes it).
-        /// </summary>
         [HttpPut("{id:guid}")]
         [Authorize(Roles = "MedicalAssistant,Doctor")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDiagnosticDraftDto dto)
@@ -66,9 +57,6 @@ namespace Diagnostics.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        /// <summary>
-        /// Deletes a draft. Called after Sign & Submit, or manually to cancel a consultation.
-        /// </summary>
         [HttpDelete("{id:guid}")]
         [Authorize(Roles = "MedicalAssistant,Doctor")]
         public async Task<IActionResult> Delete(Guid id)
@@ -81,12 +69,6 @@ namespace Diagnostics.Api.Controllers
             return BuildError(result.Errors.First());
         }
 
-        /// <summary>
-        /// Batch-rotates EncryptedDocumentKey for the caller's own drafts,
-        /// after the caller (the patient) has generated a new
-        /// PatientMasterKey client-side and re-wrapped each DocumentKey
-        /// under it. Draft content is never re-sent here.
-        /// </summary>
         [HttpPatch("rotate-keys")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> RotateDocumentKeys([FromBody] RotateDocumentKeysDto dto)

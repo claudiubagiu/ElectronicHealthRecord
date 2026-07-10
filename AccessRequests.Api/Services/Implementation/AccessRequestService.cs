@@ -106,12 +106,8 @@ namespace AccessRequests.Api.Services.Implementation
             request.ExpiresAt = now.Add(AccessDuration);
             var updated = await _accessRequestRepository.UpdateAsync(request);
 
-            // request.DoctorId identifies the authorized user (doctor, lab tech,
-            // pharmacist, medical assistant, etc.) this access request is for —
-            // the column name is historical, the value is a generic user id.
             var authorizedUserId = request.DoctorId;
 
-            // One envelope per (patient, user) — replace any stale leftover instead of duplicating.
             var existingEnvelope = await _envelopeRepository.GetByPatientAndUserAsync(request.PatientId, authorizedUserId);
             if (existingEnvelope != null)
             {
@@ -252,8 +248,6 @@ namespace AccessRequests.Api.Services.Implementation
             return Result.Ok<IReadOnlyList<AccessRequestDto>>(requests.Select(Mapper.ToAccessRequestDto).ToList());
         }
 
-        // ── Envelopes ────────────────────────────────────────────────────────
-
         public async Task<Result<EnvelopeDto>> GetEnvelopeAsync(Guid patientId, Guid userId)
         {
             var envelope = await _envelopeRepository.GetByPatientAndUserAsync(patientId, userId);
@@ -265,14 +259,6 @@ namespace AccessRequests.Api.Services.Implementation
             return Result.Ok(Mapper.ToEnvelopeDto(envelope));
         }
 
-        /// <summary>
-        /// Batch re-wraps every entry's EncryptedAesKey into the matching
-        /// (patientId, userId) envelope. Entries for users that don't
-        /// currently hold an envelope for this patient are silently
-        /// skipped — the repository scopes the update to existing rows
-        /// only, so there's nothing destructive about a stale entry
-        /// (e.g. access was revoked between key generation and submit).
-        /// </summary>
         public async Task<Result<int>> RotateEnvelopesAsync(Guid patientId, RotateEnvelopesDto dto)
         {
             if (dto.Entries == null || dto.Entries.Count == 0)

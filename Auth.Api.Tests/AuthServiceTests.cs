@@ -42,8 +42,6 @@ namespace Auth.Api.Tests
             );
         }
 
-        // ── Cache ─────────────────────────────────────────────────────────────
-
         [Fact]
         public void Cache_ShouldStoreAndRetrieveChallenge()
         {
@@ -75,8 +73,6 @@ namespace Auth.Api.Tests
             Assert.Equal("second", value);
         }
 
-        // ── ApplicationUser ───────────────────────────────────────────────────
-
         [Fact]
         public void ApplicationUser_ShouldDefaultIsApprovedToFalse()
         {
@@ -100,8 +96,6 @@ namespace Auth.Api.Tests
 
             Assert.Equal("0xabc123", user.WalletAddress);
         }
-
-        // ── RegisterRequestDto ────────────────────────────────────────────────
 
         [Fact]
         public void RegisterRequestDto_ShouldContainCorrectRoles()
@@ -141,8 +135,6 @@ namespace Auth.Api.Tests
 
             Assert.Equal(2, dto.Roles.Count);
         }
-
-        // ── TokenRepository mock ──────────────────────────────────────────────
 
         [Fact]
         public void TokenRepository_ShouldReturnMockedToken()

@@ -30,8 +30,6 @@ namespace AccessRequests.Api.Tests
             );
         }
 
-        // ── Helper ────────────────────────────────────────────────────────────
-
         private static AccessRequest MakeRequest(
             Guid? id = null,
             Guid? patientId = null,
@@ -45,7 +43,6 @@ namespace AccessRequests.Api.Tests
                 CreatedAt = DateTime.UtcNow
             };
 
-        // ── ApproveAsync ──────────────────────────────────────────────────────
 
         [Fact]
         public async Task ApproveAsync_ShouldFail_WhenRequestNotFound()
@@ -111,8 +108,6 @@ namespace AccessRequests.Api.Tests
             Assert.Contains(result.Errors, e => e.Message.Contains("encrypted AES key"));
         }
 
-        // ── RejectAsync ───────────────────────────────────────────────────────
-
         [Fact]
         public async Task RejectAsync_ShouldFail_WhenRequestNotFound()
         {
@@ -140,8 +135,6 @@ namespace AccessRequests.Api.Tests
             Assert.True(result.IsFailed);
             Assert.Contains(result.Errors, e => e.Message.Contains("Forbidden"));
         }
-
-        // ── RevokeAsync ───────────────────────────────────────────────────────
 
         [Fact]
         public async Task RevokeAsync_ShouldFail_WhenRequestNotFound()
@@ -186,8 +179,6 @@ namespace AccessRequests.Api.Tests
             Assert.True(result.IsFailed);
             Assert.Contains(result.Errors, e => e.Message.Contains("Forbidden"));
         }
-
-        // ── CreateAsync ───────────────────────────────────────────────────────
 
         [Fact]
         public async Task CreateAsync_ShouldFail_WhenDoctorNotFound()

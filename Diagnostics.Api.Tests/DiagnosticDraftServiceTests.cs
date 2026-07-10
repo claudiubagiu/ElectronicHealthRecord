@@ -24,8 +24,6 @@ namespace Diagnostics.Api.Tests
             );
         }
 
-        // ── Helper ────────────────────────────────────────────────────────────
-
         private static DiagnosticDraft MakeDraft(
             Guid? id = null,
             Guid? patientId = null,
@@ -51,8 +49,6 @@ namespace Diagnostics.Api.Tests
             EncryptedDocumentKey = "docKey",
             LinkedMedicalRecordIds = "[]"
         };
-
-        // ── CreateAsync ───────────────────────────────────────────────────────
 
         [Fact]
         public async Task CreateAsync_ShouldFail_WhenPatientNotFound()
@@ -111,8 +107,6 @@ namespace Diagnostics.Api.Tests
             Assert.Equal(patientId, result.Value.PatientId);
         }
 
-        // ── GetActiveByPatientIdAsync ─────────────────────────────────────────
-
         [Fact]
         public async Task GetActiveByPatientIdAsync_ShouldFail_WhenPatientNotFound()
         {
@@ -165,8 +159,6 @@ namespace Diagnostics.Api.Tests
             Assert.Equal(patientId, result.Value.PatientId);
         }
 
-        // ── UpdateAsync ───────────────────────────────────────────────────────
-
         [Fact]
         public async Task UpdateAsync_ShouldFail_WhenDraftNotFound()
         {
@@ -185,8 +177,6 @@ namespace Diagnostics.Api.Tests
             Assert.True(result.IsFailed);
             Assert.Contains(result.Errors, e => e.Message.Contains("Draft not found"));
         }
-
-        // ── DeleteAsync ───────────────────────────────────────────────────────
 
         [Fact]
         public async Task DeleteAsync_ShouldFail_WhenDraftNotFound()
